@@ -1,10 +1,11 @@
 /* ───────── pinned horizontal scrub (Arcade + Gallery) ─────────
    Fallback first: a native horizontal scroller. With scroll-driven animations
-   (and motion allowed) the section pins and vertical scroll drives the track. */
+   (and motion allowed, and a screen tall enough to pin) the section pins and
+   vertical scroll drives the track. */
 .scrub__track { display: flex; gap: var(--gap, 24px); overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding: 12px 4px 28px; scrollbar-width: thin; scrollbar-color: color-mix(in oklab, var(--accent) 60%, transparent) transparent; }
 .scrub__track > * { flex: none; scroll-snap-align: start; }
 
-@media (prefers-reduced-motion: no-preference) {
+@media (prefers-reduced-motion: no-preference) and (min-height: 560px) {
   @supports (animation-timeline: view()) {
     .scrub { height: calc(100svh + var(--scrub, 240vh)); padding: 0; view-timeline: --scrub block; }
     .scrub__stage {
@@ -16,8 +17,18 @@
       animation: scrubL linear both; animation-timeline: --scrub; animation-range: contain 4% contain 96%;
     }
     .scrub__track[data-dir='-1'] { animation-name: scrubR; }
+    /* the whole world powers up as it arrives and dims as you leave it */
+    .scrub__stage { animation: stageIn linear both, stageOut linear both; animation-timeline: --scrub, --scrub; animation-range: entry 0% entry 100%, exit 0% exit 100%; }
+    /* the rows/wall fill exactly the space left under the header */
+    .scrub .life__title { font-size: clamp(2.1rem, 1.2rem + 3.2vw, 4.6rem); margin-bottom: .6rem; }
+    .scrub .kicker { margin-bottom: .6rem; }
+    .arcade__aisle, .wall__room { flex: 1; min-height: 0; container-type: size; align-content: center; }
+    .arcade { --cabh: min(330px, calc((100cqh - 74px) / (1 + .86))); }
+    .wall { --row: min(260px, calc((100cqh - 64px - var(--gap)) / 2)); }
   }
 }
+@keyframes stageIn { from { opacity: .25; scale: .94; } }
+@keyframes stageOut { to { filter: brightness(.35) saturate(.6); translate: 0 -4vh; } }
 @keyframes scrubL { from { transform: translateX(0); } to { transform: translateX(calc(-100% + 100cqw)); } }
 @keyframes scrubR { from { transform: translateX(calc(-100% + 100cqw)); } to { transform: translateX(0); } }
 

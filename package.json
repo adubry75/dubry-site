@@ -10,7 +10,11 @@
     "serve": "node tools/serve.mjs",
     "dev": "node tools/build.mjs && node tools/serve.mjs",
     "shoot": "node tools/shoot.mjs",
-    "check": "node tools/check.mjs"
+    "check": "node tools/check.mjs",
+    "lighthouse": "bash tools/lighthouse.sh",
+    "static": "node tools/make-static.mjs",
+    "cat-poses": "node tools/cat-poses.mjs",
+    "art-sheet": "node tools/art-sheet.mjs"
   },
   "devDependencies": {
     "@fontsource-variable/space-grotesk": "^5.3.0",

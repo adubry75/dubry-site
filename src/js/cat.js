@@ -147,6 +147,7 @@ export function startCat({ lives, onLife }) {
         yOff = -Math.sin(Math.PI * Math.min(u, 1)) * 48 * st.s;
       } else u = clamp((T.y - st.y) / 80 + 0.5, 0, 1);
       want = u < 0.5 ? POSES.leapUp : POSES.leapDown;
+      setAttr('data-gait', 'leap');
     } else if (moving) {
       const g = speed > 2.2 ? 'sprint' : speed > 0.75 ? 'trot' : 'walk';
       if (g !== st.gait) { st.prevGait = st.gait; st.gait = g; st.gaitT = 0; }
@@ -154,10 +155,13 @@ export function startCat({ lives, onLife }) {
       const hz = g === 'sprint' ? 2.6 + speed * 0.15 : g === 'trot' ? 1.7 + speed * 0.4 : 0.9 + speed * 1.1;
       st.phase = (st.phase + dt * Math.min(hz, 3.6)) % 1;
       want = st.gaitT < 1 ? blend(gaitPose(st.prevGait, st.phase), gaitPose(g, st.phase), st.gaitT) : gaitPose(g, st.phase);
+      setAttr('data-gait', g);
     } else if (still > 450) {
       want = POSES.sit;
+      setAttr('data-gait', 'sit');
     } else {
       want = POSES.stand;
+      setAttr('data-gait', 'stand');
     }
 
     // nap on the cushion

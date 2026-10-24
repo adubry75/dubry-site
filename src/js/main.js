@@ -43,6 +43,7 @@ initLaunch({ reduced });
 
 // ── pinned horizontal scrubs (Arcade, Gallery) ──
 const scrubbing = motion && sda;
+const pinnable = matchMedia('(min-height: 560px)');
 function setupScrub(section) {
   const stage = section.querySelector('.scrub__stage');
   const tracks = [...section.querySelectorAll('.scrub__track')];
@@ -62,15 +63,21 @@ function setupScrub(section) {
   section.addEventListener('focusin', (e) => {
     const track = e.target.closest('.scrub__track');
     const item = e.target.closest('.scrub__track > *');
-    if (!track || !item || over <= 0) return;
-    const cw = stage.clientWidth;
-    const trackOver = Math.max(1, track.scrollWidth - (cw - parseFloat(getComputedStyle(stage).paddingLeft) * 2));
-    const t = Math.min(0, Math.max(-trackOver, -(item.offsetLeft + item.offsetWidth / 2 - cw / 2)));
+    if (!track || !item || over <= 0 || !pinnable.matches) return;
+    const cs = getComputedStyle(stage);
+    const cw = stage.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const trackOver = Math.max(1, track.scrollWidth - cw);
+    // offset of the item inside the (transformed) track, measured from the track itself
+    const x = item.getBoundingClientRect().left - track.getBoundingClientRect().left;
+    const t = Math.min(0, Math.max(-trackOver, -(x + item.offsetWidth / 2 - cw / 2)));
     let p = -t / trackOver;
     if (track.dataset.dir === '-1') p = 1 - p;
     const top = section.getBoundingClientRect().top + scrollY;
     const L = section.offsetHeight - innerHeight;
-    scrollTo({ top: top + L * (0.04 + 0.92 * p), behavior: 'instant' });
+    const y = top + L * (0.04 + 0.92 * p);
+    scrollTo({ top: y, behavior: 'instant' });
+    // the browser's own focus scrolling can run after this handler: land again next frame
+    requestAnimationFrame(() => scrollTo({ top: y, behavior: 'instant' }));
   });
 }
 if (scrubbing) document.querySelectorAll('.scrub').forEach(setupScrub);
@@ -94,11 +101,18 @@ addEventListener('load', () => whenIdle(() => {
 
 // Deep links (/#trail): if layout settles after the browser's first jump, land again.
 let userMoved = false;
-['wheel', 'touchstart', 'keydown', 'pointerdown'].forEach((t) => addEventListener(t, () => (userMoved = true), { once: true, passive: true }));
+['wheel', 'touchstart', 'keydown', 'pointerdown', 'focusin'].forEach((t) => addEventListener(t, () => (userMoved = true), { once: true, passive: true }));
 const hashTarget = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
 if (hashTarget) {
   const until = performance.now() + 6000;
-  const reland = () => { if (!userMoved && performance.now() < until) hashTarget.scrollIntoView({ behavior: 'instant' }); };
+  const pageTop = () => hashTarget.getBoundingClientRect().top + scrollY;
+  let lastTop = pageTop();
+  const reland = () => {
+    if (userMoved || performance.now() > until) return;
+    const t = pageTop();
+    if (Math.abs(t - lastTop) > 1) hashTarget.scrollIntoView({ behavior: 'instant' }); // something above it changed size
+    lastTop = t;
+  };
   new ResizeObserver(() => requestAnimationFrame(reland)).observe(document.querySelector('main'));
 }
 const lazy = new IntersectionObserver((entries) => {

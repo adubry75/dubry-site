@@ -1,4 +1,4 @@
-node_modules/
-fixtures/_gen/
-shots/
 .lighthouse/
+fixtures/_gen/
+node_modules/
+shots/

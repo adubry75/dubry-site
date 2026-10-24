@@ -47,7 +47,7 @@
   .bench, .bench--r { flex-direction: column; gap: .45rem; padding: 0; }
   .bench--l { align-items: flex-end; padding-right: calc(var(--bw) * .16); text-align: right; }
   .bench--r { align-items: flex-start; padding-left: calc(var(--bw) * .16); text-align: left; }
-  .bench + .bench { margin-top: calc(var(--bw) * -.5); }
+  .bench + .bench { margin-top: calc(var(--bw) * -.34); }
   .bench__name { font-size: .78rem; max-width: var(--bw); }
   .bench--l .bench__sign { right: calc(var(--bw) * .16 - 10px); }
   .bench--r .bench__sign { left: calc(var(--bw) * .16 - 10px); }

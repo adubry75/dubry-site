@@ -46,7 +46,7 @@ const posterArt = {
       `<path d="M440,470V440H470" stroke="${b}" stroke-width="4"/>` +
       `<text x="398" y="428" fill="${b}" font-family="Silkscreen,monospace" font-size="26">90°</text>` +
       `<g class="pa-cat" transform="translate(250 466) scale(2.1)" style="filter:drop-shadow(0 0 6px ${a})">${rigLines(solve(gaitPose('walk', 0.3)), a, 3)}</g>` +
-      `<g class="pa-cat2" transform="translate(466 250) rotate(-90) scale(1.7)" style="filter:drop-shadow(0 0 6px ${b})">${rigLines(solve(gaitPose('walk', 0.8)), b, 3.2)}</g>` +
+      `<g class="pa-cat2" transform="translate(466 190) rotate(-90) scale(1.7)" style="filter:drop-shadow(0 0 6px ${b})">${rigLines(solve(gaitPose('walk', 0.8)), b, 3.2)}</g>` +
       `<circle cx="140" cy="140" r="36" stroke="${b}" stroke-width="3" stroke-dasharray="6 10" class="pa-spin"/>` +
       `</svg>`;
   },

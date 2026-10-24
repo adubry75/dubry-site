@@ -60,7 +60,7 @@
 @keyframes purr { 50% { transform: translateX(2px); } }
 @keyframes float { 50% { transform: translateY(-14px) rotate(-1.5deg); } }
 @keyframes shadow { 50% { transform: scaleX(.8); opacity: .25; } }
-@keyframes wallwalk { from { translate: 0 60px; } to { translate: 0 -40px; } }
+@keyframes wallwalk { from { translate: 0 40px; } to { translate: 0 -70px; } }
 @keyframes recede { to { transform: scale(.9) translateY(-2%); filter: brightness(.45) saturate(.7); } }
 @keyframes artIn { from { transform: scale(.82) rotate(-4deg); opacity: 0; } }
 @keyframes copyIn { from { transform: translateY(24px); opacity: 0; } }

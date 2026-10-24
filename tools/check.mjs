@@ -125,7 +125,8 @@ async function scrollThrough(page) {
 {
   const page = await newPage();
   await page.goto(BASE + '#trail', { waitUntil: 'load' });
-  await page.waitForTimeout(1500);
+  await page.waitForSelector('[data-trail][data-ready]', { state: 'attached', timeout: 15000 });
+  await page.waitForTimeout(500);
   const pic = page.locator('.bench__pic').nth(2);
   await pic.scrollIntoViewIfNeeded();
   await pic.click();
@@ -187,6 +188,78 @@ for (const mode of ['empty', 'fail']) {
   await page.waitForTimeout(1500);
   ok(first === 31 && calls === first, 'scores: 31 parallel fetches, then served from sessionStorage', `${first} then ${calls - first}`);
   await page.context().close();
+}
+
+// 9 ── the cat: gait follows scroll speed, turns around, leaps between lives ──
+{
+  const page = await newPage();
+  await page.goto(BASE, { waitUntil: 'load' });
+  await page.mouse.move(300, 300);
+  await page.waitForTimeout(2600);
+  const top = await page.evaluate(() => document.querySelector('#arcade').offsetTop + 300);
+  await page.evaluate((y) => scrollTo({ top: y, behavior: 'instant' }), top);
+  await page.waitForTimeout(1200);
+  // drive scroll at a fixed speed for ~0.6s and sample the gait
+  // v in px per ms, held for `ms`; gait sampled every frame after the first 250 ms
+  const drive = (v, ms = 900) => page.evaluate(([v, ms]) => new Promise((res) => {
+    const seen = {}; const t0 = performance.now(); let prev = t0, acc = 0;
+    const step = (now) => {
+      acc += v * (now - prev); prev = now;
+      const d = Math.trunc(acc); acc -= d; scrollBy({ top: d, behavior: 'instant' });
+      if (now - t0 > 250) { const g = document.querySelector('.cat').dataset.gait; seen[g] = (seen[g] || 0) + 1; }
+      if (now - t0 < ms) requestAnimationFrame(step); else res({ seen, face: document.querySelector('.cat').dataset.face });
+    };
+    requestAnimationFrame(step);
+  }), [v, ms]);
+  const slow = await drive(0.25);
+  const mid = await drive(1.3);
+  const fast = await drive(3.5);
+  const back = await drive(-0.4);
+  const top3 = (o) => Object.entries(o).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k}:${n}`).join(' ');
+  ok((slow.seen.walk || 0) > Object.values(slow.seen).reduce((x, y) => x + y, 0) * 0.6, 'slow scroll → walk', top3(slow.seen));
+  ok((mid.seen.trot || 0) > Object.values(mid.seen).reduce((x, y) => x + y, 0) * 0.5, 'medium scroll → trot', top3(mid.seen));
+  ok((fast.seen.sprint || 0) + (fast.seen.leap || 0) > Object.values(fast.seen).reduce((x, y) => x + y, 0) * 0.5, 'fast scroll → sprint (and leaps)', top3(fast.seen));
+  ok(slow.face !== back.face, 'scrolling back up turns the cat around', `${slow.face} → ${back.face}`);
+  // cross a life boundary at walking pace → a leap
+  const b = await page.evaluate(() => document.querySelector('#scores').offsetTop - innerHeight * 0.6 - 120);
+  await page.evaluate((y) => scrollTo({ top: y, behavior: 'instant' }), b);
+  await page.waitForTimeout(1500);
+  const cross = await drive(0.4, 1400);
+  ok((cross.seen.leap || 0) > 1, 'crossing into the next life → leap', top3(cross.seen));
+  await page.waitForTimeout(2500);
+  ok(await page.evaluate(() => document.querySelector('.cat').dataset.gait) === 'sit', 'stops scrolling → cat sits');
+  await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
+  await page.waitForTimeout(4500);
+  const nap = await page.evaluate(() => ({ pose: document.querySelector('.cat').dataset.pose, sleep: document.querySelector('.cat').hasAttribute('data-sleep') }));
+  ok(nap.pose === 'curl' && nap.sleep, 'at the bottom the cat curls up asleep on the cushion');
+  await page.screenshot({ path: 'shots/check-nap.png' });
+  await page.context().close();
+}
+
+// 10 ── pinned stages fit common viewports (nothing cut off, nothing under the header) ──
+{
+  const sizes = [[1280, 720], [1366, 768], [1440, 900], [1920, 1080], [768, 1024], [390, 844], [360, 640], [844, 390]];
+  const bad = [];
+  for (const [w, h] of sizes) {
+    const page = await newPage({ viewport: { width: w, height: h } });
+    await page.goto(BASE, { waitUntil: 'load' });
+    await page.waitForTimeout(400);
+    for (const id of ['arcade', 'gallery']) {
+      const r = await page.evaluate(async (id) => {
+        const s = document.getElementById(id);
+        if (getComputedStyle(s.querySelector('.scrub__stage')).position !== 'sticky') return { unpinned: true };
+        scrollTo({ top: s.offsetTop + (s.offsetHeight - innerHeight) * 0.5, behavior: 'instant' });
+        await new Promise((r) => setTimeout(r, 1500));
+        const head = s.querySelector('.life__head').getBoundingClientRect();
+        const items = [...s.querySelectorAll('.scrub__track > *')].map((n) => n.getBoundingClientRect()).filter((b) => b.right > 0 && b.left < innerWidth);
+        return { headBottom: head.bottom, top: Math.min(...items.map((b) => b.top)), bottom: Math.max(...items.map((b) => b.bottom)), vh: innerHeight };
+      }, id);
+      if (r.unpinned) { if (h >= 560) bad.push(`${id}@${w}x${h} not pinned`); continue; }
+      if (r.bottom > r.vh + 1 || r.top < r.headBottom - 2) bad.push(`${id}@${w}x${h} (items ${Math.round(r.top)}–${Math.round(r.bottom)}, head ends ${Math.round(r.headBottom)}, vh ${r.vh})`);
+    }
+    await page.context().close();
+  }
+  ok(bad.length === 0, 'pinned arcade + gallery fit 8 viewport sizes (short landscape screens use native scrollers)', bad.join('; '));
 }
 
 // 8 ── deep links and long jumps land on the right life ────────────

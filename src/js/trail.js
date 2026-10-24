@@ -122,4 +122,5 @@ export async function init(section, api) {
 
   const { bind } = await api.lightbox();
   bind(benches.map((b) => b.querySelector('.bench__pic')), (a) => ({ alt: a.querySelector('img').alt, cap: a.dataset.cap }));
+  map.dataset.ready = '';
 }
