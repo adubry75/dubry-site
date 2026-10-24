@@ -189,6 +189,22 @@ for (const mode of ['empty', 'fail']) {
   await page.context().close();
 }
 
+// 8 ── deep links and long jumps land on the right life ────────────
+{
+  const page = await newPage();
+  await page.goto(BASE + '#trail', { waitUntil: 'load' });
+  await page.waitForTimeout(3000);
+  const top = await page.evaluate(() => document.querySelector('#trail').getBoundingClientRect().top);
+  ok(Math.abs(top) < 80, 'deep link /#trail lands on the trail after layout settles', `${Math.round(top)}px`);
+  await page.goto(BASE, { waitUntil: 'load' });
+  await page.waitForTimeout(800);
+  await page.evaluate(() => document.querySelector('.lives a[href="#office"]').click());
+  await page.waitForTimeout(4000);
+  const off = await page.evaluate(() => document.querySelector('#office').getBoundingClientRect().top);
+  ok(Math.abs(off) < 120, 'nav jump from the top to The Office lands on it', `${Math.round(off)}px`);
+  await page.context().close();
+}
+
 await browser.close();
 srv.kill();
 console.log(failures ? `\n${failures} check(s) failed` : '\nall checks passed');

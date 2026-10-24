@@ -46,13 +46,16 @@ const scrubbing = motion && sda;
 function setupScrub(section) {
   const stage = section.querySelector('.scrub__stage');
   const tracks = [...section.querySelectorAll('.scrub__track')];
-  let over = 0;
-  const size = () => {
+  let over = 0, queued = 0;
+  const size = () => { if (!queued) queued = requestAnimationFrame(measure); };
+  const measure = () => {
+    queued = 0;
     const cw = stage.clientWidth - parseFloat(getComputedStyle(stage).paddingLeft) - parseFloat(getComputedStyle(stage).paddingRight);
     over = Math.max(0, ...tracks.map((t) => t.scrollWidth - cw));
     section.style.setProperty('--scrub', Math.round(over * 1.05 + innerHeight * 0.35) + 'px');
     cat?.remeasure();
   };
+  measure();
   new ResizeObserver(size).observe(stage);
   tracks.forEach((t) => new ResizeObserver(size).observe(t));
   // keyboard: bring a focused item into view by scrolling the page to its spot
@@ -77,10 +80,27 @@ const api = { reduced, sda, motion, cat, lightbox: () => import('./lightbox.js')
 const modules = {
   arcade: () => import('./arcade.js'),
   scores: () => import('./scores.js'),
-  gallery: () => import('./gallery.js'),
   trail: () => import('./trail.js'),
   office: () => import('./office.js'),
 };
+// The gallery wall's length (and so its pinned scroll height) depends on how many
+// artworks the portfolio lists, so hang it early — on idle after load — so nothing
+// below it shifts later. Its images still load lazily as the wall scrolls past.
+const whenIdle = (f) => (window.requestIdleCallback ? requestIdleCallback(f, { timeout: 2500 }) : setTimeout(f, 400));
+addEventListener('load', () => whenIdle(() => {
+  const g = document.getElementById('gallery');
+  if (g) import('./gallery.js').then((m) => m.init(g, api)).catch((err) => console.error('gallery', err));
+}), { once: true });
+
+// Deep links (/#trail): if layout settles after the browser's first jump, land again.
+let userMoved = false;
+['wheel', 'touchstart', 'keydown', 'pointerdown'].forEach((t) => addEventListener(t, () => (userMoved = true), { once: true, passive: true }));
+const hashTarget = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+if (hashTarget) {
+  const until = performance.now() + 6000;
+  const reland = () => { if (!userMoved && performance.now() < until) hashTarget.scrollIntoView({ behavior: 'instant' }); };
+  new ResizeObserver(() => requestAnimationFrame(reland)).observe(document.querySelector('main'));
+}
 const lazy = new IntersectionObserver((entries) => {
   for (const e of entries) {
     if (!e.isIntersecting) continue;
@@ -90,11 +110,22 @@ const lazy = new IntersectionObserver((entries) => {
 }, { rootMargin: '150% 0px' });
 for (const id of Object.keys(modules)) { const s = document.getElementById(id); if (s) lazy.observe(s); }
 
-// ── hero sky: WebGL, started once the page is idle ──
-if (motion) {
-  const idle = window.requestIdleCallback || ((f) => setTimeout(f, 300));
-  addEventListener('load', () => idle(() => import('./hero-gl.js').then((m) => m.init(document.querySelector('.wake__gl')))), { once: true });
+// ── wake up: the cat naps on the wordmark until the visitor shows up (first
+// scroll / pointer / touch / key). Then it stretches and the aurora fades in. ──
+const WAKERS = ['pointermove', 'pointerdown', 'touchstart', 'keydown', 'wheel', 'scroll'];
+function wakeUp() {
+  WAKERS.forEach((t) => removeEventListener(t, wakeUp));
+  root.classList.add('is-awake');
+  cat?.wake();
+  if (motion) import('./hero-gl.js').then((m) => m.init(document.querySelector('.wake__gl')));
 }
+WAKERS.forEach((t) => addEventListener(t, wakeUp, { passive: true }));
+
+// ── pause decorative loops in lives that are off screen ──
+const onScreen = new IntersectionObserver((es) => {
+  for (const e of es) e.target.classList.toggle('is-off', !e.isIntersecting);
+}, { rootMargin: '10% 0px' });
+lives.forEach((s) => onScreen.observe(s));
 
 // ── footer: wake the cat (back to the top) ──
 document.querySelector('[data-wake]')?.addEventListener('click', () => {

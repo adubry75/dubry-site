@@ -32,7 +32,7 @@
 .monitor__btn img { width: 100%; height: 100%; object-fit: cover; object-position: top left; border-radius: 5px; background: #e8e8e6; }
 .monitor__btn::after { content: ''; position: absolute; inset: 6px; border-radius: 5px; pointer-events: none; background: linear-gradient(115deg, #ffffff1c, transparent 40%); }
 .monitor__btn:hover, .monitor__btn:focus-visible { box-shadow: inset 0 0 0 2px var(--accent), 0 0 50px -10px var(--accent), 0 20px 30px -16px #000; }
-.monitor--ghost { aspect-ratio: 16 / 11; border-radius: 10px; background: linear-gradient(90deg, #ffffff07, #ffffff12, #ffffff07) 0 0 / 200% 100%; }
+.monitor--ghost { aspect-ratio: 16 / 10.4; border-radius: 10px; background: linear-gradient(90deg, #ffffff07, #ffffff12, #ffffff07) 0 0 / 200% 100%; }
 .monitor--ghost::after { display: none; }
 @media (prefers-reduced-motion: no-preference) {
   .monitor--ghost { animation: shimmer 1.4s linear infinite; }

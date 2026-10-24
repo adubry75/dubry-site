@@ -9,6 +9,8 @@
 .cat[data-face='-1'] .cat__flip { transform: scaleX(-1); }
 .cat svg { position: absolute; overflow: visible; }
 .cat__rig { inset: 0; width: 100%; height: 100%; }
+.cat__rig, .cat__curl { transform-origin: 50% 92%; animation: breathe 3.4s ease-in-out infinite; }
+@keyframes breathe { 50% { transform: scale(1.012, 1.03); } }
 .cat__curl { left: 11.54%; top: 34.6%; width: 76.92%; height: 67.3%; }
 .cat__rig, .cat__curl { transition: opacity .28s; filter: drop-shadow(0 0 2px var(--cat-glow)) drop-shadow(0 0 7px color-mix(in oklab, var(--cat-glow) 70%, transparent)); }
 .cat .cat__curl, .cat[data-pose='curl'] .cat__rig { opacity: 0; }

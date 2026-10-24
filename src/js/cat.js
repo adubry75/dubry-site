@@ -19,21 +19,29 @@ export function startCat({ lives, onLife }) {
   let geo = []; // cached page geometry of each life
   let W = innerWidth, H = innerHeight, cw = 0, ch = 0;
 
+  let perchBox = null, bedBox = null;
+  const pageBox = (n) => { const r = n.getBoundingClientRect(); return { x: r.left + scrollX, y: r.top + scrollY, w: r.width, h: r.height }; };
   const measure = () => {
     W = innerWidth; H = innerHeight; cw = el.offsetWidth; ch = el.offsetHeight;
     const sy = scrollY;
     geo = lives.map((s) => { const r = s.getBoundingClientRect(); return { top: r.top + sy, h: r.height, track: s.dataset.track || 'ground', n: +s.dataset.life }; });
+    perchBox = pageBox(perch);
+    if (cushion) bedBox = pageBox(cushion);
+    kick();
   };
-  measure();
-  new ResizeObserver(() => measure()).observe(document.body);
-  addEventListener('resize', measure, { passive: true });
+  let mq = 0;
+  const remeasure = () => { if (!mq) mq = requestAnimationFrame(() => { mq = 0; measure(); }); };
+  new ResizeObserver(remeasure).observe(document.body);
+  addEventListener('resize', remeasure, { passive: true });
 
   const st = {
     x: W * 0.5, y: H * 0.5, vx: 0, vy: 0, s: 1, face: 1, phase: 0, gait: 'walk', prevGait: 'walk', gaitT: 1,
     pose: structuredClone(POSES.stand), vel: 0, lastSy: scrollY, lastMove: performance.now(), life: -1,
-    mode: scrollY < 40 ? 'wake' : 'move', modeT: performance.now(), leap: null, sleeping: false, frame: 0,
+    mode: scrollY < 40 ? 'asleep' : 'move', modeT: performance.now(), leap: null,
   };
   let last = performance.now();
+  const attrs = {};
+  const setAttr = (k, v) => { if (attrs[k] !== v) { attrs[k] = v; if (v === null) el.removeAttribute(k); else el.setAttribute(k, v); } };
 
   function lifeAt(focus) {
     let i = 0;
@@ -41,9 +49,9 @@ export function startCat({ lives, onLife }) {
     return i;
   }
 
-  function perchPoint() {
-    const r = perch.getBoundingClientRect();
-    return { x: r.left + r.width / 2, y: r.top + r.height * 0.923, s: clamp(r.width / cw, 1, 2.6) };
+  function perchPoint(sy) {
+    const r = perchBox;
+    return { x: r.x - scrollX + r.w / 2, y: r.y - sy + r.h * 0.923, s: clamp(r.w / cw, 1, 2.6) };
   }
 
   function target(sy) {
@@ -57,7 +65,7 @@ export function startCat({ lives, onLife }) {
     const ground = { x: dir > 0 ? lerp(pad, W - pad - (W >= 900 ? 64 : 0), p) : lerp(W - pad - (W >= 900 ? 64 : 0), pad, p), y: groundY, s: 1, i };
 
     if (g.track === 'hero') {
-      const pp = perchPoint();
+      const pp = perchPoint(sy);
       const t = clamp(sy / (g.h * 0.55), 0, 1);
       if (t <= 0) return { ...pp, i, perched: true };
       const e = ease(t);
@@ -67,8 +75,8 @@ export function startCat({ lives, onLife }) {
       const t = tracks.trail(sy, W, H);
       if (t) return { ...t, i };
     }
-    if (g.track === 'nap' && cushion) {
-      const r = cushion.getBoundingClientRect();
+    if (g.track === 'nap' && bedBox) {
+      const r = { left: bedBox.x - scrollX, top: bedBox.y - sy, width: bedBox.w, height: bedBox.h };
       if (r.top < H * 0.92) {
         const cx = r.left + r.width / 2, cy = r.top + r.height * 0.86;
         const k = clamp((H * 0.92 - r.top) / (H * 0.4), 0, 1);
@@ -96,12 +104,18 @@ export function startCat({ lives, onLife }) {
       onLife?.(T.i);
     }
 
-    // wake-up routine on first load
+    // asleep on the wordmark until the visitor shows up
+    if (st.mode === 'asleep') {
+      st.x = T.x; st.y = T.y; st.s = T.s;
+      setAttr('data-pose', 'curl'); setAttr('data-sleep', '');
+      return draw();
+    }
+    // the wake-up routine: stretch, stand, sit
     if (st.mode === 'wake') {
-      const t = now - st.modeT;
+      const t = now - st.modeT + 700;
       if (Math.abs(sy) > 40 || t > 4200) st.mode = 'move';
-      el.dataset.pose = t < 1300 ? 'curl' : 'rig';
-      el.toggleAttribute('data-sleep', t < 1300);
+      setAttr('data-pose', t < 1300 ? 'curl' : 'rig');
+      setAttr('data-sleep', t < 1300 ? '' : null);
       st.x = T.x; st.y = T.y; st.s = T.s; st.vx = st.vy = 0;
       const want = t < 2700 ? POSES.stretch : t < 3300 ? POSES.stand : POSES.sit;
       st.pose = t < 1300 ? structuredClone(POSES.stretch) : blend(st.pose, want, 1 - Math.exp(-dt * (t < 2700 ? 6 : 8)));
@@ -148,31 +162,44 @@ export function startCat({ lives, onLife }) {
 
     // nap on the cushion
     const napping = T.bed && !moving && still > 900 && Math.hypot(T.x - st.x, T.y - st.y) < 6;
-    el.dataset.pose = napping ? 'curl' : 'rig';
-    el.toggleAttribute('data-sleep', napping);
+    setAttr('data-pose', napping ? 'curl' : 'rig');
+    setAttr('data-sleep', napping ? '' : null);
+    st.settled = !moving && !st.leap && still > 1600 && Math.abs(st.vx) < 2 && Math.abs(st.vy) < 2;
 
     st.pose = blend(st.pose, want, 1 - Math.exp(-dt * (moving ? 22 : 7)));
-    if (!moving && !st.leap) st.pose.tail = st.pose.tail.map((a, k) => a + Math.sin(now / 520 + k * 0.8) * (k + 1) * 2.2);
     draw(yOff);
   }
 
+  let lastT = '';
   function draw(yOff = 0) {
-    el.dataset.face = String(st.face);
-    el.style.transform = `translate3d(${(st.x - cw / 2).toFixed(1)}px,${(st.y + yOff - ch * 0.923).toFixed(1)}px,0) scale(${st.s.toFixed(3)})`;
-    if (el.dataset.pose === 'rig') rig.draw(st.pose);
+    setAttr('data-face', String(st.face));
+    const tf = `translate3d(${(st.x - cw / 2).toFixed(1)}px,${(st.y + yOff - ch * 0.923).toFixed(1)}px,0) scale(${st.s.toFixed(3)})`;
+    if (tf !== lastT) el.style.transform = lastT = tf;
+    if (attrs['data-pose'] === 'rig') rig.draw(st.pose);
   }
 
+  // The loop only runs while something is happening; scroll/resize kick it awake.
+  let raf = 0;
   function loop(now) {
-    // when nothing is happening, redraw at ~20fps (tail flicks) instead of 60
-    const idle = now - st.lastMove > 2500 && st.mode !== 'wake' && Math.abs(st.vx) < 1;
-    if (!idle || ++st.frame % 3 === 0) frame(now);
-    else last = now;
-    requestAnimationFrame(loop);
+    raf = 0;
+    frame(now);
+    const done = st.mode === 'asleep' || (st.mode === 'move' && st.settled);
+    if (!done) raf = requestAnimationFrame(loop);
   }
-  requestAnimationFrame(loop);
+  function kick() {
+    if (raf) return;
+    last = performance.now();
+    raf = requestAnimationFrame(loop);
+  }
+  addEventListener('scroll', () => { st.lastMove = performance.now(); kick(); }, { passive: true });
+  measure();
 
   return {
-    setTrack(name, fn) { tracks[name] = fn; },
-    remeasure: measure,
+    setTrack(name, fn) { tracks[name] = fn; kick(); },
+    remeasure,
+    wake() {
+      if (st.mode !== 'asleep') return;
+      st.mode = 'wake'; st.modeT = performance.now(); kick();
+    },
   };
 }

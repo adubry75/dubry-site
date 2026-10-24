@@ -59,7 +59,7 @@ http.createServer((req, res) => {
   if (p === '/games/scores.php') {
     const mode = new URL(req.headers.referer || 'http://x/').searchParams.get('scores');
     const go = () => {
-      if (mode === 'fail' || url.searchParams.get('game') === 'turf-war') return send(req, res, 500, 'application/json', '{"error":"nope"}');
+      if (mode === 'fail' || (url.searchParams.get('game') === 'turf-war' && !process.env.NO_FAIL)) return send(req, res, 500, 'application/json', '{"error":"nope"}');
       const data = fakeScores(url.searchParams.get('game'));
       if (mode === 'empty') data.boards = {};
       send(req, res, 200, 'application/json', JSON.stringify(data));

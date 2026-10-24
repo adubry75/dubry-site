@@ -10,7 +10,7 @@ export async function init(section, api) {
   const trees = svg.querySelector('.trail__trees');
   const benches = [...map.querySelectorAll('.bench')];
   const live = api.motion;
-  let samples = [], total = 1, wayY = [], reached = -1;
+  let samples = [], total = 1, wayY = [], reached = -1, mapX = 0, mapY = 0;
 
   benches[26]?.setAttribute('data-milestone', 'Halfway there');
   benches[53]?.setAttribute('data-milestone', 'Bench 54 · summit');
@@ -18,6 +18,7 @@ export async function init(section, api) {
   function build() {
     const mr = map.getBoundingClientRect();
     const W = mr.width;
+    mapX = mr.left + scrollX; mapY = mr.top + scrollY;
     svg.setAttribute('viewBox', `0 0 ${W} ${mr.height}`);
     const sign = map.querySelector('.trail__sign').getBoundingClientRect();
     const pts = [[W / 2, sign.bottom - mr.top]];
@@ -88,10 +89,9 @@ export async function init(section, api) {
 
   function update() {
     if (!live) { path.style.strokeDashoffset = '0'; setReached(benches.length - 1); return; }
-    const mr = map.getBoundingClientRect();
-    const p = at(innerHeight * 0.6 - mr.top);
+    const ly = innerHeight * 0.6 - (mapY - scrollY);
+    const p = at(ly);
     path.style.strokeDashoffset = String(p ? total - p.l : total);
-    const ly = innerHeight * 0.6 - mr.top;
     let n = -1;
     for (let i = 0; i < wayY.length; i++) if (wayY[i] <= ly + 20) n = i;
     setReached(n);
@@ -113,10 +113,10 @@ export async function init(section, api) {
 
   // the cat hikes: stand on the trail where it crosses the focus line
   api.cat?.setTrack('trail', (sy, W, H) => {
-    const mr = map.getBoundingClientRect();
-    const p = at(H * 0.6 - mr.top);
+    const top = mapY - sy;
+    const p = at(H * 0.6 - top);
     if (!p || p.end) return null;
-    return { x: mr.left + p.x, y: mr.top + p.y + 4, s: W < 600 ? 0.62 : 0.78 };
+    return { x: mapX - scrollX + p.x, y: top + p.y + 4, s: W < 600 ? 0.62 : 0.78 };
   });
   api.cat?.remeasure();
 

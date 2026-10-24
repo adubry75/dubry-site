@@ -28,6 +28,7 @@ for (const vp of VPS) {
     await page.screenshot({ path: `shots/${tag}-${n}.png` });
   };
   await page.waitForTimeout(1000); await shot('01a-wake-sleep');
+  await page.mouse.move(200, 200); await page.mouse.move(400, 300);
   await page.waitForTimeout(2600); await shot('01b-wake');
   // walk the page in small steps so lazy modules + the cat keep up
   const go = async (sel, frac = 0, wait = 900) => {
