@@ -1,0 +1,37 @@
+/* ───────── the cat ───────── */
+.cat {
+  --cw: clamp(84px, 7vw + 40px, 132px);
+  position: fixed; left: 0; top: 0; z-index: 40; width: var(--cw); aspect-ratio: 156 / 104;
+  pointer-events: none; transform-origin: 50% 92.3%; will-change: transform; display: none;
+}
+.has-cat .cat { display: block; }
+.cat__flip { position: absolute; inset: 0; transition: transform .26s cubic-bezier(.3, .7, .3, 1.2); }
+.cat[data-face='-1'] .cat__flip { transform: scaleX(-1); }
+.cat svg { position: absolute; overflow: visible; }
+.cat__rig { inset: 0; width: 100%; height: 100%; }
+.cat__curl { left: 11.54%; top: 34.6%; width: 76.92%; height: 67.3%; }
+.cat__rig, .cat__curl { transition: opacity .28s; filter: drop-shadow(0 0 2px var(--cat-glow)) drop-shadow(0 0 7px color-mix(in oklab, var(--cat-glow) 70%, transparent)); }
+.cat .cat__curl, .cat[data-pose='curl'] .cat__rig { opacity: 0; }
+.cat[data-pose='curl'] .cat__curl { opacity: 1; }
+/* glowing floor reflection */
+.cat::after {
+  content: ''; position: absolute; left: 18%; right: 18%; bottom: 3%; height: 10%; border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--cat-glow) 50%, transparent), transparent); filter: blur(2px);
+}
+.cat-lines path { fill: none; stroke: var(--cat-core); stroke-width: 2.7; stroke-linecap: round; stroke-linejoin: round; }
+.cat-lines .far { opacity: .42; }
+.cat-lines .thin { stroke-width: 1.1; opacity: .75; }
+.cat-lines .fill, .cat-lines .eye { fill: var(--cat-core); stroke-width: 1.4; }
+.cat-lines .haunch { stroke-width: 2.2; }
+
+.cat__z { position: absolute; left: 22%; top: 22%; display: none; font: 400 14px/1 var(--f-pixel); color: var(--cat-core); text-shadow: 0 0 6px var(--cat-glow); }
+.cat[data-face='-1'] .cat__z { transform: scaleX(-1); }
+.cat[data-pose='curl'][data-sleep] .cat__z { display: block; }
+.cat__z i { position: absolute; font-style: normal; opacity: 0; animation: zzz 3s linear infinite; }
+.cat__z i:nth-child(2) { animation-delay: 1s; font-size: 17px; }
+.cat__z i:nth-child(3) { animation-delay: 2s; font-size: 21px; }
+@keyframes zzz { 0% { opacity: 0; transform: translate(0, 0); } 20% { opacity: 1; } 100% { opacity: 0; transform: translate(-22px, -40px); } }
+
+/* static cats (reduced motion / no JS) share the same drawing */
+.catsvg { overflow: visible; filter: drop-shadow(0 0 2px var(--cat-glow)) drop-shadow(0 0 8px color-mix(in oklab, var(--cat-glow) 70%, transparent)); }
+.catsvg .cat-lines path { stroke-width: 2.4; }

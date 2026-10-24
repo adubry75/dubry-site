@@ -1,0 +1,45 @@
+/* ───────── LIFE 6 · The Gallery — a salon wall seen in perspective ───────── */
+.gallery {
+  --accent: var(--amber); --bg: #110d0a; --seam: #03121a;
+  background:
+    radial-gradient(40% 30% at 50% 0%, #ffd9a022, transparent 70%),
+    linear-gradient(#110d0a, #17110c 60%, #0e0a07);
+}
+.gallery .life__head { margin-bottom: clamp(1rem, 3vh, 2rem); }
+.gallery .life__lede { font-size: clamp(.98rem, .9rem + .35vw, 1.15rem); }
+.wall__room { perspective: 1600px; perspective-origin: 30% 45%; }
+.wall {
+  --row: clamp(140px, calc((100svh - 380px) / 2), 250px); --gap: clamp(16px, 2vw, 30px);
+  display: grid; grid-auto-flow: column dense; grid-template-rows: repeat(2, var(--row)); grid-auto-columns: auto; gap: var(--gap);
+}
+.frame {
+  --fw: calc(var(--row) * .78);
+  position: relative; width: var(--fw); padding: calc(var(--row) * .05); border-radius: 3px;
+  background: linear-gradient(135deg, #3a2a17, #1d140b); box-shadow: inset 0 0 0 2px #c79a52, inset 0 0 0 5px #1a1209, 0 18px 30px -12px #000, 0 0 0 1px #00000080;
+}
+.frame--wide { --fw: calc(var(--row) * 1.25); }
+.frame--tall { grid-row: span 2; --fw: calc(var(--row) * 1.05); }
+.frame--sq { --fw: var(--row); }
+.frame::before { /* gallery spotlight */
+  content: ''; position: absolute; left: -20%; right: -20%; top: -40%; height: 70%; pointer-events: none; z-index: 2;
+  background: radial-gradient(50% 60% at 50% 0%, #fff3d633, transparent 70%);
+}
+.frame__btn { display: block; width: 100%; height: 100%; padding: 0; border: 0; background: #0b0806; cursor: zoom-in; overflow: hidden; border-radius: 1px; }
+.frame__btn img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s var(--ease-out), filter .4s; filter: saturate(.95); }
+.frame__btn:hover img, .frame__btn:focus-visible img { transform: scale(1.05); filter: saturate(1.1); }
+.frame__plaque { position: absolute; left: 50%; bottom: calc(var(--row) * -.085); translate: -50% 0; font: 400 .58rem/1 var(--f-pixel); letter-spacing: .1em; color: #c79a52aa; white-space: nowrap; }
+.frame--ghost { background: linear-gradient(90deg, #ffffff07, #ffffff10, #ffffff07) 0 0 / 200% 100%; box-shadow: inset 0 0 0 2px #c79a5233; }
+.frame--ghost:nth-child(3n) { grid-row: span 2; }
+.frame--egg { --fw: calc(var(--row) * .42); align-self: end; height: 52%; padding: 6px; }
+.frame--egg a { display: grid; place-items: center; height: 100%; background: #1a1209; color: #c79a52; text-decoration: none; }
+.frame--egg svg { width: 70%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.frame--egg a:hover, .frame--egg a:focus-visible { color: var(--yellow); }
+.gallery__status { margin-top: .5rem; font: 400 .72rem/1.3 var(--f-pixel); letter-spacing: .1em; color: var(--dim); text-transform: uppercase; }
+.gallery__status:empty { display: none; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .frame--ghost { animation: shimmer 1.4s linear infinite; }
+  @supports (animation-timeline: view()) {
+    .wall__plane { transform: rotateY(16deg); transform-origin: 0 50%; }
+  }
+}

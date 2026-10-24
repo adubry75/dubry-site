@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>dubry.com — Nine Lives · cat-powered games &amp; experiments</title>
+<meta name="description" content="A neon cat walks you through nine lives: an arcade of cat-powered games, a high score hall, lab experiments, art, the 54 Bench Challenge trail and more.">
+<meta name="theme-color" content="#0b0820">
+<meta name="color-scheme" content="dark">
+<link rel="canonical" href="https://dubry.com/">
+<link rel="icon" href="/nine-lives/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/nine-lives/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://dubry.com/">
+<meta property="og:title" content="dubry.com — Nine Lives">
+<meta property="og:description" content="Cat-powered games &amp; experiments. Nine lives. One scroll.">
+<meta property="og:image" content="https://dubry.com/nine-lives/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preload" href="/nine-lives/fonts/unbounded.woff2" as="font" type="font/woff2" crossorigin>
+<style><!--@CSS--></style>
+<script type="module" src="<!--@MAIN_JS-->"></script>
+<script type="speculationrules">{"prefetch":[{"where":{"or":[{"href_matches":"/games/*"},{"href_matches":"/ai/*"}]},"eagerness":"moderate"}]}</script>
+</head>
+<body>
+<a class="skip" href="#arcade">Skip to the games</a>
+
+<header class="topbar">
+  <a class="brand" href="#wake" aria-label="dubry.com — back to the top">
+    <svg class="brand__mark" viewBox="0 0 32 28" aria-hidden="true" focusable="false"><path d="M4 26V3l7 7h10l7-7v23H4Z"/><circle cx="11.5" cy="16" r="1.8"/><circle cx="20.5" cy="16" r="1.8"/></svg>
+    <span class="brand__word">dubry<span>.com</span></span>
+  </a>
+  <button class="lifebtn" popovertarget="lifemenu" aria-label="Jump to a life">
+    <span class="lifebtn__n" data-life-n>1</span><span class="lifebtn__of">/9</span>
+    <span class="lifebtn__name" data-life-name>Wake up</span>
+  </button>
+</header>
+
+<nav class="lives" id="lifemenu" popover aria-label="Nine lives">
+  <p class="lives__title">Nine lives</p>
+  <ol>
+    <!--@LIVES_NAV-->
+  </ol>
+</nav>
+
+<div class="cat" aria-hidden="true" data-pose="curl">
+  <div class="cat__flip">
+    <svg class="cat__rig" viewBox="-78 -96 156 104"><!--@CAT_RIG--></svg>
+    <!--@CAT_CURL-->
+    <span class="cat__z"><i>z</i><i>z</i><i>Z</i></span>
+  </div>
+</div>
+
+<main id="main">
+
+<!-- ═════════ LIFE 1 · WAKE UP ═════════ -->
+<section id="wake" class="life wake" data-life="1" data-track="hero" aria-labelledby="wake-title">
+  <div class="wake__sky" aria-hidden="true"><canvas class="wake__gl"></canvas><div class="wake__floor"></div></div>
+  <div class="wake__inner">
+    <p class="kicker"><span>Life 01</span> / 09 · Wake up</p>
+    <div class="wake__cat-static" data-perch><!--@CAT_STRETCH--></div>
+    <h1 id="wake-title" class="wake__title"><span class="wake__perch">dubry</span><span class="wake__tld">.com</span></h1>
+    <p class="wake__tag">Cat-powered games &amp; experiments.<br>Nine lives. One scroll. One very curious cat.</p>
+    <ul class="wake__stats" role="list">
+      <li><b><!--@N_CABS--></b> arcade cabinets</li>
+      <li><b>9</b> lab specimens</li>
+      <li><b>54</b> benches hiked</li>
+      <li><b>1</b> cat</li>
+    </ul>
+    <a class="wake__cue" href="#arcade"><span>Scroll to wake the cat</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v15m-6-6 6 6 6-6"/></svg></a>
+  </div>
+</section>
+
+<!-- ═════════ LIFE 2 · THE ARCADE ═════════ -->
+<section id="arcade" class="life arcade scrub" data-life="2" aria-labelledby="arcade-title">
+  <div class="scrub__stage arcade__stage">
+    <header class="life__head">
+      <span class="life__num" aria-hidden="true">02</span>
+      <p class="kicker"><span>Life 02</span> / 09</p>
+      <h2 id="arcade-title" class="life__title">The Arcade</h2>
+      <p class="life__lede"><!--@N_CABS--> cabinets, all original, all cat-powered. Scroll to stroll the aisle — pick one to play.</p>
+    </header>
+    <div class="arcade__aisle">
+      <ul class="cabrow scrub__track" data-dir="1" role="list"><!--@CABS_A--></ul>
+      <ul class="cabrow scrub__track" data-dir="-1" role="list"><!--@CABS_B--></ul>
+    </div>
+    <a class="egg egg--grumpy-arcade" href="/grumpycat/" aria-label="Secret cat: Grumpy Cat"><!--@EGG_GRUMPY--></a>
+  </div>
+</section>
+
+<!-- ═════════ LIFE 3 · HIGH SCORE HALL ═════════ -->
+<section id="scores" class="life hall" data-life="3" aria-labelledby="scores-title">
+  <header class="life__head">
+    <span class="life__num" aria-hidden="true">03</span>
+    <p class="kicker"><span>Life 03</span> / 09</p>
+    <h2 id="scores-title" class="life__title">High Score Hall</h2>
+    <p class="life__lede">Every arcade board, one hall. Crowns go to whoever sits on top of a board — and they rarely sit still.</p>
+  </header>
+  <div class="hall__crt">
+    <div class="hall__status" role="status" aria-live="polite"><span class="blink">●</span> <span data-hall-status>Insert coin… loading scores</span></div>
+    <div class="hall__grid">
+      <section class="hall__top" aria-labelledby="topcats-title">
+        <h3 id="topcats-title" class="hall__h">Top Cats <small>across all games</small></h3>
+        <ol class="topcats" data-topcats>
+          <li class="skel"></li><li class="skel"></li><li class="skel"></li><li class="skel"></li><li class="skel"></li>
+        </ol>
+      </section>
+      <section class="hall__champs" aria-labelledby="champs-title">
+        <h3 id="champs-title" class="hall__h">Champions <small>per game</small></h3>
+        <ul class="champs" data-champs role="list"><li class="skel"></li><li class="skel"></li><li class="skel"></li></ul>
+        <div class="vacant" data-vacant hidden>
+          <h4 class="vacant__h">Unclaimed crowns <small>— be the first</small></h4>
+          <ul class="vacant__list" role="list"></ul>
+        </div>
+      </section>
+    </div>
+    <noscript><p class="hall__noscript">The scoreboard needs JavaScript. The games don't — head into the arcade.</p></noscript>
+  </div>
+</section>
+
+<!-- ═════════ LIFE 4 · BIG GAMES ═════════ -->
+<section id="big" class="life big" data-life="4" aria-labelledby="big-title">
+  <header class="life__head">
+    <span class="life__num" aria-hidden="true">04</span>
+    <p class="kicker"><span>Life 04</span> / 09</p>
+    <h2 id="big-title" class="life__title">Big Games</h2>
+    <p class="life__lede">The headliners. Bigger worlds, longer naps afterwards.</p>
+  </header>
+  <div class="stack"><!--@BIG--></div>
+</section>
+
+<!-- ═════════ LIFE 5 · THE LAB ═════════ -->
+<section id="lab" class="life lab" data-life="5" aria-labelledby="lab-title">
+  <header class="life__head">
+    <span class="life__num" aria-hidden="true">05</span>
+    <p class="kicker"><span>Life 05</span> / 09</p>
+    <h2 id="lab-title" class="life__title">The Lab</h2>
+    <p class="life__lede">AI experiments and demo toys, preserved in glowing jars. Handle with curiosity.</p>
+  </header>
+  <ul class="jars" role="list"><!--@LAB--></ul>
+  <a class="egg egg--rat-lab" href="/ratsrus/" aria-label="Secret: an escaped lab rat"><!--@EGG_RAT--></a>
+</section>
+
+<!-- ═════════ LIFE 6 · THE GALLERY ═════════ -->
+<section id="gallery" class="life gallery scrub" data-life="6" aria-labelledby="gallery-title">
+  <div class="scrub__stage gallery__stage">
+    <header class="life__head">
+      <span class="life__num" aria-hidden="true">06</span>
+      <p class="kicker"><span>Life 06</span> / 09</p>
+      <h2 id="gallery-title" class="life__title">The Gallery</h2>
+      <p class="life__lede">Paintings and drawings, hung salon-style. Scroll the wall, tap a frame to look closer.</p>
+    </header>
+    <div class="wall__room"><div class="wall__plane">
+      <ul class="wall scrub__track" data-dir="1" data-wall role="list" aria-busy="true">
+        <li class="frame frame--ghost"></li><li class="frame frame--ghost"></li><li class="frame frame--ghost"></li><li class="frame frame--ghost"></li><li class="frame frame--ghost"></li><li class="frame frame--ghost"></li><li class="frame frame--ghost"></li><li class="frame frame--ghost"></li>
+      </ul>
+    </div></div>
+    <p class="gallery__status" data-gallery-status role="status"></p>
+    <noscript><p class="gallery__status"><a href="/art-portfolio/">Open the art portfolio</a></p></noscript>
+  </div>
+</section>
+
+<!-- ═════════ LIFE 7 · THE TRAIL ═════════ -->
+<section id="trail" class="life trail" data-life="7" data-track="trail" aria-labelledby="trail-title">
+  <header class="life__head">
+    <span class="life__num" aria-hidden="true">07</span>
+    <p class="kicker"><span>Life 07</span> / 09</p>
+    <h2 id="trail-title" class="life__title">The Trail</h2>
+    <p class="life__lede">The <strong>54 Bench Challenge</strong>: every bench on the trails, one by one. Finished <time datetime="2022-05-08">May 8, 2022</time>. Follow the cat up the switchbacks.</p>
+    <p class="trail__links"><a class="btn btn--ghost" href="/54benchchallenge/">The full bench story →</a></p>
+  </header>
+  <div class="trail__map" data-trail>
+    <svg class="trail__svg" aria-hidden="true" focusable="false"><path class="trail__ghost"/><path class="trail__path"/><g class="trail__trees"></g></svg>
+    <p class="trail__sign trail__sign--start" aria-hidden="true">Trailhead</p>
+    <ol class="benches" aria-label="The 54 benches"><!--@BENCHES--></ol>
+    <div class="trail__summit">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M18 58V8l30 10-30 10"/></svg>
+      <p><strong>54 / 54.</strong> Challenge complete — <time datetime="2022-05-08">5/8/2022</time>.</p>
+    </div>
+    <a class="egg egg--grumpy-trail" href="/grumpycat/" aria-label="Secret cat: Grumpy Cat on the trail"><!--@EGG_GRUMPY--></a>
+  </div>
+</section>
+
+<!-- ═════════ LIFE 8 · THE OFFICE ═════════ -->
+<section id="office" class="life office" data-life="8" aria-labelledby="office-title">
+  <header class="life__head">
+    <span class="life__num" aria-hidden="true">08</span>
+    <p class="kicker"><span>Life 08</span> / 09</p>
+    <h2 id="office-title" class="life__title">The Office</h2>
+    <p class="life__lede">When the cat clocks in: <strong>Blazor / .NET developer</strong> by day, building business apps in C# and turning messy data into Power BI reports people actually read.</p>
+    <ul class="chips" role="list"><li>Blazor</li><li>.NET</li><li>C#</li><li>Power BI</li></ul>
+  </header>
+  <div class="desk">
+    <figure class="editor" aria-label="A small Blazor component">
+      <div class="editor__bar" aria-hidden="true"><i></i><i></i><i></i><span>NapTime.razor</span></div>
+      <pre class="editor__code"><code><!--@CODE--></code></pre>
+    </figure>
+    <ul class="monitors" data-monitors role="list" aria-busy="true">
+      <li class="monitor monitor--ghost"></li><li class="monitor monitor--ghost"></li><li class="monitor monitor--ghost"></li>
+    </ul>
+    <noscript><p><a href="/portfolio/powerbi.html">See the Power BI reports</a></p></noscript>
+  </div>
+</section>
+
+</main>
+
+<!-- ═════════ LIFE 9 · NAP TIME ═════════ -->
+<footer id="nap" class="life nap" data-life="9" data-track="nap" aria-labelledby="nap-title">
+  <div class="nap__sky" aria-hidden="true"><div class="nap__moon"></div></div>
+  <div class="nap__inner">
+    <p class="kicker"><span>Life 09</span> / 09</p>
+    <h2 id="nap-title" class="life__title">Nap time.</h2>
+    <p class="life__lede">Nine lives, one scroll. Thanks for walking with the cat — it's earned a nap.</p>
+    <div class="nap__bed">
+      <div class="nap__cushion" data-cushion><!--@CAT_CURL_STATIC--></div>
+    </div>
+    <nav class="nap__nav" aria-label="Footer">
+      <ul role="list"><!--@FOOT_NAV--></ul>
+      <ul role="list" class="nap__ext">
+        <li><a href="https://feelie75.itch.io/catridge-32">Catridge on itch.io ↗</a></li>
+        <li><a href="/54benchchallenge/">54 Bench Challenge</a></li>
+        <li><a href="/art-portfolio/">Art portfolio</a></li>
+      </ul>
+    </nav>
+    <button class="btn nap__wake" type="button" data-wake>Wake the cat ↑</button>
+    <p class="nap__fine">© <span data-year>2026</span> dubry.com · Made with catnip, CSS and a little JavaScript.</p>
+  </div>
+  <a class="egg egg--rat-hole" href="/ratsrus/" aria-label="Secret: a mouse hole"><!--@EGG_HOLE--></a>
+</footer>
+
+<dialog class="lb" aria-label="Image viewer">
+  <figure class="lb__fig">
+    <img class="lb__img" alt="">
+    <figcaption class="lb__cap"></figcaption>
+  </figure>
+  <button class="lb__btn lb__close" type="button" aria-label="Close viewer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  <button class="lb__btn lb__prev" type="button" aria-label="Previous image"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <button class="lb__btn lb__next" type="button" aria-label="Next image"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+</dialog>
+
+<div class="launch" hidden>
+  <div class="launch__screen"></div>
+  <p class="launch__title"></p>
+  <p class="launch__msg" role="status">Loading<span class="blink">_</span></p>
+</div>
+</body>
+</html>

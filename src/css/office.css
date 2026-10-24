@@ -1,0 +1,45 @@
+/* ───────── LIFE 8 · The Office ───────── */
+.office {
+  --accent: #6aa8ff; --bg: #070c1a; --seam: #06110d;
+  background:
+    repeating-linear-gradient(-28deg, transparent 0 46px, #6aa8ff09 46px 70px) 0 0 / 100% 100%,
+    radial-gradient(40% 40% at 85% 85%, #ffb23d1c, transparent 70%),
+    linear-gradient(#070c1a, #0a1226);
+}
+.desk { display: grid; gap: clamp(1.5rem, 3vw, 2.5rem); max-width: 1240px; align-items: start; }
+@media (min-width: 1000px) { .desk { grid-template-columns: minmax(0, .85fr) minmax(0, 1.4fr); } }
+.editor { border-radius: 14px; overflow: hidden; background: #0b1020; box-shadow: inset 0 0 0 1px #ffffff1a, 0 30px 60px -30px #000; }
+.editor__bar { display: flex; align-items: center; gap: 6px; padding: .7rem .9rem; background: #111833; font: 400 .66rem/1 var(--f-pixel); color: var(--dim); letter-spacing: .08em; }
+.editor__bar i { width: 10px; height: 10px; border-radius: 50%; background: #ff5f57; } .editor__bar i:nth-child(2) { background: #febc2e; } .editor__bar i:nth-child(3) { background: #28c840; }
+.editor__bar span { margin-left: .6rem; }
+.editor__code { margin: 0; padding: 1rem 1rem 1.3rem 0; overflow-x: auto; font: 400 clamp(.72rem, .66rem + .25vw, .86rem)/1.7 ui-monospace, 'Cascadia Code', Consolas, monospace; color: #c9d4f5; counter-reset: ln; tab-size: 4; }
+.editor__code .ln { display: block; padding-left: 3.2rem; position: relative; white-space: pre; }
+.editor__code .ln::before { counter-increment: ln; content: counter(ln); position: absolute; left: 0; width: 2.2rem; text-align: right; color: #48557d; }
+.editor__code b { font-weight: 400; }
+.t-d { color: #ff7ad9; } .t-s { color: #ffd479; } .t-k { color: #7aa8ff; } .t-t { color: #5cffc8; } .t-n { color: #ff9d5c; } .t-g { color: #c6ff3d; }
+
+.monitors { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(.8rem, 2vw, 1.4rem); }
+@media (min-width: 640px) { .monitors { grid-template-columns: repeat(3, minmax(0, 1fr)); } .monitor:first-child { grid-column: span 2; grid-row: span 2; } }
+.monitor { position: relative; padding-bottom: 14px; }
+.monitor::after { /* stand */
+  content: ''; position: absolute; left: 50%; bottom: 0; width: 26%; height: 14px; translate: -50% 0;
+  background: linear-gradient(#1b2340, #0c1124); clip-path: polygon(30% 0, 70% 0, 100% 100%, 0 100%);
+}
+.monitor__btn {
+  display: block; width: 100%; aspect-ratio: 16 / 10; padding: 6px; border: 0; border-radius: 10px; cursor: zoom-in;
+  background: #0d1120; box-shadow: inset 0 0 0 1px #ffffff1f, 0 0 40px -14px var(--accent), 0 20px 30px -16px #000; position: relative; overflow: hidden;
+}
+.monitor__btn img { width: 100%; height: 100%; object-fit: cover; object-position: top left; border-radius: 5px; background: #e8e8e6; }
+.monitor__btn::after { content: ''; position: absolute; inset: 6px; border-radius: 5px; pointer-events: none; background: linear-gradient(115deg, #ffffff1c, transparent 40%); }
+.monitor__btn:hover, .monitor__btn:focus-visible { box-shadow: inset 0 0 0 2px var(--accent), 0 0 50px -10px var(--accent), 0 20px 30px -16px #000; }
+.monitor--ghost { aspect-ratio: 16 / 11; border-radius: 10px; background: linear-gradient(90deg, #ffffff07, #ffffff12, #ffffff07) 0 0 / 200% 100%; }
+.monitor--ghost::after { display: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .monitor--ghost { animation: shimmer 1.4s linear infinite; }
+  @supports (animation-timeline: view()) {
+    .monitor__btn img { animation: powerOn linear both; animation-timeline: view(); animation-range: entry 20% cover 30%; }
+    .editor__code .ln { clip-path: inset(0 100% 0 0); animation: type linear both; animation-timeline: view(); animation-range: cover 4% cover 24%; }
+  }
+}
+@keyframes powerOn { 0% { clip-path: inset(49.5% 0 49.5% 0); filter: brightness(4); } 40% { clip-path: inset(49.5% 0 49.5% 0); filter: brightness(3); } 100% { clip-path: inset(0); filter: none; } }
+@keyframes type { to { clip-path: inset(0 0 0 0); } }

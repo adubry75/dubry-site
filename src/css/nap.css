@@ -1,0 +1,49 @@
+/* ───────── LIFE 9 · Nap time ───────── */
+.nap {
+  --accent: var(--violet); --bg: #05061a; --seam: #0a1226;
+  min-height: 100svh; display: grid; align-content: center; text-align: center; overflow: clip; padding-bottom: 3rem;
+  background: radial-gradient(70% 50% at 50% 100%, #a46bff26, transparent 70%), linear-gradient(#060718, #0a0b2a);
+}
+.nap__sky { position: absolute; inset: 0; z-index: -1; }
+.nap__sky::before {
+  content: ''; position: absolute; inset: 0; opacity: .8;
+  background-image:
+    radial-gradient(1.2px 1.2px at 8% 20%, #fff, transparent), radial-gradient(1px 1px at 22% 8%, #fff, transparent),
+    radial-gradient(1.4px 1.4px at 34% 30%, #e7dcff, transparent), radial-gradient(1px 1px at 52% 12%, #fff, transparent),
+    radial-gradient(1.2px 1.2px at 68% 26%, #fff, transparent), radial-gradient(1px 1px at 86% 10%, #e7dcff, transparent),
+    radial-gradient(1px 1px at 94% 36%, #fff, transparent), radial-gradient(1.2px 1.2px at 14% 44%, #fff, transparent);
+}
+.nap__moon {
+  position: absolute; right: 12%; top: 14%; width: clamp(70px, 10vw, 130px); aspect-ratio: 1; border-radius: 50%;
+  background: #fff3c4; mask: radial-gradient(circle at 30% 38%, transparent 47%, #000 48%); filter: drop-shadow(0 0 22px #fff3c488); rotate: -10deg;
+}
+.nap__inner { display: grid; justify-items: center; }
+.nap .life__lede { margin-inline: auto; }
+.nap__bed { margin: clamp(2rem, 6vh, 4rem) 0 2rem; }
+.nap__cushion {
+  position: relative; width: clamp(200px, 26vw, 280px); aspect-ratio: 2.6 / 1; display: grid; place-items: end center;
+}
+.nap__cushion::before {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 42%; border-radius: 50%;
+  border: 2.5px solid var(--accent); background: radial-gradient(closest-side, #a46bff40, #a46bff10);
+  box-shadow: 0 0 24px -2px var(--accent), inset 0 0 18px #a46bff66;
+}
+.nap__static { position: relative; width: 70%; margin-bottom: 9%; }
+.has-cat .nap__static { visibility: hidden; }
+.nap__nav { display: grid; gap: 1rem; justify-items: center; margin-bottom: 2rem; }
+.nap__nav ul { display: flex; flex-wrap: wrap; justify-content: center; gap: .3rem 1.1rem; }
+.nap__nav a { display: inline-block; padding: .55rem .2rem; font: 400 .76rem/1 var(--f-pixel); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); text-decoration: none; }
+.nap__nav a:hover, .nap__nav a:focus-visible { color: var(--text); text-decoration: underline; text-underline-offset: 4px; }
+.nap__ext a { color: var(--accent); }
+.nap__wake { margin-bottom: 2.4rem; }
+.nap__fine { font-size: .85rem; color: var(--dim); }
+.egg--rat-hole { right: calc(var(--gutter) + var(--navw)); bottom: 0; width: 60px; height: 44px; border-radius: 0; --egg: #a46bff99; align-items: end; }
+.egg--rat-hole svg { width: 52px; }
+@media (prefers-reduced-motion: no-preference) {
+  .nap__sky::before { animation: twinkle 4s ease-in-out infinite alternate; }
+  @supports (animation-timeline: view()) {
+    .nap__moon { animation: moonrise linear both; animation-timeline: view(); animation-range: entry 0% cover 60%; }
+  }
+}
+@keyframes twinkle { to { opacity: .45; } }
+@keyframes moonrise { from { transform: translateY(40vh); opacity: 0; } }

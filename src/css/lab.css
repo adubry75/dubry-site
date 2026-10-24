@@ -1,0 +1,59 @@
+/* ───────── LIFE 5 · The Lab — specimen jars ───────── */
+.lab {
+  --accent: #5cffc8; --bg: #03121a; --seam: #05070f;
+  background:
+    radial-gradient(50% 35% at 70% 30%, #5cffc81a, transparent 70%),
+    radial-gradient(45% 35% at 15% 75%, #3df2ff14, transparent 70%),
+    linear-gradient(#03121a, #041a1f 70%, #03121a);
+  overflow: clip;
+}
+.lab::after { /* lab bench grid */
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: .5;
+  background: linear-gradient(#5cffc80d 1px, transparent 1px) 0 0 / 100% 48px, linear-gradient(90deg, #5cffc80d 1px, transparent 1px) 0 0 / 48px 100%;
+  mask: radial-gradient(80% 70% at 50% 50%, #000, transparent);
+}
+.jars { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2.5rem clamp(1rem, 4vw, 3rem); max-width: 1180px; margin-inline: auto; align-items: start; }
+.jar:nth-child(even) { margin-top: 3.5rem; }
+@media (min-width: 760px) {
+  .jars { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .jar:nth-child(even) { margin-top: 0; }
+  .jar:nth-child(3n + 2) { margin-top: 7rem; }
+  .jar:nth-child(3n) { margin-top: 2.5rem; }
+}
+.jar { --c: hsl(var(--hue) 100% 68%); --s: 1; position: relative; }
+.jar:nth-child(4n + 1) { --s: .92; } .jar:nth-child(5n + 2) { --s: 1.06; }
+.jar__link { display: grid; justify-items: center; gap: .9rem; text-decoration: none; color: var(--c); border-radius: 28px; padding: .6rem; }
+.jar__glass { width: calc(100% * var(--s)); max-width: 250px; filter: drop-shadow(0 0 18px color-mix(in oklab, var(--c) 35%, transparent)); transition: filter .35s, transform .45s var(--ease-out); }
+.jar__glass svg { width: 100%; overflow: visible; }
+.jar__outline { stroke: color-mix(in oklab, var(--c) 55%, #fff); stroke-width: 2.2; }
+.jar__lid { stroke: color-mix(in oklab, var(--c) 40%, #fff); stroke-width: 2; fill: color-mix(in oklab, var(--c) 18%, #02090c); }
+.jar__shine { stroke: #ffffff60; stroke-width: 3; }
+.jar__specimen { stroke: var(--c); stroke-width: 2.4; color: var(--c); filter: drop-shadow(0 0 4px var(--c)); transform-origin: 80px 128px; }
+.bub { fill: none; stroke: color-mix(in oklab, var(--c) 60%, #fff); stroke-width: 1; opacity: .7; }
+.jar__tag {
+  display: grid; gap: .2rem; justify-items: center; text-align: center; padding: .55rem .9rem .6rem; border-radius: 6px; rotate: calc((var(--k) - 4) * .9deg);
+  background: #e9f7ef; color: #07231d; box-shadow: 0 8px 18px -8px #000; position: relative; max-width: 15rem;
+}
+.jar__tag::before { content: ''; position: absolute; top: -14px; left: 50%; width: 1px; height: 14px; background: #e9f7ef88; }
+.jar__no { font: 400 .62rem/1 var(--f-pixel); letter-spacing: .14em; text-transform: uppercase; color: #2c6d5c; }
+.jar__name { font: 700 .95rem/1.15 var(--f-display); letter-spacing: -.01em; }
+.jar__link:hover .jar__glass, .jar__link:focus-visible .jar__glass { filter: drop-shadow(0 0 34px var(--c)); transform: translateY(-8px) rotate(-2deg); }
+.egg--rat-lab { left: calc(var(--gutter) + 2%); bottom: 2.4rem; --egg: #5cffc888; }
+.egg--rat-lab svg { width: 40px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .jar__specimen { animation: bob 4.5s ease-in-out infinite; animation-delay: calc(var(--k) * -.7s); }
+  .bub { animation: bubble 4s linear infinite; animation-delay: var(--d); }
+  .jar__liquid { animation: slosh 5s ease-in-out infinite alternate; }
+  .jar__link:hover .bub { animation-duration: 1.6s; }
+  @supports (animation-timeline: view()) {
+    .jar { animation: drift linear both; animation-timeline: view(); --depth: 1; }
+    .jar:nth-child(3n + 2) { --depth: 1.8; } .jar:nth-child(3n) { --depth: -.6; }
+    .jar__tag { animation: tagIn linear both; animation-timeline: view(); animation-range: entry 20% cover 45%; }
+  }
+}
+@keyframes bob { 0%, 100% { transform: translateY(4px) rotate(-3deg); } 50% { transform: translateY(-8px) rotate(3deg); } }
+@keyframes bubble { from { transform: translateY(0); opacity: 0; } 10% { opacity: .8; } to { transform: translate(var(--x), -150px); opacity: 0; } }
+@keyframes slosh { from { transform: translateX(-12px); } to { transform: translateX(10px); } }
+@keyframes drift { from { transform: translateY(calc(var(--depth) * 70px)); } to { transform: translateY(calc(var(--depth) * -70px)); } }
+@keyframes tagIn { from { transform: translateY(-30px) rotate(12deg); opacity: 0; } }

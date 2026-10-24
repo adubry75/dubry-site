@@ -1,0 +1,93 @@
+/* ───────── pinned horizontal scrub (Arcade + Gallery) ─────────
+   Fallback first: a native horizontal scroller. With scroll-driven animations
+   (and motion allowed) the section pins and vertical scroll drives the track. */
+.scrub__track { display: flex; gap: var(--gap, 24px); overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding: 12px 4px 28px; scrollbar-width: thin; scrollbar-color: color-mix(in oklab, var(--accent) 60%, transparent) transparent; }
+.scrub__track > * { flex: none; scroll-snap-align: start; }
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .scrub { height: calc(100svh + var(--scrub, 240vh)); padding: 0; view-timeline: --scrub block; }
+    .scrub__stage {
+      position: sticky; top: 0; height: 100svh; overflow: clip; container-type: inline-size;
+      display: flex; flex-direction: column; justify-content: center; padding: 64px calc(var(--gutter) + var(--navw)) 24px var(--gutter);
+    }
+    .scrub__track {
+      width: max-content; overflow: visible; padding-block: 10px 14px;
+      animation: scrubL linear both; animation-timeline: --scrub; animation-range: contain 4% contain 96%;
+    }
+    .scrub__track[data-dir='-1'] { animation-name: scrubR; }
+  }
+}
+@keyframes scrubL { from { transform: translateX(0); } to { transform: translateX(calc(-100% + 100cqw)); } }
+@keyframes scrubR { from { transform: translateX(calc(-100% + 100cqw)); } to { transform: translateX(0); } }
+
+/* ───────── LIFE 2 · The Arcade ───────── */
+.arcade {
+  --accent: var(--pink); --bg: #0c0716; --seam: #1d0b30;
+  background:
+    radial-gradient(60% 40% at 50% 100%, #ff4fd822, transparent 70%),
+    radial-gradient(50% 30% at 80% 0%, #3df2ff14, transparent 70%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' fill='none' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M14 30q10-14 20 0t20 0' stroke='%23ff4fd8' opacity='.16'/%3E%3Cpath d='M96 24l10 10 10-10' stroke='%233df2ff' opacity='.14'/%3E%3Ccircle cx='130' cy='92' r='7' stroke='%23ffe45c' opacity='.12'/%3E%3Cpath d='M30 112l12-12m0 12-12-12' stroke='%23c6ff3d' opacity='.12'/%3E%3Cpath d='M78 136q8-10 16 0' stroke='%23a46bff' opacity='.16'/%3E%3Cpath d='M70 70h14v14H70z' stroke='%23ff4fd8' opacity='.08'/%3E%3C/svg%3E") 0 0 / 160px 160px,
+    var(--bg);
+}
+.arcade .life__head { margin-bottom: clamp(1rem, 3vh, 2.2rem); }
+.arcade__aisle { display: grid; gap: clamp(10px, 2.2vh, 22px); }
+.arcade .life__lede { font-size: clamp(.98rem, .9rem + .35vw, 1.15rem); }
+.cabrow { --gap: clamp(14px, 1.6vw, 26px); }
+.cabrow[data-dir='-1'] { --ch: .86; padding-left: calc(var(--cabh) * .22); }
+
+.arcade { --cabh: clamp(210px, calc((100svh - 330px) / 2), 330px); }
+@media (max-width: 600px) { .arcade { --cabh: clamp(190px, calc((100svh - 380px) / 2), 280px); } }
+
+.cab {
+  --h: calc(var(--cabh) * var(--ch, 1));
+  position: relative; display: flex; flex-direction: column; align-items: stretch; height: var(--h); aspect-ratio: 10 / 16.4;
+  padding: 0 calc(var(--h) * .03); text-decoration: none; color: var(--a); border-radius: calc(var(--h) * .045) calc(var(--h) * .045) 4px 4px;
+  background:
+    linear-gradient(90deg, #ffffff10, transparent 12% 88%, #00000060),
+    linear-gradient(#1e1530, #120c1f 60%, #0b0714);
+  box-shadow:
+    inset 3px 0 0 var(--a), inset -3px 0 0 var(--a), inset 0 0 0 1px #ffffff14,
+    0 0 18px -4px color-mix(in oklab, var(--a) 70%, transparent), 0 24px 30px -18px #000;
+  transition: transform .35s var(--ease-out), box-shadow .35s;
+}
+.cab__marquee {
+  position: relative; display: grid; place-items: center; height: 17%; margin: calc(var(--h) * .03) 0 calc(var(--h) * .025);
+  border-radius: calc(var(--h) * .03); padding: 0 6%; overflow: hidden; text-align: center;
+  background: linear-gradient(color-mix(in oklab, var(--a) 42%, #12001a), color-mix(in oklab, var(--a) 16%, #08000d));
+  box-shadow: inset 0 0 0 1.5px var(--a), inset 0 0 22px color-mix(in oklab, var(--a) 60%, transparent), 0 0 16px -2px var(--a);
+}
+.cab__marquee::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, #ffffff30 48%, transparent 62%); translate: -100% 0; }
+.cab__title {
+  font: 800 calc(var(--h) * .052)/1.05 var(--f-display); letter-spacing: -.02em; color: #fff; text-wrap: balance;
+  text-shadow: 0 0 6px var(--a), 0 0 14px var(--a);
+}
+.cab__screen {
+  position: relative; aspect-ratio: 4 / 3; margin: 0 4%; border-radius: 10% / 13%; overflow: hidden; background: #050309;
+  box-shadow: 0 0 0 calc(var(--h) * .012) #05030a, 0 0 0 calc(var(--h) * .02) #2a1f3c, 0 0 26px -2px color-mix(in oklab, var(--b) 55%, transparent);
+}
+.cab__screen svg { width: 100%; height: 100%; }
+.cab__screen::after { /* scanlines + glass */
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(#0000 0 2px, #0000004d 2px 3px), radial-gradient(120% 90% at 30% 20%, #ffffff22, transparent 45%), radial-gradient(transparent 60%, #000a);
+}
+.cab__screen .hs { opacity: 0; }
+.cab__deck {
+  position: relative; height: 12%; margin: calc(var(--h) * .03) -3% 0; clip-path: polygon(5% 0, 95% 0, 100% 100%, 0 100%);
+  background: linear-gradient(#2b2040, #171024); box-shadow: inset 0 2px 0 #ffffff22;
+}
+.cab__stick { position: absolute; left: 22%; top: 18%; width: calc(var(--h) * .036); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #fff8, var(--a) 45%, color-mix(in oklab, var(--a) 40%, #000)); box-shadow: 0 0 10px var(--a); }
+.cab__stick::after { content: ''; position: absolute; left: 50%; top: 80%; width: 2px; height: 90%; background: #b9b0cc; translate: -50% 0; }
+.cab__btn { position: absolute; top: 34%; width: calc(var(--h) * .03); aspect-ratio: 1; border-radius: 50%; background: var(--b); box-shadow: 0 0 8px var(--b), inset 0 -2px 0 #0006; }
+.cab__btn { left: 58%; } .cab__btn + .cab__btn { left: 72%; top: 24%; }
+.cab__door { flex: 1; display: flex; justify-content: center; gap: 12%; padding-top: 9%; background: linear-gradient(#0d0816, #08050f); margin: 0 2%; box-shadow: inset 0 1px 0 #ffffff12; }
+.cab__door i { width: calc(var(--h) * .05); height: calc(var(--h) * .06); border-radius: 3px; background: linear-gradient(#ff5c2a, #ffb23d); box-shadow: 0 0 10px #ff8a3d, inset 0 0 0 2px #2a0f00; position: relative; }
+.cab__door i::after { content: ''; position: absolute; left: 44%; top: 18%; width: 12%; height: 64%; background: #2a0f00; border-radius: 1px; }
+.cab:hover, .cab:focus-visible { transform: translateY(-8px); box-shadow: inset 3px 0 0 var(--a), inset -3px 0 0 var(--a), inset 0 0 0 1px #ffffff22, 0 0 40px -2px var(--a), 0 30px 34px -18px #000; }
+.cab:hover .cab__screen .hs, .cab:focus-visible .cab__screen .hs { opacity: 1; animation: blink .9s steps(2, jump-none) infinite; }
+.cab:focus-visible { outline-offset: 6px; }
+@media (prefers-reduced-motion: no-preference) {
+  .cab:hover .cab__marquee::after, .cab:focus-visible .cab__marquee::after { transition: translate .7s var(--ease-out); translate: 100% 0; }
+  .cab:hover .cab__title { animation: neonOn .9s steps(1, end); }
+}
+.egg--grumpy-arcade { right: calc(var(--gutter) + var(--navw) + 8px); top: 76px; --egg: #ffb23d88; }

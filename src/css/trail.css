@@ -1,0 +1,53 @@
+/* ───────── LIFE 7 · The Trail — 54 Bench Challenge ───────── */
+.trail {
+  --accent: #ffd23d; --bg: #06110d; --seam: #0e0a07;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420' fill='none' stroke='%235cffc8' stroke-opacity='.06'%3E%3Cpath d='M-20 80c80-40 160 30 240-10s160 20 220-20M-20 160c90-30 150 40 250 0s140 10 210-30M-20 250c70-40 170 20 260-10s130 30 200-10M-20 340c100-30 160 30 240 0s150 10 220-20'/%3E%3C/svg%3E") 0 0 / 420px 420px,
+    radial-gradient(60% 30% at 50% 0%, #ffd23d14, transparent 70%),
+    linear-gradient(#06110d, #081a14 50%, #06110d);
+}
+.trail__links { margin-top: 1.4rem; }
+.trail__map { --bw: clamp(118px, 15vw, 190px); position: relative; max-width: 1040px; margin: 0 auto; padding: 4.5rem 0 1rem; }
+.trail__svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.trail__ghost { fill: none; stroke: #ffd23d2e; stroke-width: 3; stroke-dasharray: 2 9; stroke-linecap: round; }
+.trail__path { fill: none; stroke: var(--accent); stroke-width: 3.5; stroke-linecap: round; filter: drop-shadow(0 0 5px #ffd23daa); }
+.trail__trees path { fill: none; stroke: #5cffc8; stroke-opacity: .32; stroke-width: 1.6; stroke-linejoin: round; }
+.trail__sign {
+  position: absolute; top: 0; left: 50%; translate: -50% 0; padding: .45rem .8rem; border-radius: 4px;
+  font: 400 .7rem/1 var(--f-pixel); letter-spacing: .14em; text-transform: uppercase; color: #1b1203; background: var(--accent); box-shadow: 0 0 20px -4px var(--accent);
+}
+.benches { position: relative; display: flex; flex-direction: column; }
+.bench { --tilt: -2deg; position: relative; display: flex; align-items: center; gap: .9rem; width: 50%; padding-right: calc(var(--bw) * .28); }
+.bench + .bench { margin-top: calc(var(--bw) * -.32); }
+.bench--r { --tilt: 2deg; margin-left: auto; flex-direction: row-reverse; padding: 0 0 0 calc(var(--bw) * .28); text-align: right; }
+.bench--l { flex-direction: row-reverse; text-align: right; }
+.bench--r { flex-direction: row; text-align: left; }
+.bench__pic {
+  flex: none; width: var(--bw); aspect-ratio: 4 / 3; padding: 5px 5px 16px; border-radius: 3px; background: #f3efe3; rotate: var(--tilt);
+  box-shadow: 0 14px 24px -12px #000, 0 0 0 1px #00000040; transition: transform .35s var(--ease-out), box-shadow .35s; position: relative; z-index: 1;
+}
+.bench__pic img { width: 100%; height: 100%; object-fit: cover; background: #23392f; }
+.bench__pic:hover, .bench__pic:focus-visible { transform: scale(1.08) rotate(calc(var(--tilt) * -1.5)); box-shadow: 0 20px 34px -12px #000, 0 0 0 3px var(--accent); z-index: 3; }
+.bench__sign {
+  position: absolute; z-index: 2; top: -10px; display: grid; place-items: center; min-width: 34px; height: 26px; padding: 0 .4rem; border-radius: 4px;
+  font: 400 .8rem/1 var(--f-pixel); color: #1b1203; background: var(--accent); box-shadow: 0 0 14px -2px var(--accent);
+}
+.bench--l .bench__sign { right: calc(var(--bw) * .28 - 10px); }
+.bench--r .bench__sign { left: calc(var(--bw) * .28 - 10px); }
+.bench__name { font: 700 clamp(.82rem, .7rem + .4vw, 1.05rem)/1.2 var(--f-display); letter-spacing: -.01em; color: #eaf6ee; max-width: 12rem; }
+.bench.is-reached .bench__sign { animation: none; }
+.bench[data-milestone] .bench__name::after { content: attr(data-milestone); display: block; margin-top: .3rem; font: 400 .62rem/1 var(--f-pixel); letter-spacing: .12em; color: var(--accent); text-transform: uppercase; }
+.trail__summit { display: grid; justify-items: center; gap: .6rem; margin-top: 3rem; text-align: center; position: relative; }
+.trail__summit svg { width: 64px; fill: none; stroke: var(--accent); stroke-width: 3; stroke-linejoin: round; filter: drop-shadow(0 0 8px var(--accent)); }
+.trail__summit p { font: 400 clamp(1rem, .9rem + .4vw, 1.25rem)/1.4 var(--f-body); color: var(--muted); }
+.trail__summit strong { font: 800 1.3em/1 var(--f-display); color: #fff; }
+.egg--grumpy-trail { right: -4px; top: 34%; --egg: #5cffc877; }
+@media (max-width: 600px) {
+  .trail__map { --bw: clamp(104px, 30vw, 132px); }
+  .bench { gap: .5rem; }
+  .bench__name { font-size: .78rem; }
+}
+@media (prefers-reduced-motion: no-preference) and (scripting: enabled) {
+  .js .bench__pic { opacity: .35; filter: grayscale(.8); transition: opacity .5s, filter .5s, transform .35s var(--ease-out), box-shadow .35s; }
+  .js .bench.is-reached .bench__pic { opacity: 1; filter: none; }
+}

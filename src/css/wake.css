@@ -1,0 +1,65 @@
+/* ───────── LIFE 1 · Wake up ───────── */
+.wake {
+  --accent: var(--pink); --bg: #0a0719;
+  min-height: 100svh; display: grid; place-items: center; text-align: center; overflow: clip;
+  padding-top: 88px; padding-bottom: 10vh;
+  background:
+    radial-gradient(120% 60% at 50% 108%, #ff4fd866, #ff8a3d22 35%, transparent 62%),
+    radial-gradient(80% 50% at 20% 0%, #3df2ff1c, transparent 60%),
+    linear-gradient(#05040c, #0d0822 55%, #1d0b30);
+}
+.wake__sky { position: absolute; inset: 0; z-index: -1; overflow: hidden; }
+.wake__gl { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 1.6s; }
+.wake__gl.is-on { opacity: 1; }
+.wake__sky::before { /* CSS star field: visible until (or instead of) the WebGL sky */
+  content: ''; position: absolute; inset: 0; opacity: .7;
+  background-image:
+    radial-gradient(1.2px 1.2px at 12% 18%, #fff, transparent), radial-gradient(1px 1px at 28% 42%, #fff, transparent),
+    radial-gradient(1.4px 1.4px at 46% 12%, #ffd6f5, transparent), radial-gradient(1px 1px at 63% 30%, #fff, transparent),
+    radial-gradient(1.3px 1.3px at 78% 16%, #c9fbff, transparent), radial-gradient(1px 1px at 88% 44%, #fff, transparent),
+    radial-gradient(1px 1px at 6% 52%, #fff, transparent), radial-gradient(1.2px 1.2px at 36% 64%, #fff, transparent),
+    radial-gradient(1px 1px at 92% 70%, #ffd6f5, transparent), radial-gradient(1px 1px at 55% 56%, #fff, transparent);
+}
+.wake__floor {
+  position: absolute; left: -50%; right: -50%; bottom: -2px; height: 34vh; transform-origin: 50% 100%;
+  transform: perspective(40vh) rotateX(58deg); opacity: .55;
+  background:
+    linear-gradient(90deg, #ff4fd8 1px, transparent 1px) 50% 0 / 64px 64px,
+    linear-gradient(#ff4fd8 1px, transparent 1px) 0 0 / 64px 64px;
+  mask: linear-gradient(transparent, #000 45%);
+}
+.wake__inner { position: relative; display: grid; justify-items: center; width: 100%; }
+.wake__title {
+  position: relative; margin: 0; font: 800 clamp(3rem, 12.6vw, 12.5rem)/.9 var(--f-display); letter-spacing: -.045em;
+  color: #fff3fd;
+  text-shadow: 0 0 .04em #fff, 0 0 .18em var(--pink), 0 0 .5em #ff4fd8aa, 0 0 1.1em #ff4fd855;
+}
+.wake__tld { color: #e9fdff; text-shadow: 0 0 .04em #fff, 0 0 .18em var(--cyan), 0 0 .5em #3df2ffaa, 0 0 1.1em #3df2ff55; }
+.wake__cat-static { width: clamp(140px, 17vw, 240px); aspect-ratio: 156 / 104; margin: 0 auto calc(clamp(3rem, 12.6vw, 12.5rem) * -.09); position: relative; z-index: 1; }
+.has-cat .wake__cat-static { visibility: hidden; }
+.wake__cat-static .catsvg { width: 100%; }
+.wake__tag { margin-top: clamp(1.4rem, 3.4vw, 3.2rem); max-width: 34ch; font-size: clamp(1.1rem, .9rem + 1vw, 1.55rem); line-height: 1.4; color: #e6defa; text-wrap: balance; }
+.wake__stats { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem 1.4rem; margin-top: 1.8rem; font: 400 .74rem/1.2 var(--f-pixel); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.wake__stats b { font: 700 1.05rem/1 var(--f-display); color: var(--yellow); margin-right: .35em; text-shadow: 0 0 10px #ffe45c88; }
+.wake__cue {
+  display: inline-flex; flex-direction: column; align-items: center; gap: .5rem; margin-top: clamp(2rem, 6vh, 4rem); padding: .6rem 1rem;
+  text-decoration: none; font: 400 .74rem/1 var(--f-pixel); letter-spacing: .14em; text-transform: uppercase; color: var(--cyan);
+}
+.wake__cue svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 4px var(--cyan)); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .wake__title { animation: neonOn 1.6s steps(1, end) both .2s; }
+  .wake__tld { animation: neonOn 1.4s steps(1, end) both .75s; }
+  .wake__cue svg { animation: cue 1.8s var(--ease-out) infinite; }
+  .wake__floor { animation: floor 3.2s linear infinite; }
+  @supports (animation-timeline: scroll()) {
+    .wake__inner { animation: wakeOut linear both; animation-timeline: scroll(root); animation-range: 0 85vh; }
+    .topbar::before { animation: barIn linear both; animation-timeline: scroll(root); animation-range: 40vh 90vh; }
+  }
+}
+@supports not (animation-timeline: scroll()) { .topbar::before { opacity: 1; } }
+@keyframes neonOn { 0% { opacity: .15; } 8% { opacity: 1; } 12% { opacity: .3; } 20% { opacity: 1; } 24% { opacity: .5; } 30%, 100% { opacity: 1; } }
+@keyframes cue { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(8px); } }
+@keyframes floor { to { background-position: 50% 64px, 0 64px; } }
+@keyframes wakeOut { to { opacity: 0; transform: translateY(-14vh) scale(.94); filter: blur(3px); } }
+@keyframes barIn { to { opacity: 1; } }

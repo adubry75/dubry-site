@@ -1,0 +1,39 @@
+/* ───────── lightbox (native <dialog>) ───────── */
+html:has(.lb[open]) { overflow: hidden; }
+.lb {
+  width: 100vw; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: clamp(56px, 8vh, 80px) clamp(12px, 6vw, 96px);
+  border: 0; background: #05040ae8; color: var(--text); overflow: hidden;
+}
+.lb::backdrop { background: #000c; backdrop-filter: blur(6px); }
+.lb[open] { display: grid; place-items: center; }
+.lb__fig { display: grid; justify-items: center; gap: .9rem; max-width: 100%; max-height: 100%; }
+.lb__img { max-width: 100%; max-height: calc(100dvh - 190px); width: auto; height: auto; object-fit: contain; border-radius: 6px; box-shadow: 0 30px 80px #000; view-transition-name: lb-img; background: #111; }
+.lb__cap { font: 400 .8rem/1.4 var(--f-pixel); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); text-align: center; }
+.lb__btn {
+  position: absolute; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; cursor: pointer;
+  border: 1px solid #ffffff33; background: #0d0a18cc; color: #fff; transition: background .2s, border-color .2s;
+}
+.lb__btn:hover { background: #ffffff1a; border-color: #fff8; }
+.lb__btn svg { width: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.lb__close { top: 14px; right: 14px; }
+.lb__prev { left: 14px; top: 50%; translate: 0 -50%; } .lb__next { right: 14px; top: 50%; translate: 0 -50%; }
+.lb[data-single] .lb__prev, .lb[data-single] .lb__next { display: none; }
+@media (max-width: 600px) { .lb__prev, .lb__next { top: auto; bottom: 14px; translate: none; } }
+
+/* ───────── launch screen (View Transition target when opening a game) ───────── */
+.launch {
+  position: fixed; inset: 0; z-index: 90; display: grid; place-content: center; justify-items: center; gap: 1.2rem; padding: 2rem;
+  background: radial-gradient(60% 60% at 50% 40%, color-mix(in oklab, var(--la, var(--pink)) 25%, transparent), transparent 70%), #05030a;
+}
+.launch[hidden] { display: none; }
+.launch__screen { width: min(78vw, 70vh, 640px); aspect-ratio: 4 / 3; border-radius: 4% / 5.3%; overflow: hidden; display: grid; place-items: center; background: #050309; view-transition-name: launch; box-shadow: 0 0 0 6px #120c1f, 0 0 0 7px #ffffff22, 0 0 120px -20px var(--la, var(--pink)); }
+.launch__screen > * { width: 100%; height: 100%; }
+.launch__screen svg { width: 100%; height: 100%; }
+.launch__screen .hs { opacity: 1; }
+.launch__title { font: 800 clamp(1.6rem, 1rem + 3vw, 3rem)/1 var(--f-display); letter-spacing: -.03em; text-align: center; text-shadow: 0 0 .4em var(--la, var(--pink)); }
+.launch__msg { font: 400 .8rem/1 var(--f-pixel); letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
+
+::view-transition-group(launch) { animation-duration: .55s; animation-timing-function: cubic-bezier(.3, .8, .2, 1); }
+::view-transition-group(lb-img) { animation-duration: .45s; animation-timing-function: cubic-bezier(.3, .8, .2, 1); }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .35s; }
+@media (prefers-reduced-motion: reduce) { ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; } }
