@@ -6,13 +6,16 @@ down through eight "lives", each its own world (it's keeping the ninth in reserv
 | # | Life | What's there |
 |---|------|--------------|
 | 1 | **Wake up** | Hero. The cat naps on the `dubry.com` wordmark until you arrive (first scroll / mouse move / touch / key), then stretches awake; WebGL aurora sky. |
-| 2 | **The Arcade** | 34 neon cabinets, each screen showing the real game (title-screen captures). The section pins and your scroll drives the aisle sideways. Click = View Transition into the game. |
+| 2 | **The Arcade** | 34 neon cabinets, each screen showing the real game (title-screen captures). The section pins and your scroll drives the aisle sideways. Click = View Transition "insert coin" card, then the game opens in a new tab. |
 | 3 | **High Score Hall** | One combined leaderboard from `/games/scores.php` (Top Cats + per-game champions + unclaimed crowns). |
 | 4 | **Big Games** | Purrpendicular! (itch.io), Meowntain (itch.io), Purr Bricks (Steam), Reactor Purr (a Catridge-32 cart), Catridge (itch.io): full-screen posters with each game's key art, stacking as you scroll. |
 | 5 | **The Gallery** | The art portfolio hung salon-style on a wall in perspective, scrubbed by scroll; lightbox on click. |
 | 6 | **The Trail** | 54 Bench Challenge: a winding trail draws itself as the cat hikes it; benches light up as you pass. |
 | 7 | **The Office** | Blazor / .NET blurb, a little Razor component, Power BI screenshots on "monitors". |
 | 8 | **Nap time** | Footer. The cat walks onto a cushion and curls up asleep. Store buttons for every game on itch.io and Steam. |
+
+Every link that leaves the page opens in a new tab (screen readers are told so); the nine-lives nav and
+other in-page links scroll within the page.
 
 Hidden easter-egg cats link to `/grumpycat/` and `/ratsrus/` (arcade, gallery, trail, footer).
 

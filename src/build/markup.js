@@ -83,16 +83,15 @@ const posterImg = ({ src, w, h }) =>
 export const N_BIG = BIG_GAMES.length;
 export function posters() {
   return BIG_GAMES.map((g, i) => {
-    const ext = g.store ? ' rel="noopener"' : '';
     const arrow = g.store ? ` <span aria-hidden="true">↗</span><span class="sr">(${esc(g.store)})</span>` : ' <span aria-hidden="true">→</span>';
     return `<article class="poster poster--${g.art}" style="--i:${i}" aria-labelledby="poster-${g.id}">
     <div class="poster__card">
-      <a class="poster__art" href="${g.href}" data-launch tabindex="-1" aria-hidden="true"${ext}><span data-launch-art>${g.img ? posterImg(g.img) : posterArt[g.art]()}</span></a>
+      <a class="poster__art" href="${g.href}" data-launch tabindex="-1" aria-hidden="true"><span data-launch-art>${g.img ? posterImg(g.img) : posterArt[g.art]()}</span></a>
       <div class="poster__copy">
         <p class="poster__kicker">${esc(g.kicker)}</p>
         <h3 id="poster-${g.id}" class="poster__title" style="--tl:${Math.max(...g.title.split(' ').map((w) => w.length))}">${esc(g.title)}</h3>
         <p class="poster__blurb">${esc(g.blurb)}</p>
-        <a class="btn poster__cta" href="${g.href}" data-launch${ext}>${esc(g.cta)}${arrow}</a>
+        <a class="btn poster__cta" href="${g.href}" data-launch>${esc(g.cta)}${arrow}</a>
       </div>
     </div>
   </article>`;
@@ -102,9 +101,9 @@ export function posters() {
 // ── Footer store buttons ──────────────────────────────────────
 export function storeButtons() {
   return STORE_LINKS.map((s) =>
-    `<li><a class="btn btn--ghost nap__store" href="${s.href}" rel="noopener" style="--accent:${s.c}">` +
+    `<li><a class="btn btn--ghost nap__store" href="${s.href}" style="--accent:${s.c}">` +
     `<span class="nap__store-name">${esc(s.title)}</span> <span class="nap__store-where">on ${esc(s.store)} <span aria-hidden="true">↗</span></span></a></li>`).join('') +
-    `<li><a class="btn nap__store nap__store--all" href="${ITCH_PROFILE}" rel="noopener">` +
+    `<li><a class="btn nap__store nap__store--all" href="${ITCH_PROFILE}">` +
     `<span class="nap__store-name">All my games</span> <span class="nap__store-where">on itch.io <span aria-hidden="true">↗</span></span></a></li>`;
 }
 

@@ -130,7 +130,8 @@ async function scrollThrough(page) {
   const pic = page.locator('.bench__pic').nth(2);
   await pic.scrollIntoViewIfNeeded();
   await pic.click();
-  await page.waitForTimeout(900);
+  await page.waitForFunction(() => document.querySelector('.lb').open, null, { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(500);
   const open1 = await page.evaluate(() => ({ open: document.querySelector('.lb').open, cap: document.querySelector('.lb__cap').textContent, focusIn: document.querySelector('.lb').contains(document.activeElement) }));
   ok(open1.open && /3 – Red Osier/.test(open1.cap), 'bench opens in the lightbox with its caption', open1.cap);
   ok(open1.focusIn, 'focus moves into the dialog');
@@ -144,7 +145,7 @@ async function scrollThrough(page) {
   await page.context().close();
 }
 
-// 5 ── launch: cabinet click → transition → game URL ───────────────
+// 5 ── launch: cabinet click → transition → game opens in a new tab ─
 {
   const page = await newPage();
   await page.goto(BASE + '#arcade', { waitUntil: 'load' });
@@ -152,11 +153,23 @@ async function scrollThrough(page) {
   const cab = page.locator('.cab', { hasText: 'Pounce' });
   await cab.focus();
   await page.waitForTimeout(300);
-  await Promise.all([page.waitForURL('**/games/pounce.html', { timeout: 5000 }).catch(() => {}), cab.click()]);
-  ok(page.url().endsWith('/games/pounce.html'), 'clicking a cabinet launches /games/pounce.html', page.url());
-  await page.goBack();
-  await page.waitForTimeout(800);
-  ok(await page.evaluate(() => document.querySelector('.launch').hidden), 'back button restores the page (launch overlay hidden)');
+  const [popup] = await Promise.all([page.context().waitForEvent('page', { timeout: 6000 }).catch(() => null), cab.click()]);
+  if (popup) await popup.waitForLoadState().catch(() => {});
+  ok(!!popup && popup.url().endsWith('/games/pounce.html'), 'clicking a cabinet opens /games/pounce.html in a new tab', popup?.url());
+  ok(page.url().endsWith('#arcade'), 'the home page stays where it was', page.url());
+  await page.waitForTimeout(1200);
+  ok(await page.evaluate(() => document.querySelector('.launch').hidden), 'launch card closes again after the tab opens');
+  const links = await page.evaluate(() => [...document.querySelectorAll('a[href]')].map((a) => [a.getAttribute('href'), a.target]));
+  const wrong = links.filter(([h, t]) => (h.startsWith('#') ? t === '_blank' : t !== '_blank'));
+  ok(wrong.length === 0, 'every outbound link opens a new tab; in-page anchors do not', wrong.slice(0, 5).map((w) => w.join(' ')).join(', '));
+  // reduced motion / modifier clicks rely on the link's own target: check a cabinet in reduced motion
+  const rm = await newPage({ reducedMotion: 'reduce' });
+  await rm.goto(BASE + '#arcade', { waitUntil: 'load' });
+  await rm.waitForTimeout(800);
+  const [p2] = await Promise.all([rm.context().waitForEvent('page', { timeout: 6000 }).catch(() => null), rm.locator('.cab').first().click()]);
+  if (p2) await p2.waitForLoadState().catch(() => {});
+  ok(!!p2 && p2.url().endsWith('/games/bird-brigade.html'), 'reduced motion: a cabinet opens in a new tab directly', p2?.url());
+  await rm.context().close();
   await page.context().close();
 }
 

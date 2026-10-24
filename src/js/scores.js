@@ -2,6 +2,7 @@
 // scores API, caches the lot in sessionStorage, and ranks players across games.
 import { ARCADE, SOURCES } from '../data/content.js';
 import { staticSVG } from './cat-rig.js';
+import { newTab } from './links.js';
 
 const KEY = 'nine-lives:scores:v1';
 const TTL = 5 * 60 * 1000;
@@ -125,7 +126,7 @@ function render(section, data, retry) {
   champEl.replaceChildren(...rows.map(({ g, b, e }) => {
     const li = h('li');
     const name = h('span', 'g');
-    const a = h('a', null, g.title);
+    const a = newTab(h('a', null, g.title));
     a.href = g.href;
     name.append(a);
     const who = h('span', 'who', e.name);
@@ -142,7 +143,7 @@ function render(section, data, retry) {
   vacant.hidden = !empty.length;
   vacant.querySelector('ul').replaceChildren(...empty.map((g) => {
     const li = h('li');
-    const a = h('a', null, g.title);
+    const a = newTab(h('a', null, g.title));
     a.href = g.href;
     li.append(a);
     return li;

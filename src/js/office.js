@@ -1,5 +1,6 @@
 // Life 8: pull the Power BI screenshots from /portfolio/powerbi.html at runtime.
 import { SOURCES } from '../data/content.js';
+import { NEW_TAB, newTab } from './links.js';
 
 export async function init(section, api) {
   const list = section.querySelector('[data-monitors]');
@@ -15,13 +16,13 @@ export async function init(section, api) {
     }).filter((s) => s.src).slice(0, 6);
     if (!shots.length) throw new Error('empty');
   } catch {
-    list.outerHTML = `<p class="life__lede"><a href="${SOURCES.powerbi.replace(/"/g, '')}">See the Power BI reports →</a></p>`;
+    list.outerHTML = `<p class="life__lede"><a href="${SOURCES.powerbi.replace(/"/g, '')}" ${NEW_TAB}>See the Power BI reports →</a></p>`;
     return;
   }
   list.replaceChildren(...shots.map((s, i) => {
     const li = document.createElement('li');
     li.className = 'monitor';
-    const a = document.createElement('a');
+    const a = newTab(document.createElement('a'));
     a.className = 'monitor__btn';
     a.href = s.src;
     const img = document.createElement('img');

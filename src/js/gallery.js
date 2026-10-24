@@ -1,5 +1,6 @@
 // Life 6: read /art-portfolio/ at runtime, pull its <img> sources, hang them on the wall.
 import { SOURCES } from '../data/content.js';
+import { NEW_TAB, newTab } from './links.js';
 
 const SHAPES = ['tall', '', 'wide', 'sq', '', 'tall', 'sq', 'wide', '', 'sq'];
 const GRUMPY = '<svg viewBox="0 0 40 34" aria-hidden="true"><path d="M6,30V10L4,2L13,8Q20,6 27,8L36,2L34,10V30Q20,34 6,30Z"/><path d="M11,16l6,2M29,16l-6,2"/><path d="M16,27q4,-4 8,0"/></svg>';
@@ -30,14 +31,14 @@ export async function init(section, api) {
   } catch {
     wall.replaceChildren();
     wall.removeAttribute('aria-busy');
-    status.innerHTML = 'The gallery is closed for cleaning — <a href="/art-portfolio/">visit the portfolio directly</a>.';
+    status.innerHTML = `The gallery is closed for cleaning — <a href="/art-portfolio/" ${NEW_TAB}>visit the portfolio directly</a>.`;
     return;
   }
   const n = art.length;
   const nodes = art.map((a, i) => {
     const li = document.createElement('li');
     li.className = 'frame' + (SHAPES[i % SHAPES.length] ? ' frame--' + SHAPES[i % SHAPES.length] : '');
-    const link = document.createElement('a');
+    const link = newTab(document.createElement('a'));
     link.className = 'frame__btn';
     link.href = a.src;
     const img = document.createElement('img');
@@ -56,7 +57,7 @@ export async function init(section, api) {
   // a tiny self-portrait by a certain grumpy critic, hung among the real work
   const egg = document.createElement('li');
   egg.className = 'frame frame--egg';
-  egg.innerHTML = `<a href="${SOURCES.grumpy}" aria-label="Secret cat: a grumpy self-portrait">${GRUMPY}</a>`;
+  egg.innerHTML = `<a href="${SOURCES.grumpy}" ${NEW_TAB} aria-label="Secret cat: a grumpy self-portrait">${GRUMPY}</a>`;
   nodes.splice(Math.min(nodes.length, 17), 0, egg);
   wall.replaceChildren(...nodes);
   wall.removeAttribute('aria-busy');

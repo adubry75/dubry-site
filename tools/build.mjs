@@ -43,6 +43,8 @@ html = html.replace(/<!--@(\w+)-->/g, (m, k) => {
   if (!(k in parts)) throw new Error('Unknown placeholder ' + k);
   return parts[k];
 });
+// Every link that leaves the page opens in a new tab; in-page #anchors stay put.
+html = html.replace(/<a (?=[^>]*\bhref="(?!#)[^"]*")/g, '<a target="_blank" rel="noopener" aria-describedby="newtab" ');
 fs.writeFileSync(path.join(dist, 'index.html'), html);
 
 // Fonts (OFL, self-hosted) and static files.
