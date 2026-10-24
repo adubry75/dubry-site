@@ -43,9 +43,14 @@
 .trail__summit strong { font: 800 1.3em/1 var(--f-display); color: #fff; }
 .egg--grumpy-trail { right: -4px; top: 34%; --egg: #5cffc877; }
 @media (max-width: 600px) {
-  .trail__map { --bw: clamp(104px, 30vw, 132px); }
-  .bench { gap: .5rem; }
-  .bench__name { font-size: .78rem; }
+  .trail__map { --bw: clamp(112px, 33vw, 150px); }
+  .bench, .bench--r { flex-direction: column; gap: .45rem; padding: 0; }
+  .bench--l { align-items: flex-end; padding-right: calc(var(--bw) * .16); text-align: right; }
+  .bench--r { align-items: flex-start; padding-left: calc(var(--bw) * .16); text-align: left; }
+  .bench + .bench { margin-top: calc(var(--bw) * -.5); }
+  .bench__name { font-size: .78rem; max-width: var(--bw); }
+  .bench--l .bench__sign { right: calc(var(--bw) * .16 - 10px); }
+  .bench--r .bench__sign { left: calc(var(--bw) * .16 - 10px); }
 }
 @media (prefers-reduced-motion: no-preference) and (scripting: enabled) {
   .js .bench__pic { opacity: .35; filter: grayscale(.8); transition: opacity .5s, filter .5s, transform .35s var(--ease-out), box-shadow .35s; }

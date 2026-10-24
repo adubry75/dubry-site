@@ -18,6 +18,7 @@
   background: #fff3c4; mask: radial-gradient(circle at 30% 38%, transparent 47%, #000 48%); filter: drop-shadow(0 0 22px #fff3c488); rotate: -10deg;
 }
 .nap__inner { display: grid; justify-items: center; }
+@media (max-width: 600px) { .nap__moon { right: 8%; top: 7%; width: 64px; } }
 .nap .life__lede { margin-inline: auto; }
 .nap__bed { margin: clamp(2rem, 6vh, 4rem) 0 2rem; }
 .nap__cushion {

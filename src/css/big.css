@@ -51,7 +51,7 @@
       .poster:nth-child(2) .poster__card { animation: recede linear both; animation-timeline: --p2; animation-range: entry 0% entry 100%; }
     }
     .poster__art svg { animation: artIn linear both; animation-timeline: view(); animation-range: entry 0% cover 45%; }
-    .poster__copy > * { animation: copyIn linear both; animation-timeline: view(); animation-range: entry 10% cover 40%; }
+    .poster__copy > * { animation: copyIn linear both; animation-timeline: view(); animation-range: entry 0% entry 100%; }
     .pa-draw { stroke-dasharray: 1600; animation: draw linear both; animation-timeline: view(); animation-range: entry 0% cover 50%; }
   }
 }
@@ -63,5 +63,5 @@
 @keyframes wallwalk { from { translate: 0 60px; } to { translate: 0 -40px; } }
 @keyframes recede { to { transform: scale(.9) translateY(-2%); filter: brightness(.45) saturate(.7); } }
 @keyframes artIn { from { transform: scale(.82) rotate(-4deg); opacity: 0; } }
-@keyframes copyIn { from { transform: translateY(40px); opacity: 0; } }
+@keyframes copyIn { from { transform: translateY(24px); opacity: 0; } }
 @keyframes draw { from { stroke-dashoffset: 1600; } to { stroke-dashoffset: 0; } }
