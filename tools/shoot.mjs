@@ -5,7 +5,7 @@ import { chromium } from './pw.mjs';
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 
-const PORT = 8077;
+const PORT = +(process.env.PORT || 8077);
 const srv = spawn('node', ['tools/serve.mjs', String(PORT)], { stdio: 'ignore' });
 await new Promise((r) => setTimeout(r, 600));
 const filter = process.argv[2] || '';

@@ -115,14 +115,16 @@ if (hashTarget) {
   };
   new ResizeObserver(() => requestAnimationFrame(reland)).observe(document.querySelector('main'));
 }
-const lazy = new IntersectionObserver((entries) => {
+const load = (entries, obs) => {
   for (const e of entries) {
     if (!e.isIntersecting) continue;
-    lazy.unobserve(e.target);
+    obs.unobserve(e.target);
     modules[e.target.id]?.().then((m) => m.init(e.target, api)).catch((err) => console.error(e.target.id, err));
   }
-}, { rootMargin: '150% 0px' });
-for (const id of Object.keys(modules)) { const s = document.getElementById(id); if (s) lazy.observe(s); }
+};
+const lazy = new IntersectionObserver(load, { rootMargin: '150% 0px' });
+const near = new IntersectionObserver(load, { rootMargin: '40% 0px' }); // the arcade sits right under the hero
+for (const id of Object.keys(modules)) { const s = document.getElementById(id); if (s) (id === 'arcade' ? near : lazy).observe(s); }
 
 // ── wake up: the cat naps on the wordmark until the visitor shows up (first
 // scroll / pointer / touch / key). Then it stretches and the aurora fades in. ──

@@ -5,7 +5,7 @@
     .life__head > :not(.life__num) { animation: headIn linear both; animation-timeline: view(); animation-range: entry 5% cover 30%; }
     /* lives that scroll normally also fade out as they leave under the top bar */
     .life:not(.scrub) .life__head > :not(.life__num) { animation: headInOut linear both; animation-timeline: view(); animation-range: cover 0% cover 100%; }
-    .hall__crt { animation: crtOn linear both; animation-timeline: view(); animation-range: entry 10% entry 90%; }
+    .hall__crt { animation: crtOn linear both; animation-timeline: view(); animation-range: entry 0% entry 35%; }
     .nap__cushion::before { animation: glowIn linear both; animation-timeline: view(); animation-range: entry 0% cover 50%; }
     .life__num { animation: numDrift linear both; animation-timeline: view(); animation-range: cover 0% cover 100%; }
     .topcats li, .champs li { animation: rowIn linear both; animation-timeline: view(); animation-range: entry 0% entry 90%; }

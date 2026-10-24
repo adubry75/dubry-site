@@ -74,7 +74,8 @@ API shows "the scoreboard is napping" + retry; a missing gallery or Power BI pag
 
 ## Previewing locally
 
-Requirements: **Node 18+**, and **Python 3 + Pillow** (only for generating preview fixtures).
+Requirements: **Node 18+**, and **Python 3 + Pillow** (only for generating preview fixtures; on Windows run
+`py tools/make_fixtures.py` if `python3` isn't on your PATH).
 
 ```bash
 npm install                 # esbuild + self-hosted fonts + axe-core
@@ -148,7 +149,7 @@ tools/                    build, preview server, fixtures, screenshots, checks, 
   horizontal scrollers instead of pinned scrubs.
 * **`prefers-reduced-motion`:** no live cat, no pinning, no parallax. Static cat illustrations (same
   drawing) sit on the wordmark and the cushion. The trail is fully drawn and every bench is shown.
-* **Performance:** CSS inlined (no render-blocking requests), one preloaded font, an 8 KB entry module,
+* **Performance:** CSS inlined (no render-blocking requests), one preloaded font, a ~10 KB entry module,
   every life's code lazy-loaded near its section, images lazy, decorative loops paused off-screen, the
   cat's animation loop stops when idle, and the WebGL sky starts only once a visitor interacts.
 * **Content:** edit `src/data/content.js`, then `npm run build`. The Big Games blurbs are placeholder
