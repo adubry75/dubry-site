@@ -57,7 +57,7 @@ async function scrollThrough(page) {
     eggs: [...document.querySelectorAll('a.egg, .frame--egg a')].map((a) => a.getAttribute('href')),
   }));
   ok(info.h1 === 1, 'exactly one <h1>');
-  ok(info.h2.length === 8, 'eight life <h2> headings (life 1 is the h1)', info.h2.join(' / '));
+  ok(info.h2.length === 7, 'seven life <h2> headings (life 1 is the h1)', info.h2.join(' / '));
   ok(info.unnamedLinks === 0, 'every link has an accessible name', String(info.unnamedLinks));
   ok(info.imgsNoAlt === 0, 'every <img> has alt');
   ok(info.catHidden === 'true', 'decorative cat is aria-hidden');

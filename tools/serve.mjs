@@ -9,10 +9,11 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import zlib from 'node:zlib';
 import { ARCADE } from '../src/data/content.js';
 
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(root, 'dist');
 const FIX = path.join(root, 'fixtures', '_gen');
 const port = +(process.argv[2] || process.env.PORT || 8054);

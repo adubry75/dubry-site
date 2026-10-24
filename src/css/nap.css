@@ -1,4 +1,4 @@
-/* ───────── LIFE 9 · Nap time ───────── */
+/* ───────── LIFE 8 · Nap time ───────── */
 .nap {
   --accent: var(--violet); --bg: #05061a; --seam: #0a1226;
   min-height: 100svh; display: grid; align-content: center; text-align: center; overflow: clip; padding-bottom: 3rem;
@@ -36,6 +36,21 @@
 .nap__nav a { display: inline-block; padding: .55rem .2rem; font: 400 .76rem/1 var(--f-pixel); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); text-decoration: none; }
 .nap__nav a:hover, .nap__nav a:focus-visible { color: var(--text); text-decoration: underline; text-underline-offset: 4px; }
 .nap__ext a { color: var(--accent); }
+/* store buttons: big, two-line, each tinted like its game */
+.nap__stores-title { margin-top: .6rem; font: 400 .72rem/1 var(--f-pixel); letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+.nap__nav .nap__stores { gap: .8rem; max-width: 64rem; }
+.nap__nav .nap__store {
+  display: inline-flex; flex-direction: column; justify-content: center; gap: .35rem; min-width: 11.5rem; min-height: 64px; padding: .85rem 1.4rem; border-radius: 18px;
+  font: 700 1.02rem/1.1 var(--f-display); letter-spacing: -.01em; text-transform: none; color: var(--accent); text-decoration: none;
+}
+.nap__nav .nap__store--all { color: #0b0614; }
+.nap__nav .nap__store:hover, .nap__nav .nap__store:focus-visible { text-decoration: none; }
+.nap__store-where { font: 400 .66rem/1 var(--f-pixel); letter-spacing: .1em; text-transform: uppercase; opacity: .85; }
+@media (max-width: 520px) {
+  .nap__nav .nap__stores { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; gap: .6rem; }
+  .nap__nav .nap__store { width: 100%; min-width: 0; padding-inline: .6rem; font-size: .9rem; }
+  .nap__stores li:last-child { grid-column: 1 / -1; }
+}
 .nap__wake { margin-bottom: 2.4rem; }
 .nap__fine { font-size: .85rem; color: var(--dim); }
 .egg--rat-hole { right: calc(var(--gutter) + var(--navw)); bottom: 0; width: 60px; height: 44px; border-radius: 0; --egg: #a46bff99; align-items: end; }

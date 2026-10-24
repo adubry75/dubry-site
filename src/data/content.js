@@ -43,39 +43,51 @@ export const EXTRA_CABINETS = [
   { id: 'arkanoid', title: 'Arkanoid', motif: 'arkanoid', href: '/arkanoid/arkanoid.html' },
 ];
 
-// Life 4 — featured. `blurb` is placeholder copy: rewrite freely.
+// Life 4 — featured. `art` picks the poster theme (big.css); `img` is the game's own key art in
+// src/static/posters/ (w/h = its pixel size), otherwise `art` names a drawn SVG in markup.js.
+// `store` marks an external link (itch.io, Steam).
 export const BIG_GAMES = [
   {
-    id: 'purrpendicular', title: 'Purrpendicular!', href: '/games/purrpendicular/', art: 'purrpendicular',
-    kicker: 'Featured · 01', blurb: 'Right angles, sharp reflexes and one very determined cat. Everything here meets at ninety degrees — except the cat.',
-    cta: 'Play Purrpendicular!',
+    id: 'purrpendicular', title: 'Purrpendicular!', href: 'https://feelie75.itch.io/purrpendicular', art: 'purrpendicular', store: 'itch.io',
+    img: { src: 'purrpendicular.webp', w: 630, h: 500 },
+    kicker: 'Featured · 01 · itch.io', blurb: 'Gravity has gone to the cats. Pop groups of same-colour balls, tilt the whole chamber to build bigger ones, and survive the spinners, pegs and bumpers.',
+    cta: 'Play Purrpendicular! on itch.io',
   },
   {
-    id: 'reactor', title: 'Reactor Purr', href: '/games/ReactorRun/', art: 'reactor',
-    kicker: 'Featured · 02', blurb: 'Keep the core humming. Keep the cat calm. A warm, glowing, slightly-too-loud purr at the heart of the machine.',
-    cta: 'Play Reactor Purr',
+    id: 'meowntain', title: 'Meowntain', href: 'https://feelie75.itch.io/meowntain', art: 'meowntain', store: 'itch.io',
+    img: { src: 'meowntain.webp', w: 1232, h: 706 },
+    kicker: 'Featured · 02 · itch.io', blurb: 'Drop cat cards. Same cats squish into bigger cats. Climb the Meowntain through 36 levels, 13 cats and a café that fills with every cat you make.',
+    cta: 'Play Meowntain on itch.io',
   },
   {
-    id: 'catridge', title: 'Catridge', href: 'https://feelie75.itch.io/catridge-32', art: 'catridge', external: true,
-    kicker: 'Collection · itch.io', blurb: 'My game collection, packed into one cartridge. Blow on the contacts, slot it in, and lose an afternoon.',
+    id: 'purrbricks', title: 'Purr Bricks', href: 'https://store.steampowered.com/app/4459470/Purr_Bricks/', art: 'purrbricks', store: 'Steam',
+    img: { src: 'purrbricks.webp', w: 616, h: 353 },
+    kicker: 'Featured · 03 · Free on Steam', blurb: 'Smash through 100+ brick-packed levels. Grab wild powerups, dodge chaotic curses and build up FURY for board-clearing strikes.',
+    cta: 'Get Purr Bricks on Steam',
+  },
+  {
+    id: 'reactor', title: 'Reactor Purr', href: 'https://feelie75.itch.io/catridge-32', art: 'reactor', store: 'itch.io',
+    kicker: 'Featured · 04 · Catridge-32 cart', blurb: 'Fly in. Blow the core. Get out alive. You’re a space cat, and 24 stations full of mouse fighters stand between you and home. One of the carts in Catridge-32.',
+    cta: 'Play it in Catridge-32 on itch.io',
+  },
+  {
+    id: 'catridge', title: 'Catridge', href: 'https://feelie75.itch.io/catridge-32', art: 'catridge', store: 'itch.io',
+    img: { src: 'catridge.webp', w: 630, h: 500 },
+    kicker: 'Collection · itch.io', blurb: 'A 1983 console that never existed, loaded with 32 cat arcade carts. Blow on the contacts, slot one in, and lose an afternoon.',
     cta: 'Get Catridge on itch.io',
   },
 ];
 
-// Life 5 — the Lab. glyph picks the floating specimen drawing; hue tints the jar.
-export const LAB = [
-  { href: '/ai/agent1.html', title: 'Trippy Demo Scene I', glyph: 'spiral', hue: 300 },
-  { href: '/ai/agent2.html', title: 'Trippy Demo Scene II', glyph: 'tunnel', hue: 190 },
-  { href: '/ai/pixigame.html', title: 'Candy Crush (PixiJS)', glyph: 'candy', hue: 340 },
-  { href: '/ai/snake-enhanced.html', title: 'Neon Snake', glyph: 'snake', hue: 120 },
-  { href: '/ball/', title: 'Gravity & Bouncing Balls', glyph: 'balls', hue: 40 },
-  { href: '/periodic.html', title: 'Dynamic Periodic Table', glyph: 'element', hue: 210 },
-  { href: '/torus.html', title: 'Torus', glyph: 'torus', hue: 165 },
-  { href: '/spinny.html', title: 'Spinny', glyph: 'spinny', hue: 270 },
-  { href: '/mana.html', title: 'Mana Collector', glyph: 'mana', hue: 230 },
+// Footer store buttons: everything on itch.io, plus Steam. `c` tints the button.
+export const ITCH_PROFILE = 'https://feelie75.itch.io/';
+export const STORE_LINKS = [
+  { title: 'Purrpendicular!', href: 'https://feelie75.itch.io/purrpendicular', store: 'itch.io', c: '#ffb23d' },
+  { title: 'Meowntain', href: 'https://feelie75.itch.io/meowntain', store: 'itch.io', c: '#ffab73' },
+  { title: 'Catridge-32', href: 'https://feelie75.itch.io/catridge-32', store: 'itch.io', c: '#ff4fd8' },
+  { title: 'Purr Bricks', href: 'https://store.steampowered.com/app/4459470/Purr_Bricks/', store: 'Steam', c: '#5aa9ff' },
 ];
 
-// Life 7 — 54 Bench Challenge, in trail order.
+// Life 6 — 54 Bench Challenge, in trail order.
 export const BENCH_FILES = `01_Spillway.jpg,02_salamander.jpg,03_RedOsier.jpg,04_Trillium.jpg,05_FrogSong.jpg,
 06_NorlingBridge.jpg,07_TheNarrows.jpg,08_SiskiyouRidge.jpg,09_SiskiyouView.jpg,10_KnobconePine.jpg,
 11_Grandview.jpg,12_GraniteFalls.jpg,13_Pipsissewa.jpg,14_CantrellFalls.jpg,15_Ridgeview.jpg,16_DickAmes.jpg,

@@ -3,9 +3,10 @@
 import * as esbuild from 'esbuild';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import * as M from '../src/build/markup.js';
 
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const src = (p) => path.join(root, 'src', p);
 const dist = path.join(root, 'dist');
 const assets = path.join(dist, 'nine-lives');
@@ -14,7 +15,7 @@ fs.rmSync(dist, { recursive: true, force: true });
 fs.mkdirSync(path.join(assets, 'fonts'), { recursive: true });
 
 // CSS: concatenated in cascade order, minified, inlined (no render-blocking request).
-const CSS_ORDER = ['base', 'cat', 'wake', 'arcade', 'hall', 'big', 'lab', 'gallery', 'trail', 'office', 'nap', 'overlays', 'motion'];
+const CSS_ORDER = ['base', 'cat', 'wake', 'arcade', 'hall', 'big', 'gallery', 'trail', 'office', 'nap', 'overlays', 'motion'];
 const cssRaw = CSS_ORDER.map((n) => fs.readFileSync(src(`css/${n}.css`), 'utf8')).join('\n');
 const css = (await esbuild.transform(cssRaw, {
   loader: 'css', minify: true, target: ['chrome123', 'safari18', 'firefox128'],
@@ -34,8 +35,8 @@ const parts = {
   CSS: css, MAIN_JS: mainUrl, LIVES_NAV: M.livesNav(), FOOT_NAV: M.footNav(),
   CAT_RIG: M.catRig(), CAT_CURL: M.catStatic('curl', { cls: 'cat__curl' }),
   CAT_STRETCH: M.catStatic('stretch'), CAT_CURL_STATIC: M.catStatic('curl', { cls: 'nap__static' }),
-  N_CABS: String(M.CABINETS.length), CABS_A: cabsA, CABS_B: cabsB, BIG: M.posters(), LAB: M.jars(),
-  BENCHES: M.benches(), CODE: M.code(), EGG_GRUMPY: M.EGGS.grumpy, EGG_RAT: M.EGGS.rat, EGG_HOLE: M.EGGS.hole,
+  N_CABS: String(M.CABINETS.length), CABS_A: cabsA, CABS_B: cabsB, BIG: M.posters(), N_BIG: String(M.N_BIG), STORES: M.storeButtons(),
+  BENCHES: M.benches(), CODE: M.code(), EGG_GRUMPY: M.EGGS.grumpy, EGG_HOLE: M.EGGS.hole,
 };
 let html = fs.readFileSync(src('index.html'), 'utf8');
 html = html.replace(/<!--@(\w+)-->/g, (m, k) => {

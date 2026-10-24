@@ -10,11 +10,19 @@
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--pa) 45%, transparent), 0 40px 80px -30px #000, 0 0 80px -40px var(--pa);
   transform-origin: 50% 0;
 }
-.poster--reactor .poster__card { --pa: var(--lime); --pb: #ff8a3d; background: radial-gradient(90% 90% at 25% 45%, #c6ff3d26, transparent 65%), linear-gradient(140deg, #0f1a0c, #070b06 60%); }
+.poster--purrpendicular .poster__card { --pa: var(--amber); --pb: var(--yellow); background: radial-gradient(90% 90% at 25% 45%, #ffb23d2b, transparent 65%), linear-gradient(140deg, #24150b, #0d0805 60%); }
+.poster--meowntain .poster__card { --pa: #ffab73; --pb: #6fd6bd; background: radial-gradient(90% 90% at 25% 45%, #ffab732b, transparent 65%), linear-gradient(140deg, #2a1912, #0f0a08 60%); }
+.poster--purrbricks .poster__card { --pa: #ff8a3d; --pb: #5aa9ff; background: radial-gradient(90% 90% at 25% 45%, #ff6a3d2e, transparent 65%), linear-gradient(140deg, #1d0f30, #0a0616 60%); }
+.poster--reactor .poster__card { --pa: #46f1ff; --pb: #ff3d8b; background: radial-gradient(90% 90% at 25% 45%, #46f1ff1f, transparent 65%), linear-gradient(140deg, #071624, #04050b 60%); }
 .poster--catridge .poster__card { --pa: var(--pink); --pb: var(--violet); background: radial-gradient(90% 90% at 25% 45%, #ff4fd82b, transparent 65%), linear-gradient(140deg, #22082a, #0d0414 60%); }
 .poster__art { display: grid; place-items: center; padding: clamp(1rem, 3vw, 2.5rem); }
 .poster__art > span { display: grid; place-items: center; width: 100%; }
 .poster__art svg { width: min(100%, 520px); aspect-ratio: 1; overflow: visible; }
+/* the game's own key art, framed like a lit poster */
+.poster__art img {
+  display: block; width: auto; max-width: 100%; height: auto; border-radius: clamp(12px, 1.6vw, 20px);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--pa) 55%, transparent), 0 30px 60px -24px #000, 0 0 70px -24px var(--pa);
+}
 .poster__copy { container-type: inline-size; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 1.1rem; padding: 0 clamp(1.4rem, 4vw, 4rem) clamp(1.6rem, 4vw, 3.5rem); }
 .poster__kicker { font: 400 .75rem/1 var(--f-pixel); letter-spacing: .16em; text-transform: uppercase; color: var(--pb); }
 .poster__title {
@@ -27,9 +35,9 @@
   .poster { position: sticky; top: 0; min-height: 100svh; padding-top: 76px; }
   .poster__card { grid-template-columns: 1.05fr 1fr; align-items: center; height: min(calc(100svh - 110px), 720px); }
   .poster__copy { padding: clamp(2rem, 4vw, 4rem) clamp(2rem, 4vw, 4rem) clamp(2rem, 4vw, 4rem) 0; }
-  .poster__art svg { max-height: calc(100svh - 170px); }
+  .poster__art svg, .poster__art img { max-height: calc(100svh - 170px); }
 }
-.poster:nth-child(1) { z-index: 1; } .poster:nth-child(2) { z-index: 2; } .poster:nth-child(3) { z-index: 3; }
+.poster { z-index: calc(var(--i) + 1); }
 
 /* idle motion inside the art */
 @media (prefers-reduced-motion: no-preference) {
@@ -37,26 +45,41 @@
   .pa-spin-slow { animation: spin 60s linear infinite; transform-origin: 300px 300px; }
   .pa-orbit { animation: spin 24s linear infinite reverse; transform-origin: 300px 300px; }
   .pa-pulse { animation: pulse 2.6s ease-in-out infinite; transform-origin: 300px 300px; }
+  .pa-spin-rev { animation: spin 20s linear infinite reverse; transform-box: fill-box; transform-origin: center; }
+  .pa-shield { animation: shield 1s linear infinite; }
+  .pa-pulse-pop { animation: pop 1.6s ease-out infinite; transform-box: fill-box; transform-origin: center; }
   .pa-purr { animation: purr .35s steps(2) infinite; }
+  /* translate/scale, not transform, so the hover lift doesn't fight the scroll-driven artIn */
+  .poster__art img { transition: translate .5s cubic-bezier(.2, .8, .2, 1), scale .5s cubic-bezier(.2, .8, .2, 1), box-shadow .5s; }
+  .poster__art:hover img { translate: 0 -6px; scale: 1.015; box-shadow: 0 0 0 1px var(--pa), 0 40px 70px -24px #000, 0 0 90px -20px var(--pa); }
   .pa-float { animation: float 5s ease-in-out infinite; }
   .pa-shadow { animation: shadow 5s ease-in-out infinite; transform-origin: 300px 570px; }
   .pa-cat2 { animation: wallwalk 6s ease-in-out infinite alternate; }
 
   @supports (animation-timeline: view()) {
-    .stack { timeline-scope: --p1, --p2; }
+    /* each poster recedes as the next one slides over it */
+    .stack { timeline-scope: --p1, --p2, --p3, --p4; }
     .poster:nth-child(2) { view-timeline: --p1 block; }
     .poster:nth-child(3) { view-timeline: --p2 block; }
+    .poster:nth-child(4) { view-timeline: --p3 block; }
+    .poster:nth-child(5) { view-timeline: --p4 block; }
     @media (min-width: 860px) {
-      .poster:nth-child(1) .poster__card { animation: recede linear both; animation-timeline: --p1; animation-range: entry 0% entry 100%; }
-      .poster:nth-child(2) .poster__card { animation: recede linear both; animation-timeline: --p2; animation-range: entry 0% entry 100%; }
+      .poster .poster__card { animation: recede linear both; animation-range: entry 0% entry 100%; }
+      .poster:nth-child(1) .poster__card { animation-timeline: --p1; }
+      .poster:nth-child(2) .poster__card { animation-timeline: --p2; }
+      .poster:nth-child(3) .poster__card { animation-timeline: --p3; }
+      .poster:nth-child(4) .poster__card { animation-timeline: --p4; }
+      .poster:last-child .poster__card { animation: none; }
     }
-    .poster__art svg { animation: artIn linear both; animation-timeline: view(); animation-range: entry 0% cover 45%; }
+    .poster__art :is(svg, img) { animation: artIn linear both; animation-timeline: view(); animation-range: entry 0% cover 45%; }
     .poster__copy > * { animation: copyIn linear both; animation-timeline: view(); animation-range: entry 0% entry 100%; }
     .pa-draw { stroke-dasharray: 1600; animation: draw linear both; animation-timeline: view(); animation-range: entry 0% cover 50%; }
   }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes pulse { 50% { transform: scale(1.06); opacity: .75; } }
+@keyframes shield { to { stroke-dashoffset: -24; } }
+@keyframes pop { from { transform: scale(.6); opacity: 1; } to { transform: scale(1.35); opacity: 0; } }
 @keyframes purr { 50% { transform: translateX(2px); } }
 @keyframes float { 50% { transform: translateY(-14px) rotate(-1.5deg); } }
 @keyframes shadow { 50% { transform: scaleX(.8); opacity: .25; } }

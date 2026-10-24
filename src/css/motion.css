@@ -20,7 +20,7 @@
 @keyframes rowIn { from { opacity: 0; transform: translateX(-24px); } }
 
 /* decorative loops sleep while their life is off screen */
-.js .is-off :is(.pa-spin, .pa-spin-slow, .pa-orbit, .pa-pulse, .pa-purr, .pa-float, .pa-shadow, .pa-cat2, .jar__specimen, .bub, .jar__liquid, .skel, .frame--ghost, .monitor--ghost, .blink),
+.js .is-off :is(.pa-spin, .pa-spin-slow, .pa-orbit, .pa-pulse, .pa-purr, .pa-float, .pa-shadow, .pa-cat2, .pa-spin-rev, .pa-shield, .pa-pulse-pop, .skel, .frame--ghost, .monitor--ghost, .blink),
 .js .nap.is-off .nap__sky::before { animation-play-state: paused; }
 
 /* With reduced motion, everything is laid out statically and stays put. */

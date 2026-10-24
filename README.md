@@ -1,21 +1,20 @@
 # dubry.com — Nine Lives
 
 The dubry.com home page: one long scroll-driven page where a neon line-art cat walks
-down through nine "lives", each its own world.
+down through eight "lives", each its own world (it's keeping the ninth in reserve).
 
 | # | Life | What's there |
 |---|------|--------------|
 | 1 | **Wake up** | Hero. The cat naps on the `dubry.com` wordmark until you arrive (first scroll / mouse move / touch / key), then stretches awake; WebGL aurora sky. |
 | 2 | **The Arcade** | 34 neon cabinets with generated cabinet art. The section pins and your scroll drives the aisle sideways. Click = View Transition into the game. |
 | 3 | **High Score Hall** | One combined leaderboard from `/games/scores.php` (Top Cats + per-game champions + unclaimed crowns). |
-| 4 | **Big Games** | Purrpendicular!, Reactor Purr, Catridge (itch.io): full-screen posters that stack as you scroll. |
-| 5 | **The Lab** | AI/demo toys as floating specimen jars with parallax. |
-| 6 | **The Gallery** | The art portfolio hung salon-style on a wall in perspective, scrubbed by scroll; lightbox on click. |
-| 7 | **The Trail** | 54 Bench Challenge: a winding trail draws itself as the cat hikes it; benches light up as you pass. |
-| 8 | **The Office** | Blazor / .NET blurb, a little Razor component, Power BI screenshots on "monitors". |
-| 9 | **Nap time** | Footer. The cat walks onto a cushion and curls up asleep. |
+| 4 | **Big Games** | Purrpendicular! (itch.io), Meowntain (itch.io), Purr Bricks (Steam), Reactor Purr (a Catridge-32 cart), Catridge (itch.io): full-screen posters with each game's key art, stacking as you scroll. |
+| 5 | **The Gallery** | The art portfolio hung salon-style on a wall in perspective, scrubbed by scroll; lightbox on click. |
+| 6 | **The Trail** | 54 Bench Challenge: a winding trail draws itself as the cat hikes it; benches light up as you pass. |
+| 7 | **The Office** | Blazor / .NET blurb, a little Razor component, Power BI screenshots on "monitors". |
+| 8 | **Nap time** | Footer. The cat walks onto a cushion and curls up asleep. Store buttons for every game on itch.io and Steam. |
 
-Hidden easter-egg cats link to `/grumpycat/` and `/ratsrus/` (arcade, lab, gallery, trail, footer).
+Hidden easter-egg cats link to `/grumpycat/` and `/ratsrus/` (arcade, gallery, trail, footer).
 
 The cat reacts to scroll speed: **walk → trot → sprint**, **leaps** between lives, **turns around** when you
 scroll back up, **sits** when you stop, and **sleeps** at the bottom.
@@ -32,6 +31,7 @@ dist/
 └── nine-lives/         → upload to  public_html/nine-lives/     (whole folder)
     ├── js/             ES modules (content-hashed names)
     ├── fonts/          Unbounded, Space Grotesk, Silkscreen (OFL, self-hosted)
+    ├── posters/        Big Games key art (WebP)
     ├── favicon.svg, apple-touch-icon.png, og.jpg
 ```
 
@@ -126,18 +126,18 @@ both mobile and desktop presets, against the preview server.
 ```
 src/
 ├── index.html            page template (build fills the <!--@…--> slots)
-├── data/content.js       ← all content: games, big games (blurbs!), lab toys, benches, runtime URLs
+├── data/content.js       ← all content: games, big games, store links, benches, runtime URLs
 ├── css/*.css             one file per life + base/cat/overlays/motion (inlined & minified at build)
 ├── js/
 │   ├── main.js           entry: nav, wake-up, pinned scrubs, lazy loading per life
 │   ├── cat-rig.js        the cat: procedural rig (IK legs, poses, gaits) — also renders static SVGs
 │   ├── cat.js            cat controller: scroll speed → gait, per-life tracks, leaps, naps
 │   ├── art.js            original cabinet art generator (title + motif + a cat in every screen)
-│   ├── launch.js         View Transition "insert coin" launch into games/toys
+│   ├── launch.js         View Transition "insert coin" launch into games
 │   ├── lightbox.js       <dialog> viewer with View Transitions
 │   ├── arcade.js · scores.js · gallery.js · trail.js · office.js · hero-gl.js   (lazy chunks)
-├── build/markup.js       build-time HTML (cabinets, posters, jars, benches, code snippet)
-└── static/               favicon, touch icon, og image (copied to dist/nine-lives/)
+├── build/markup.js       build-time HTML (cabinets, posters, store buttons, benches, code snippet)
+└── static/               favicon, touch icon, og image, posters/ key art (copied to dist/nine-lives/)
 tools/                    build, preview server, fixtures, screenshots, checks, lighthouse
 ```
 
@@ -152,6 +152,7 @@ tools/                    build, preview server, fixtures, screenshots, checks, 
 * **Performance:** CSS inlined (no render-blocking requests), one preloaded font, a ~10 KB entry module,
   every life's code lazy-loaded near its section, images lazy, decorative loops paused off-screen, the
   cat's animation loop stops when idle, and the WebGL sky starts only once a visitor interacts.
-* **Content:** edit `src/data/content.js`, then `npm run build`. The Big Games blurbs are placeholder
-  copy written for this page, so rewrite them freely. To add an arcade game, add a line to `ARCADE`
+* **Content:** edit `src/data/content.js`, then `npm run build`. The Big Games blurbs come from each
+  game's store page; a poster's art is `src/static/posters/<name>.webp` (set `img` with its pixel size),
+  or a drawn SVG in `markup.js` when a game has no key art (Reactor Purr). To add an arcade game, add a line to `ARCADE`
   and pick a motif from `src/js/art.js`.

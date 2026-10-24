@@ -1,4 +1,4 @@
-// "Insert coin": opening a game or toy morphs its screen/jar into a full-screen
+// "Insert coin": opening a game morphs its screen or poster art into a full-screen
 // launch card with a same-document View Transition, then navigates.
 export function initLaunch({ reduced }) {
   const overlay = document.querySelector('.launch');
@@ -13,9 +13,9 @@ export function initLaunch({ reduced }) {
     if (reduced || !document.startViewTransition) return; // plain navigation
     e.preventDefault();
 
-    const scope = a.closest('.poster, .cab, .jar') || a;
+    const scope = a.closest('.poster, .cab') || a;
     const art = scope.querySelector('[data-launch-art]');
-    const name = (scope.querySelector('.poster__title, .cab__title, .jar__name') || a).textContent.trim();
+    const name = (scope.querySelector('.poster__title, .cab__title') || a).textContent.trim();
     const color = getComputedStyle(scope).getPropertyValue('--a').trim() || getComputedStyle(scope).getPropertyValue('--c').trim()
       || getComputedStyle(scope.querySelector('.poster__card') || scope).getPropertyValue('--pa').trim();
     const href = a.href;

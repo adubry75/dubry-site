@@ -64,6 +64,9 @@ function setupScrub(section) {
     const track = e.target.closest('.scrub__track');
     const item = e.target.closest('.scrub__track > *');
     if (!track || !item || over <= 0 || !pinnable.matches) return;
+    // keyboard focus only: a mouse/touch press also focuses the link, and scrolling here would
+    // slide the wall out from under the pointer before mouseup, so the click never lands
+    if (!e.target.matches(':focus-visible')) return;
     const cs = getComputedStyle(stage);
     const cw = stage.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
     const trackOver = Math.max(1, track.scrollWidth - cw);

@@ -52,8 +52,8 @@ for (const vp of VPS) {
   await go('.poster:nth-child(2)', -0.5, 600); await shot('04c-poster2-entering');
   await go('.poster:nth-child(2)', 0); await shot('04d-poster2');
   await go('.poster:nth-child(3)', 0); await shot('04e-poster3');
-  await go('#lab', 0); await shot('05a-lab');
-  await go('#lab', 0.6); await shot('05b-lab-more');
+  await go('.poster:nth-child(4)', 0); await shot('04f-poster4');
+  await go('.poster:nth-child(5)', 0); await shot('04g-poster5');
   await go('#gallery', 0, 1500); await shot('06a-gallery');
   await go('#gallery', 0.5, 1500); await shot('06b-gallery-mid');
   await go('#trail', 0); await shot('07a-trail');
