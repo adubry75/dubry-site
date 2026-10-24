@@ -1,7 +1,8 @@
 // Build-time markup generators. Everything here runs in Node during `npm run build`
 // and is baked into dist/index.html, so the page works (and looks right) before JS.
 import { ARCADE, EXTRA_CABINETS, BIG_GAMES, BENCHES, SOURCES, STORE_LINKS, ITCH_PROFILE } from '../data/content.js';
-import { paletteFor } from '../js/art.js';
+import fs from 'node:fs';
+import { paletteFor, screenSVG } from '../js/art.js';
 import { solve, POSES, rigMarkup, staticSVG } from '../js/cat-rig.js';
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -21,11 +22,17 @@ export function footNav() {
 
 // ── Arcade cabinets ───────────────────────────────────────────
 export const CABINETS = [...ARCADE, ...EXTRA_CABINETS];
+// Each screen shows a real frame of the game (src/static/cabs/<id>.webp, 360×270). A game with
+// no screenshot yet gets the generated neon art from art.js instead, baked in at build time.
+const hasShot = (id) => fs.existsSync(new URL(`../static/cabs/${id}.webp`, import.meta.url));
+const screen = (g, i) => hasShot(g.id)
+  ? `<img src="/nine-lives/cabs/${g.id}.webp" width="360" height="270" alt="" loading="lazy" decoding="async"><span class="hs" aria-hidden="true">PRESS START</span>`
+  : screenSVG(g, i);
 function cabinet(g, i) {
   const [a, b] = paletteFor(g.title, i);
   return `<li><a class="cab" href="${g.href}" data-launch data-i="${i}" data-motif="${g.motif}" style="--a:${a};--b:${b}">` +
     `<span class="cab__marquee"><span class="cab__title">${esc(g.title)}</span></span>` +
-    `<span class="cab__screen" data-launch-art></span>` +
+    `<span class="cab__screen" data-launch-art>${screen(g, i)}</span>` +
     `<span class="cab__deck" aria-hidden="true"><i class="cab__stick"></i><i class="cab__btn"></i><i class="cab__btn"></i></span>` +
     `<span class="cab__door" aria-hidden="true"><i></i><i></i></span><span class="sr"> — play</span></a></li>`;
 }

@@ -88,7 +88,6 @@ if (scrubbing) document.querySelectorAll('.scrub').forEach(setupScrub);
 // ── lazy lives: load each module when its section is ~1.5 screens away ──
 const api = { reduced, sda, motion, cat, lightbox: () => import('./lightbox.js') };
 const modules = {
-  arcade: () => import('./arcade.js'),
   scores: () => import('./scores.js'),
   trail: () => import('./trail.js'),
   office: () => import('./office.js'),
@@ -126,8 +125,7 @@ const load = (entries, obs) => {
   }
 };
 const lazy = new IntersectionObserver(load, { rootMargin: '150% 0px' });
-const near = new IntersectionObserver(load, { rootMargin: '40% 0px' }); // the arcade sits right under the hero
-for (const id of Object.keys(modules)) { const s = document.getElementById(id); if (s) (id === 'arcade' ? near : lazy).observe(s); }
+for (const id of Object.keys(modules)) { const s = document.getElementById(id); if (s) lazy.observe(s); }
 
 // ── wake up: the cat naps on the wordmark until the visitor shows up (first
 // scroll / pointer / touch / key). Then it stretches and the aurora fades in. ──

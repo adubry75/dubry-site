@@ -6,7 +6,7 @@ down through eight "lives", each its own world (it's keeping the ninth in reserv
 | # | Life | What's there |
 |---|------|--------------|
 | 1 | **Wake up** | Hero. The cat naps on the `dubry.com` wordmark until you arrive (first scroll / mouse move / touch / key), then stretches awake; WebGL aurora sky. |
-| 2 | **The Arcade** | 34 neon cabinets with generated cabinet art. The section pins and your scroll drives the aisle sideways. Click = View Transition into the game. |
+| 2 | **The Arcade** | 34 neon cabinets, each screen showing the real game (title-screen captures). The section pins and your scroll drives the aisle sideways. Click = View Transition into the game. |
 | 3 | **High Score Hall** | One combined leaderboard from `/games/scores.php` (Top Cats + per-game champions + unclaimed crowns). |
 | 4 | **Big Games** | Purrpendicular! (itch.io), Meowntain (itch.io), Purr Bricks (Steam), Reactor Purr (a Catridge-32 cart), Catridge (itch.io): full-screen posters with each game's key art, stacking as you scroll. |
 | 5 | **The Gallery** | The art portfolio hung salon-style on a wall in perspective, scrubbed by scroll; lightbox on click. |
@@ -32,6 +32,7 @@ dist/
     ├── js/             ES modules (content-hashed names)
     ├── fonts/          Unbounded, Space Grotesk, Silkscreen (OFL, self-hosted)
     ├── posters/        Big Games key art (WebP)
+    ├── cabs/           arcade cabinet screens, 360×270 WebP
     ├── favicon.svg, apple-touch-icon.png, og.jpg
 ```
 
@@ -132,12 +133,12 @@ src/
 │   ├── main.js           entry: nav, wake-up, pinned scrubs, lazy loading per life
 │   ├── cat-rig.js        the cat: procedural rig (IK legs, poses, gaits) — also renders static SVGs
 │   ├── cat.js            cat controller: scroll speed → gait, per-life tracks, leaps, naps
-│   ├── art.js            original cabinet art generator (title + motif + a cat in every screen)
+│   ├── art.js            generated neon cabinet art — fallback for a cabinet with no screenshot (baked in at build)
 │   ├── launch.js         View Transition "insert coin" launch into games
 │   ├── lightbox.js       <dialog> viewer with View Transitions
-│   ├── arcade.js · scores.js · gallery.js · trail.js · office.js · hero-gl.js   (lazy chunks)
+│   ├── scores.js · gallery.js · trail.js · office.js · hero-gl.js   (lazy chunks)
 ├── build/markup.js       build-time HTML (cabinets, posters, store buttons, benches, code snippet)
-└── static/               favicon, touch icon, og image, posters/ key art (copied to dist/nine-lives/)
+└── static/               favicon, touch icon, og image, posters/ + cabs/ art (copied to dist/nine-lives/)
 tools/                    build, preview server, fixtures, screenshots, checks, lighthouse
 ```
 
@@ -155,4 +156,6 @@ tools/                    build, preview server, fixtures, screenshots, checks, 
 * **Content:** edit `src/data/content.js`, then `npm run build`. The Big Games blurbs come from each
   game's store page; a poster's art is `src/static/posters/<name>.webp` (set `img` with its pixel size),
   or a drawn SVG in `markup.js` when a game has no key art (Reactor Purr). To add an arcade game, add a line to `ARCADE`
-  and pick a motif from `src/js/art.js`.
+  and drop a 360×270 `src/static/cabs/<id>.webp` frame of it (without one, the cabinet gets generated art from
+  the motif you pick in `src/js/art.js`). `npm run og` re-renders the share image `src/static/og.jpg` from the
+  current art (needs `npm run serve` running); bump the `?v=` on the `og:image` URL so social sites refetch it.
