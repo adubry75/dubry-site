@@ -1,4 +1,6 @@
-// temp: capture title + gameplay frames of every arcade cabinet from the live site
+// Capture a title-screen frame (<id>-t.png) and a gameplay frame (<id>-g.png) of every arcade cabinet
+// from the live site, for picking new src/static/cabs/<id>.webp screens (crop to 4:3, resize to 360x270).
+// Usage: node tools/capture-cabs.mjs <out-dir>
 import { chromium } from './pw.mjs';
 import { ARCADE, EXTRA_CABINETS } from '../src/data/content.js';
 const out = process.argv[2];
