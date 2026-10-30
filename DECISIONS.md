@@ -270,7 +270,7 @@ weather changes, rapid switching, NaN injection, timing). Its real findings, all
   | file | peak | clipped | gaps | short-term loudness | worst 1 s change | integrated |
   |---|---|---|---|---|---|---|
   | lofi-3min-seed10.mp3 (D minor → F major → B♭ major) | −3.5 dBFS | 0 | none | −24.5 to −15.3 LUFS | 2.0 LU | −18.1 LUFS |
-  | lofi-rain-3min-seed13.mp3 (F major → D minor, rain) | −3.4 dBFS | 0 | none | −22.4 to −14.3 LUFS | 2.2 LU | −17.5 LUFS |
+  | lofi-rain-3min-seed13.mp3 (F major → D minor, rain) | −3.3 dBFS | 0 | none | −22.4 to −14.3 LUFS | 2.2 LU | −17.5 LUFS |
   | jazz-3min-seed41.mp3 (A♭ major → B major) | −5.4 dBFS | 0 | none | −21.2 to −15.6 LUFS | 2.2 LU | −18.0 LUFS |
   | ambient-3min-seed21.mp3 (D dorian → A dorian) | −5.6 dBFS | 0 | none | −18.9 to −14.0 LUFS | 1.1 LU | −17.0 LUFS |
 
