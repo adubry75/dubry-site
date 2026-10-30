@@ -717,6 +717,24 @@ export class Scene {
     this.nextShooting -= dt;
     if (this.nextShooting <= 0) { if (state.night > 0.8 && W.cloud < 0.5) this.shooting = { x: 200 + r() * 600, y: 40 + r() * 120, t: 0 }; this.nextShooting = 90 + r() * 240; }
     if (this.shooting) { this.shooting.t += dt; if (this.shooting.t > 1.2) this.shooting = null; }
+    // a stray trots along the far sidewalk now and then
+    if (this.nextStray === undefined) this.nextStray = 240 + r() * 400;
+    this.nextStray -= dt;
+    if (!this.roofs) // flat roofs in the nearer rows that nothing on the sill (or the cat) hides
+      this.roofs = this.town.rows.flat().filter((b) => b.kind === 'flat' && b.row > 0 && b.w > 60 && (b.x + b.w < 470 || b.x > 880) && b.x > 20 && b.x + b.w < G.w - 20);
+    if (this.nextStray <= 0 && !this.stray && W.rain < 0.6 && this.roofs.length) {
+      const b = this.roofs[(r() * this.roofs.length) | 0], dir = r() < 0.5 ? 1 : -1;
+      this.stray = { x0: b.x + 6, x1: b.x + b.w - 6, x: dir > 0 ? b.x + 6 : b.x + b.w - 6, y: b.y - b.h - 4, s: b.row === 2 ? 0.85 : 0.65, dir, v: 16 + r() * 8, ph: 0,
+        col: ['#2a2629', '#d08a4a', '#8a8580', '#e9e2d6'][(r() * 4) | 0], sit: r() < 0.6 ? 0.35 + r() * 0.3 : -1, sat: 0 };
+      this.nextStray = 360 + r() * 700;
+    }
+    if (this.stray) {
+      const st = this.stray, u = (st.x - st.x0) / (st.x1 - st.x0), along = st.dir > 0 ? u : 1 - u;
+      if (st.sit > 0 && along > st.sit && st.sat < 7) { st.sat += dt; } // pauses to sit and look around
+      else { st.x += st.dir * st.v * dt; st.ph += dt * st.v / 7; }
+      st.a = Math.min(1, along * 8, (1 - along) * 8); // fades in and out at the ends of the roof
+      if (along >= 1) this.stray = null;
+    }
     // the visitor
     this.nextPeek -= dt;
     if (this.nextPeek <= 0 && !this.peek) {
@@ -729,6 +747,7 @@ export class Scene {
     let look = null;
     const catHead = { x: G.x + (CAT_X - G.x) - 112, y: SILL_Y - 128 };
     if (this.peek && this.peek.t > 1.5) look = { x: (this.peek.x - CAT_X) / 400, y: 0.8 };
+    else if (this.stray) look = { x: (G.x + this.stray.x - catHead.x) / 500, y: (G.y + this.stray.y - catHead.y) / 400 };
     else if (this.birds.length) { const b = this.birds[0]; look = { x: (G.x + b.x - catHead.x) / 500, y: (G.y + b.y - catHead.y) / 400 }; }
     if (this.peek && this.peek.t > 1 && this.cat.state === 'sleep' && this.peek.t < 1.1) this.cat.wake();
     this.cat.pupil = clamp(0.25 + state.night * 0.7, 0, 1);
@@ -832,6 +851,7 @@ export class Scene {
     const wet = Math.max(W.rain, this.wetRoad || 0);
     if (wet > 0.05 && state.dark > 0.3) this.reflections(ctx, state, wet);
     this.drawCars(ctx, state);
+    if (this.stray) this.drawStray(ctx, state);
     this.drawBirds(ctx, state);
     this.mark('lights');
     // fog
@@ -1072,6 +1092,28 @@ export class Scene {
       ctx.fillStyle = gr; ctx.fillRect(bx - 2, c.lane, 4, 18);
     }
     ctx.globalCompositeOperation = 'source-over';
+  }
+
+  drawStray(ctx, state) {
+    const st = this.stray, sitting = st.sit > 0 && st.sat > 0 && st.sat < 7, y = st.y;
+    const col = css(mix(hex(st.col), [18, 18, 30], state.night * 0.75));
+    ctx.save(); ctx.globalAlpha = Math.max(0, st.a ?? 1); ctx.translate(st.x, y); ctx.scale(st.dir * st.s, st.s); ctx.fillStyle = col; ctx.strokeStyle = col; ctx.lineCap = 'round';
+    if (sitting) { // a little sitting silhouette
+      ctx.beginPath(); ctx.ellipse(0, -7, 5, 7, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(2, -15, 3.6, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(0, -18); ctx.lineTo(0.5, -21.5); ctx.lineTo(2.5, -18.5); ctx.lineTo(4, -21.5); ctx.lineTo(5, -17); ctx.fill();
+      ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(-4, -1); ctx.quadraticCurveTo(-10, 0, -9, -6 + Math.sin(this.time * 2) * 1.5); ctx.stroke();
+    } else { // trotting: legs swing, tail up
+      const a = Math.sin(st.ph), b = Math.sin(st.ph + Math.PI);
+      ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(5, -6); ctx.lineTo(5 + a * 2.5, 0); ctx.moveTo(-5, -6); ctx.lineTo(-5 + b * 2.5, 0); ctx.moveTo(3.5, -6); ctx.lineTo(3.5 + b * 2.5, 0); ctx.moveTo(-6.5, -6); ctx.lineTo(-6.5 + a * 2.5, 0); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(0, -8, 8, 3.6, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(8.5, -11, 3.2, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(7, -13); ctx.lineTo(7.5, -16.5); ctx.lineTo(9.3, -13.8); ctx.lineTo(10.6, -16.5); ctx.lineTo(11.3, -12.5); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-7.5, -9); ctx.quadraticCurveTo(-12, -12, -11 + Math.sin(st.ph * 0.5) * 1.5, -17); ctx.stroke();
+    }
+    if (state.night > 0.5) { ctx.fillStyle = 'rgba(220,240,140,0.9)'; ctx.fillRect(sitting ? 3.4 : 9.8, sitting ? -15.6 : -11.6, 1.3, 1.1); }
+    ctx.restore();
   }
 
   smoke(ctx, state) {

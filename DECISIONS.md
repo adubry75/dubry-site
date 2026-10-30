@@ -310,3 +310,7 @@ weather changes, rapid switching, NaN injection, timing). Its real findings, all
   −12.8 LUFS, worst 1 s change 3.2 LU, −16.5 LUFS integrated.
 - Desktop control bar: it wrapped onto two rows even on wide screens (an absolutely positioned box at `left: 50%`
   shrink-wraps to half the viewport). It now sizes to its content and only wraps when the screen is narrow.
+- A second kind of cameo: every 6–18 minutes (not in heavy rain) a little **rooftop cat** strolls along one of the
+  town's flat roofs (only roofs not hidden by the sill's things or the main cat), sometimes sits halfway to look
+  around, and fades in and out at the roof's ends. Its eyes glint at night, and the window cat watches it. (I first
+  put it on the sidewalk, but the mug, plant and pumpkin hide most of the sidewalk.)

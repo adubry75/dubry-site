@@ -78,6 +78,7 @@ function adaptQuality(dt) {
 }
 scene.skin = settings.cat; scene.theme = settings.room;
 if (q.has('peek')) scene.nextPeek = parseFloat(q.get('peek')) || 1;
+if (q.has('stray')) scene.nextStray = parseFloat(q.get('stray')) || 1;
 if (q.get('awake') === '1') { scene.cat.wake(); scene.cat.action = null; }
 addEventListener('resize', () => { clearTimeout(resize.t); resize.t = setTimeout(resize, 120); });
 function resize() { scene.resize(); }
@@ -126,7 +127,7 @@ function autoPick(month) {
 }
 function applyWeather(name) { scene.setWeather(WEATHER[name] || WEATHER.clear); }
 if (settings.weather !== 'auto' && WEATHER[settings.weather]) { applyWeather(settings.weather); Object.assign(scene.w, WEATHER[settings.weather]); }
-if (q.get('instant') === '1') { Object.assign(scene.w, scene.wt); scene.snowCover = scene.w.snow; for (let i = 0; i < 20; i++) scene.update(0.5, { night: 0, dark: 0, hour: 12, fast: false }); scene.birds = []; scene.cars = []; }
+if (q.get('instant') === '1') { Object.assign(scene.w, scene.wt); scene.snowCover = scene.w.snow; for (let i = 0; i < 20; i++) scene.update(0.5, { night: 0, dark: 0, hour: 12, fast: false }); scene.birds = []; scene.cars = []; scene.stray = null; }
 
 // ── audio
 let actx = null, node = null, gain = null, playing = false, starting = null, info = null;
