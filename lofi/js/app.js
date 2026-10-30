@@ -177,10 +177,19 @@ if ('mediaSession' in navigator) {
   navigator.mediaSession.setActionHandler('play', play);
   navigator.mediaSession.setActionHandler('pause', pause);
 }
+// every section gets a little made-up track title, derived from its key and tempo
+const ADJ = ['sleepy', 'warm', 'quiet', 'slow', 'soft', 'rainy', 'golden', 'late', 'little', 'velvet', 'paper', 'cozy', 'dusty', 'drowsy', 'gentle', 'faraway', 'amber', 'lazy', 'hazy', 'midnight'];
+const NOUN = ['radiator', 'mug', 'paws', 'windowsill', 'blanket', 'tea', 'rain', 'lamp', 'pages', 'streetlight', 'cushion', 'yarn', 'nap', 'moon', 'kettle', 'sweater', 'purrs', 'clouds', 'whiskers', 'sunbeam', 'socks', 'fog', 'snowfall', 'radio'];
+function trackTitle(i) {
+  let h = 2166136261;
+  for (const c of `${i.mode}|${i.key}|${i.bpm}|${seed}`) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; }
+  const a = ADJ[h % ADJ.length], n = NOUN[(h >>> 8) % NOUN.length], n2 = NOUN[(h >>> 16) % NOUN.length];
+  return (h >>> 24) % 4 === 0 && n2 !== n ? `${n} & ${n2}` : `${a} ${n}`;
+}
 function showInfo(i) {
   info = i;
   const el = $('#now');
-  if (el) el.textContent = i.mode === 'ambient' ? `Ambient · ${i.key}` : `${i.mode === 'jazz' ? 'Jazz' : 'Lofi'} · ${i.key} · ${i.bpm} BPM${i.keys && i.keys !== 'rhodes' ? ' · ' + i.keys : ''}`;
+  if (el) el.textContent = `“${trackTitle(i)}” · ` + (i.mode === 'ambient' ? `Ambient · ${i.key}` : `${i.mode === 'jazz' ? 'Jazz' : 'Lofi'} · ${i.key} · ${i.bpm} BPM${i.keys && i.keys !== 'rhodes' ? ' · ' + i.keys : ''}`);
 }
 
 // ── controls

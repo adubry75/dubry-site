@@ -819,6 +819,7 @@ class JazzGen extends LofiGen {
     this.reverb = new FDN(sr, 1.1, 2.2, 5200, 20);
   }
   pools(minor) { return minor ? PROG_JAZZ_MINOR : PROG_JAZZ; }
+  newSection(prev) { super.newSection(prev); if (this.section.keys === 'guitar') this.section.keys = 'piano'; }
   get info() { const i = super.info; i.mode = 'jazz'; return i; }
   scheduleBar() {
     const r = this.r, sr = this.sr, s = this.section;
