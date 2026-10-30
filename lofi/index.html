@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lofi Cat Radio</title>
+<meta name="description" content="A cozy, endless, generative lofi radio: a cat naps on the windowsill while the town outside follows real Medford, Oregon time and weather drifts by. All art and music made live in your browser.">
+<meta name="theme-color" content="#1a1626">
+<meta property="og:title" content="Lofi Cat Radio">
+<meta property="og:description" content="Lofi cats to relax to. Generative music and a sleepy cat on a windowsill, live in your browser.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+  :root {
+    --ink: #f6eadf; --ink-dim: rgba(246, 234, 223, 0.66); --glass: rgba(26, 20, 34, 0.46); --line: rgba(255, 236, 214, 0.16);
+    --accent: #ffc58a; --accent-ink: #2b1d17;
+    --font: ui-rounded, "SF Pro Rounded", "Nunito", "Quicksand", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; background: #1a1626; overflow: hidden; color: var(--ink); font-family: var(--font); }
+  canvas#scene { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; display: block; }
+  body:not(.awake) { cursor: none; }
+
+  #ui { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.9s ease; }
+  body.awake #ui { opacity: 1; transition-duration: 0.25s; }
+  body.hide-ui #ui { display: none; }
+  #ui > * { pointer-events: auto; }
+
+  .brand { position: absolute; left: max(20px, env(safe-area-inset-left)); top: max(18px, env(safe-area-inset-top)); padding: 12px 18px 12px 16px; border-radius: 18px;
+    background: var(--glass); backdrop-filter: blur(12px) saturate(1.2); -webkit-backdrop-filter: blur(12px) saturate(1.2); border: 1px solid var(--line); max-width: calc(100vw - 40px); }
+  .brand h1 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: 0.02em; display: flex; align-items: center; gap: 8px; }
+  .brand h1 svg { width: 22px; height: 22px; flex: none; }
+  .brand p { margin: 4px 0 0; font-size: 13px; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+  .brand #now { color: var(--accent); }
+  .brand a { color: inherit; text-decoration: none; }
+
+  .bar { position: absolute; left: 50%; bottom: max(18px, env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center;
+    padding: 8px 10px; border-radius: 999px; background: var(--glass); backdrop-filter: blur(12px) saturate(1.2); -webkit-backdrop-filter: blur(12px) saturate(1.2); border: 1px solid var(--line);
+    max-width: calc(100vw - 24px); }
+  .bar button, .bar select { font: inherit; color: var(--ink); background: rgba(255, 255, 255, 0.07); border: 1px solid var(--line); border-radius: 999px; height: 38px; padding: 0 14px; cursor: pointer; font-size: 14px; }
+  .bar button:hover, .bar select:hover { background: rgba(255, 255, 255, 0.14); }
+  .bar button:focus-visible, .bar select:focus-visible, .bar input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .bar select { appearance: none; -webkit-appearance: none; padding-right: 30px; background-image: linear-gradient(45deg, transparent 50%, var(--ink-dim) 50%), linear-gradient(135deg, var(--ink-dim) 50%, transparent 50%);
+    background-position: calc(100% - 17px) 16px, calc(100% - 12px) 16px; background-size: 5px 5px; background-repeat: no-repeat; }
+  .bar select option { color: #222; }
+  #play { width: 46px; height: 46px; padding: 0; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); border: 0; }
+  #play:hover { background: #ffd3a3; }
+  #play svg { width: 20px; height: 20px; }
+  .vol { display: flex; align-items: center; gap: 6px; color: var(--ink-dim); }
+  .vol svg { width: 18px; height: 18px; }
+  input[type=range] { width: 92px; accent-color: var(--accent); }
+  .seg { display: flex; gap: 2px; padding: 2px; border-radius: 999px; background: rgba(0, 0, 0, 0.18); border: 1px solid var(--line); }
+  .seg button { border: 0; background: transparent; height: 34px; }
+  .seg button[aria-pressed="true"] { background: rgba(255, 220, 180, 0.22); color: #fff; }
+  .lbl { font-size: 12px; color: var(--ink-dim); margin-right: -4px; }
+  .toggle { display: flex; align-items: center; gap: 6px; font-size: 14px; padding: 0 6px; cursor: pointer; white-space: nowrap; }
+  .toggle input { accent-color: var(--accent); width: 16px; height: 16px; }
+  #full { width: 38px; padding: 0; display: grid; place-items: center; }
+  #full svg { width: 16px; height: 16px; }
+
+  #start { position: fixed; inset: 0; display: grid; place-items: center; background: radial-gradient(ellipse at center, rgba(20, 14, 28, 0.25), rgba(20, 14, 28, 0.6)); transition: opacity 0.7s ease; cursor: pointer; }
+  #start.gone { opacity: 0; pointer-events: none; }
+  #start .card { text-align: center; }
+  #start button { font: inherit; font-size: 20px; font-weight: 700; color: var(--accent-ink); background: var(--accent); border: 0; border-radius: 999px; padding: 16px 30px; cursor: pointer;
+    box-shadow: 0 10px 40px rgba(255, 170, 100, 0.35); display: inline-flex; align-items: center; gap: 10px; }
+  #start button:hover { background: #ffd3a3; }
+  #start button svg { width: 20px; height: 20px; }
+  #start p { margin: 14px 0 0; color: var(--ink); text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6); font-size: 15px; }
+  #start .hint { font-size: 12px; color: var(--ink-dim); }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  @media (max-width: 720px) {
+    .brand { padding: 10px 14px; }
+    .brand h1 { font-size: 16px; }
+    .brand p { font-size: 12px; }
+    .bar { gap: 6px; padding: 8px; border-radius: 24px; width: calc(100vw - 24px); }
+    .vol input { width: 70px; }
+    .bar button, .bar select { height: 36px; font-size: 13px; padding: 0 12px; }
+    .lbl { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { #ui, #start { transition: none; } }
+</style>
+</head>
+<body>
+<canvas id="scene" aria-label="A cat napping on a windowsill, looking out over a small town" role="img"></canvas>
+
+<div id="ui">
+  <header class="brand">
+    <h1><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#ffc58a" d="M4 20c0-5 2.5-9 8-9s8 4 8 9H4z"/><path fill="#ffc58a" d="M7 7l1.5-4L11 6.5h2L15.5 3 17 7c1 1.2 1.5 2.5 1.5 4H5.5C5.5 9.5 6 8.2 7 7z"/></svg><a href="/">Lofi Cat Radio</a></h1>
+    <p id="now">Lofi</p>
+    <p id="clock">Medford, OR</p>
+  </header>
+  <div class="bar" role="toolbar" aria-label="Radio controls">
+    <button id="play" aria-label="Play" aria-pressed="false">
+      <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 4.5v15l13-7.5z"/></svg>
+      <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true" hidden><path fill="currentColor" d="M6 4h4.5v16H6zM13.5 4H18v16h-4.5z"/></svg>
+    </button>
+    <label class="vol"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 9v6h4l5 4V5L8 9H4zm12.5 3a4 4 0 0 0-2-3.5v7a4 4 0 0 0 2-3.5z"/></svg><span class="sr">Volume</span><input id="vol" type="range" min="0" max="1" step="0.01" value="0.8"></label>
+    <div class="seg" id="mode" role="group" aria-label="Music style">
+      <button data-mode="lofi" aria-pressed="true">Lofi</button>
+      <button data-mode="ambient" aria-pressed="false">Ambient</button>
+    </div>
+    <span class="lbl" aria-hidden="true">Weather</span>
+    <select id="weather" aria-label="Weather">
+      <option value="auto">Auto</option><option value="clear">Clear</option><option value="cloudy">Cloudy</option>
+      <option value="rain">Rain</option><option value="snow">Snow</option><option value="fog">Fog</option>
+    </select>
+    <span class="lbl" aria-hidden="true">Cat</span>
+    <select id="cat" aria-label="Cat"></select>
+    <label class="toggle"><input id="fast" type="checkbox"> Fast day</label>
+    <button id="full" aria-label="Full screen"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  </div>
+</div>
+
+<div id="start">
+  <div class="card">
+    <button><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 4.5v15l13-7.5z"/></svg>Tune in</button>
+    <p>Lofi cats to relax to</p>
+    <p class="hint">Space play/pause · M music · W weather · C cat · D fast day · F full screen · H hide</p>
+  </div>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

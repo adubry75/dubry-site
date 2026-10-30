@@ -1,0 +1,253 @@
+// Lofi Cat Radio: wiring. Time and sky, weather, the controls, the audio.
+import { Scene } from './scene.js';
+import { SKINS, SKIN_IDS } from './cat.js';
+import { sunPosition, moonPosition, moonIllumination, localParts, clockText, sunTimes } from './sky.js';
+
+const $ = (s) => document.querySelector(s);
+const q = new URLSearchParams(location.search);
+const RECORD = q.get('record') === '1';
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('lofi-cat-radio:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('lofi-cat-radio:' + k, JSON.stringify(v)); } catch { /* private mode */ } },
+};
+const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
+const smooth = (e0, e1, x) => { const t = clamp((x - e0) / (e1 - e0), 0, 1); return t * t * (3 - 2 * t); };
+
+// ── settings (URL beats saved beats default)
+const settings = {
+  mode: q.get('mode') || store.get('mode', 'lofi'),
+  weather: q.get('weather') || store.get('weather', 'auto'),
+  cat: q.get('cat') || store.get('cat', 'daisy'),
+  volume: q.has('vol') ? clamp(parseFloat(q.get('vol')), 0, 1) : store.get('volume', 0.8),
+  fast: q.has('fast') ? q.get('fast') !== '0' : false,
+};
+if (!SKINS[settings.cat]) settings.cat = 'daisy';
+if (!['lofi', 'ambient'].includes(settings.mode)) settings.mode = 'lofi';
+const DAY_SECONDS = q.has('fast') && parseFloat(q.get('fast')) > 1 ? parseFloat(q.get('fast')) : 360; // a fast day lasts 6 minutes
+const seed = q.has('seed') ? parseInt(q.get('seed'), 10) >>> 0 : (Date.now() ^ (performance.now() * 1000)) >>> 0;
+
+// ── time: real Medford time, or a fixed/fast clock
+let offset = 0; // virtual - real
+if (q.has('time')) { // ?time=21:30 (Medford local, today) or a full ISO date
+  const t = q.get('time');
+  const m = /^(\d{1,2}):(\d{2})$/.exec(t);
+  if (m) {
+    const now = Date.now(), p = localParts(now);
+    const cur = p.hour * 60 + p.minute, want = +m[1] * 60 + +m[2];
+    offset = (want - cur) * 60e3 - p.second * 1000;
+  } else if (!isNaN(Date.parse(t))) offset = Date.parse(t) - Date.now();
+}
+const freeze = q.get('freeze') === '1'; // hold the clock still (for screenshots)
+let virtual = Date.now() + offset, catchUp = false;
+function advanceClock(dt) {
+  const real = Date.now() + offset;
+  if (freeze) return;
+  if (settings.fast) { virtual += dt * 1000 * (86400 / DAY_SECONDS); catchUp = false; return; }
+  if (catchUp) { // after a fast run, roll forward to the real time of day instead of jumping
+    const target = real + Math.ceil((virtual - real) / 864e5) * 864e5;
+    virtual += dt * 1000 * (86400 / DAY_SECONDS);
+    if (virtual >= target) { virtual = real; catchUp = false; }
+    return;
+  }
+  virtual = real;
+}
+
+// ── scene
+const canvas = $('#scene');
+const scene = new Scene(canvas, { seed });
+scene.skin = settings.cat;
+if (q.has('peek')) scene.nextPeek = parseFloat(q.get('peek')) || 1;
+if (q.get('awake') === '1') { scene.cat.wake(); scene.cat.action = null; }
+addEventListener('resize', () => { clearTimeout(resize.t); resize.t = setTimeout(resize, 120); });
+function resize() { scene.resize(); }
+
+// ── weather
+const WEATHER = {
+  clear: { rain: 0, snow: 0, fog: 0, cloud: 0.12 },
+  cloudy: { rain: 0, snow: 0, fog: 0, cloud: 0.75 },
+  rain: { rain: 1, snow: 0, fog: 0, cloud: 0.9 },
+  snow: { rain: 0, snow: 1, fog: 0, cloud: 0.8 },
+  fog: { rain: 0, snow: 0, fog: 1, cloud: 0.45 },
+};
+const auto = { current: 'clear', left: 0 };
+const wr = (() => { let a = seed ^ 0x5bd1e995; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; })();
+function autoPick(month) {
+  const winter = month === 12 || month <= 2, shoulder = month === 3 || month === 11 || month === 10 || month === 4;
+  const w = winter ? { clear: 2, cloudy: 2, rain: 3, snow: 3, fog: 3 } : shoulder ? { clear: 3, cloudy: 2, rain: 4, snow: month === 11 || month === 3 ? 1 : 0, fog: 2 } : { clear: 6, cloudy: 2, rain: 1.5, snow: 0, fog: 0.5 };
+  let x = wr() * Object.values(w).reduce((a, b) => a + b, 0);
+  for (const [k, v] of Object.entries(w)) { x -= v; if (x <= 0) return k; }
+  return 'clear';
+}
+function applyWeather(name) { scene.setWeather(WEATHER[name] || WEATHER.clear); }
+if (settings.weather !== 'auto' && WEATHER[settings.weather]) { applyWeather(settings.weather); Object.assign(scene.w, WEATHER[settings.weather]); }
+if (q.get('instant') === '1') { Object.assign(scene.w, scene.wt); scene.snowCover = scene.w.snow; for (let i = 0; i < 20; i++) scene.update(0.5, { night: 0, dark: 0, hour: 12, fast: false }); }
+
+// ── audio
+let actx = null, node = null, gain = null, playing = false, starting = null, info = null;
+async function startAudio() {
+  if (starting) return starting;
+  starting = (async () => {
+    actx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'playback' });
+    gain = actx.createGain(); gain.gain.value = 0; gain.connect(actx.destination);
+    const weather = { rain: scene.w.rain, snow: scene.w.snow, fog: scene.w.fog };
+    try {
+      await actx.audioWorklet.addModule(new URL('./worklet.js', import.meta.url));
+      node = new AudioWorkletNode(actx, 'lofi-radio', { numberOfInputs: 0, outputChannelCount: [2], processorOptions: { seed, mode: settings.mode, weather } });
+      node.port.onmessage = (e) => { if (e.data.type === 'info') showInfo(e.data.info); };
+      node.connect(gain);
+    } catch (err) { // older browsers: run the same engine on the main thread
+      console.warn('AudioWorklet unavailable, using ScriptProcessor', err);
+      const { Engine } = await import('./engine.js');
+      const engine = new Engine({ sampleRate: actx.sampleRate, seed, mode: settings.mode });
+      engine.setWeather(weather); engine.onInfo = showInfo;
+      const sp = actx.createScriptProcessor(4096, 0, 2);
+      sp.onaudioprocess = (ev) => { const L = ev.outputBuffer.getChannelData(0), R = ev.outputBuffer.getChannelData(1); engine.process(L, R, L.length); };
+      node = { port: { postMessage: (m) => { if (m.type === 'mode') engine.setMode(m.mode); else if (m.type === 'weather') engine.setWeather(m.weather); } }, connect: (d) => sp.connect(d) };
+      sp.connect(gain);
+    }
+  })();
+  return starting;
+}
+async function play() {
+  await startAudio();
+  if (actx.state !== 'running') await actx.resume();
+  const t = actx.currentTime;
+  gain.gain.cancelScheduledValues(t); gain.gain.setValueAtTime(gain.gain.value, t); gain.gain.linearRampToValueAtTime(settings.volume, t + 1.5);
+  playing = true; scene.playing = true; updateUI();
+  wakeLock();
+  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+}
+async function pause() {
+  if (!actx) return;
+  const t = actx.currentTime;
+  gain.gain.cancelScheduledValues(t); gain.gain.setValueAtTime(gain.gain.value, t); gain.gain.linearRampToValueAtTime(0, t + 0.8);
+  playing = false; scene.playing = false; updateUI();
+  setTimeout(() => { if (!playing && actx.state === 'running') actx.suspend(); }, 900);
+  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+}
+const toggle = () => (playing ? pause() : play());
+let lock = null;
+async function wakeLock() { try { if ('wakeLock' in navigator && !lock) { lock = await navigator.wakeLock.request('screen'); lock.addEventListener('release', () => { lock = null; }); } } catch { /* not allowed */ } }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && playing) wakeLock(); });
+if ('mediaSession' in navigator) {
+  navigator.mediaSession.metadata = new MediaMetadata({ title: 'Lofi Cat Radio', artist: 'dubry.com', album: 'Lofi cats to relax to' });
+  navigator.mediaSession.setActionHandler('play', play);
+  navigator.mediaSession.setActionHandler('pause', pause);
+}
+function showInfo(i) {
+  info = i;
+  const el = $('#now');
+  if (el) el.textContent = i.mode === 'lofi' ? `Lofi · ${i.key} · ${i.bpm} BPM` : `Ambient · ${i.key}`;
+}
+
+// ── controls
+const ui = $('#ui');
+function updateUI() {
+  $('#play').setAttribute('aria-pressed', String(playing));
+  $('#play').setAttribute('aria-label', playing ? 'Pause' : 'Play');
+  $('#play .i-play').hidden = playing; $('#play .i-pause').hidden = !playing;
+  for (const b of document.querySelectorAll('#mode button')) b.setAttribute('aria-pressed', String(b.dataset.mode === settings.mode));
+  $('#weather').value = settings.weather; $('#cat').value = settings.cat; $('#fast').checked = settings.fast; $('#vol').value = settings.volume;
+}
+function setMode(m) {
+  settings.mode = m; store.set('mode', m);
+  if (node) node.port.postMessage({ type: 'mode', mode: m });
+  const el = $('#now'); if (el && !node) el.textContent = m === 'lofi' ? 'Lofi' : 'Ambient';
+  updateUI();
+}
+$('#cat').innerHTML = SKIN_IDS.map((id) => `<option value="${id}">${SKINS[id].name}</option>`).join('');
+$('#play').addEventListener('click', toggle);
+for (const b of document.querySelectorAll('#mode button')) b.addEventListener('click', () => setMode(b.dataset.mode));
+$('#vol').addEventListener('input', (e) => { settings.volume = parseFloat(e.target.value); store.set('volume', settings.volume); if (gain && playing) gain.gain.setTargetAtTime(settings.volume, actx.currentTime, 0.05); });
+$('#weather').addEventListener('change', (e) => { settings.weather = e.target.value; store.set('weather', settings.weather); if (settings.weather === 'auto') auto.left = 0; else applyWeather(settings.weather); });
+$('#cat').addEventListener('change', (e) => { settings.cat = e.target.value; store.set('cat', settings.cat); scene.skin = settings.cat; });
+$('#fast').addEventListener('change', (e) => { settings.fast = e.target.checked; if (!settings.fast) catchUp = true; });
+$('#full').addEventListener('click', () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.().catch(() => {}); });
+updateUI();
+
+// keyboard: space play/pause, M mode, W weather, C cat, F fullscreen, D fast day, H hide controls
+const WEATHER_ORDER = ['auto', 'clear', 'cloudy', 'rain', 'snow', 'fog'];
+let hidden = RECORD;
+addEventListener('keydown', (e) => {
+  if (e.target.closest && e.target.closest('select, input[type=range]') && e.key !== ' ') return;
+  const k = e.key.toLowerCase();
+  if (k === ' ' || k === 'k') { e.preventDefault(); hideStart(); toggle(); }
+  else if (k === 'm') setMode(settings.mode === 'lofi' ? 'ambient' : 'lofi');
+  else if (k === 'w') { const i = (WEATHER_ORDER.indexOf(settings.weather) + 1) % WEATHER_ORDER.length; $('#weather').value = WEATHER_ORDER[i]; $('#weather').dispatchEvent(new Event('change')); }
+  else if (k === 'c') { const i = (SKIN_IDS.indexOf(settings.cat) + 1) % SKIN_IDS.length; $('#cat').value = SKIN_IDS[i]; $('#cat').dispatchEvent(new Event('change')); }
+  else if (k === 'f') $('#full').click();
+  else if (k === 'd') { $('#fast').checked = !settings.fast; $('#fast').dispatchEvent(new Event('change')); }
+  else if (k === 'h') { hidden = !hidden; document.body.classList.toggle('hide-ui', hidden); }
+  else return;
+  poke();
+});
+
+// the controls fade away when the pointer rests (and the cursor hides), so recordings stay clean
+let idleT = 0;
+function poke() {
+  if (RECORD) return;
+  document.body.classList.add('awake');
+  clearTimeout(idleT);
+  idleT = setTimeout(() => { if (!ui.matches(':hover') && !ui.contains(document.activeElement)) document.body.classList.remove('awake'); else poke(); }, 2600);
+}
+for (const ev of ['pointermove', 'pointerdown', 'touchstart', 'wheel']) addEventListener(ev, poke, { passive: true });
+ui.addEventListener('focusin', poke);
+if (RECORD) document.body.classList.add('record', 'hide-ui');
+
+// start overlay: browsers need a click before sound can play
+const start = $('#start');
+function hideStart() { start.classList.add('gone'); setTimeout(() => (start.hidden = true), 700); }
+if (RECORD || q.get('ui') === '0') { start.hidden = true; }
+start.querySelector('button').addEventListener('click', (e) => { e.stopPropagation(); hideStart(); play(); poke(); });
+start.addEventListener('click', () => { hideStart(); play(); poke(); });
+if (RECORD) addEventListener('pointerdown', () => { if (!playing) play(); }, { once: true });
+if (!RECORD) poke();
+
+// ── the loop
+let last = performance.now(), sunCache = { at: -1e9 }, lamp = 0, lampOn = false, sendT = 0, clockT = 0;
+const stats = { frames: 0, work: 0, worst: 0 };
+window.__lofi = { scene, settings, stats, get virtual() { return virtual; }, setTime(ms) { offset = ms - Date.now(); virtual = ms; }, play, pause, setMode };
+
+function frame(now) {
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  const t0 = performance.now();
+  advanceClock(dt);
+  const P = localParts(virtual);
+  // weather auto-pilot: a new pattern every 8–20 minutes (sooner on a fast day)
+  if (settings.weather === 'auto') {
+    auto.left -= dt * (settings.fast ? 8 : 1);
+    if (auto.left <= 0) { auto.current = autoPick(P.month); applyWeather(auto.current); auto.left = 480 + wr() * 720; }
+  }
+  // sun and moon (recomputed a few times a second; every frame on a fast day)
+  if (settings.fast || catchUp || now - sunCache.at > 250) {
+    const s = sunPosition(virtual), m = moonPosition(virtual);
+    if (!sunCache.ill || now - sunCache.illAt > 60000 || settings.fast) { sunCache.ill = moonIllumination(virtual); sunCache.illAt = now; }
+    Object.assign(sunCache, { at: now, sAlt: s.altitude * 180 / Math.PI, sAltR: s.altitude, sAz: s.azimuth, mAlt: m.altitude, mAz: m.azimuth });
+  }
+  const W = scene.w;
+  const sunAlt = sunCache.sAlt;
+  const night = smooth(-1, -12, sunAlt);
+  const dark = clamp(smooth(7, -7, sunAlt) + W.cloud * 0.12 + W.rain * 0.1 + W.fog * 0.08, 0, 1);
+  if (!lampOn && dark > 0.5) lampOn = true; else if (lampOn && dark < 0.38) lampOn = false;
+  lamp += ((lampOn ? 1 : 0) - lamp) * Math.min(1, dt * 1.4);
+  const state = {
+    sunAlt, sunAltR: sunCache.sAltR, sunAz: sunCache.sAz, moonAlt: sunCache.mAlt, moonAz: sunCache.mAz,
+    moonPhase: sunCache.ill.phase, moonFraction: sunCache.ill.fraction, night, dark, lamp,
+    hour: P.hour + P.minute / 60, month: P.month, day: P.day, fast: settings.fast || catchUp,
+  };
+  scene.update(dt, state);
+  scene.draw(state);
+  // keep the music's weather sounds in step with what we see
+  sendT -= dt;
+  if (node && sendT <= 0) { node.port.postMessage({ type: 'weather', weather: { rain: W.rain, snow: W.snow, fog: W.fog } }); sendT = 1; }
+  clockT -= dt;
+  if (clockT <= 0 && !hidden) {
+    const st = sunTimes(virtual);
+    $('#clock').textContent = `Medford, OR · ${clockText(virtual)}` + (st.sunrise ? ` · sunrise ${clockText(st.sunrise)} · sunset ${clockText(st.sunset)}` : '');
+    clockT = settings.fast ? 0.2 : 5;
+  }
+  const work = performance.now() - t0;
+  stats.frames++; stats.work += work; stats.worst = Math.max(stats.worst, work);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
