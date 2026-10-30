@@ -86,3 +86,25 @@ Overnight build of `/lofi/`. Each entry is a call I made without asking, and why
   and Jammies was a visible disc, so it is now a wide, faint wash.
 - 10-minute soak (fast day cycle, auto weather, music playing): JS heap 1.4 → 2.0 MB and flat after the first
   minute, DOM nodes constant at 224, no console errors or warnings. JS work per frame 1.3–3.4 ms on average.
+
+## Polish pass 2 (music)
+- **The browser and the renderer produce identical audio.** Checked by rendering 8 s of each mode in Chromium with an
+  `OfflineAudioContext` + the real AudioWorklet and comparing with the Node engine for the same seed: max
+  difference 0.0 (bit-identical). The renderer now runs the engine in the same 128-frame quanta as the browser,
+  because a few ambient events are timed at block boundaries.
+- Lofi grooves now swing their off-beat 8ths (they were straight; only 16ths swung). About a third of sections
+  play a soft **felt piano** (additive, slightly stretched partials, higher ones decaying faster) instead of the
+  Rhodes: the brief said "Rhodes/piano". The last bar of a section has a quiet filtered-noise riser that leads
+  into the next one.
+- Tempo now drifts 3–7 BPM per section and bounces off the 70/90 limits. Before, clamping made some seeds sit
+  at 90 forever.
+- Listen-check of the samples in `lofi/samples/` (decoded from the MP3s):
+
+  | file | peak | clipped | silence gaps | short-term loudness | worst 1 s change | integrated |
+  |---|---|---|---|---|---|---|
+  | lofi-3min-seed10.mp3 (D minor piano → F major Rhodes → D minor) | −3.4 dBFS | 0 | none | −23.0 to −14.5 LUFS | 3.1 LU | −18.1 LUFS |
+  | ambient-3min-seed21.mp3 (D dorian → A ionian) | −4.7 dBFS | 0 | none | −19.9 to −13.8 LUFS | 1.2 LU | −17.1 LUFS |
+  | lofi-rain-3min-seed13.mp3 | −3.3 dBFS | 0 | none | −21.0 to −14.2 LUFS | 2.7 LU | −17.2 LUFS |
+
+- "No bells, no plucks" in Ambient, measured: with the signal high-passed at 200 Hz, ambient has **no** level rise above
+  6 dB within 60 ms (largest 5.1 dB, which is pad beating), while lofi has 77 (drums and keys).

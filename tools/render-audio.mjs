@@ -72,7 +72,8 @@ let peak = 0, done = 0, lastPct = -1;
 const t0 = Date.now();
 while (done < total) {
   const n = Math.min(N, total - done);
-  engine.process(L, R, n);
+  // 128-frame quanta, exactly like the browser's AudioWorklet, so a seed renders the same music as the page
+  for (let i = 0; i < n; i += 128) { const m = Math.min(128, n - i); engine.process(L.subarray(i, i + m), R.subarray(i, i + m), m); }
   const buf = Buffer.alloc(n * 4);
   for (let i = 0; i < n; i++) {
     const k = done + i;

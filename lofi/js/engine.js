@@ -149,6 +149,56 @@ class Rhodes { // 2-op FM electric piano with a soft tremolo
   }
 }
 
+class Piano { // soft felt piano: a few slightly stretched partials, the higher ones dying faster
+  constructor(sr, start, midi, vel, durS, pan) {
+    this.start = start; this.end = start + Math.round(durS * sr);
+    const f = mtof(midi), B = 0.00035;
+    this.p = [];
+    for (let k = 1; k <= 6; k++) {
+      const fk = f * k * Math.sqrt(1 + B * k * k);
+      if (fk > sr * 0.4) break;
+      const tau = (2.6 - clamp((midi - 48) / 40, 0, 1) * 1.4) / Math.pow(k, 0.7);
+      this.p.push({ inc: fk / sr, ph: 0, a: Math.pow(k, -1.5) * (k === 1 ? 1 : 0.55 + vel * 0.5), d: Math.exp(-1 / (sr * tau)), e: 1 });
+    }
+    this.env = 0; this.atk = 1 / (sr * 0.006); this.up = true; this.rel = Math.exp(-1 / (sr * 0.22));
+    this.lp = new OnePole(sr, 1400 + vel * 2600); this.lp2 = new OnePole(sr, 1400 + vel * 2600);
+    this.gain = vel * 0.16 * (1 - clamp((midi - 60) / 60, -0.3, 0.6));
+    [this.gl, this.gr] = panGains(pan);
+  }
+  process(L, R, t0, n) {
+    let i = this.start - t0; if (i >= n) return true; if (i < 0) i = 0;
+    const P = this.p;
+    for (; i < n; i++) {
+      const t = t0 + i;
+      if (this.up) { this.env += this.atk; if (this.env >= 1) { this.env = 1; this.up = false; } }
+      else if (t >= this.end) this.env *= this.rel;
+      let y = 0;
+      for (let k = 0; k < P.length; k++) { const q = P[k]; q.ph += q.inc; if (q.ph > 1) q.ph -= 1; y += sinc(q.ph) * q.a * q.e; q.e *= q.d; }
+      y = this.lp2.lp(this.lp.lp(y)) * this.env * this.gain;
+      L[i] += y * this.gl; R[i] += y * this.gr;
+    }
+    return !(t0 + n > this.end && this.env < 2e-4) && P[0].e > 1e-4;
+  }
+}
+
+class Riser { // a soft noise swell that leads into the next section
+  constructor(sr, start, durS, noise) {
+    this.start = start; this.len = Math.round(durS * sr); this.k = 0; this.noise = noise;
+    this.f = new SVF(sr, 400, 1.4); this.f2 = new SVF(sr, 400, 1.4);
+  }
+  process(L, R, t0, n) {
+    let i = this.start - t0; if (i >= n) return true; if (i < 0) i = 0;
+    for (; i < n && this.k < this.len; i++, this.k++) {
+      const u = this.k / this.len;
+      if ((this.k & 63) === 0) { this.f.set(400 + 2600 * u * u, 1.4); this.f2.set(430 + 2700 * u * u, 1.4); }
+      const env = Math.pow(Math.sin(Math.PI * Math.min(1, u * 1.15) * 0.5), 3) * (u > 0.92 ? (1 - u) / 0.08 : 1) * 0.05;
+      this.f.run(this.noise()); this.f2.run(this.noise());
+      L[i] += this.f.band * env; R[i] += this.f2.band * env;
+    }
+    return this.k < this.len;
+  }
+}
+
 class Bass { // round sine bass with a little harmonics and saturation
   constructor(sr, start, midi, vel, durS) {
     this.start = start; this.end = start + Math.round(durS * sr);
@@ -489,7 +539,13 @@ class LofiGen {
       tonic = (last.tonic + shift + 12) % 12;
       if (minor !== last.minor && r.chance(0.6)) tonic = minor ? (last.tonic + 9) % 12 : (last.tonic + 3) % 12;
     } else { tonic = r.int(0, 11); minor = r.chance(0.3); }
-    const bpm = last ? clamp(Math.round(last.bpm + r.pick([-7, -5, -3, 3, 5, 7, -4, 4])), 70, 90) : r.int(70, 90);
+    let bpm = r.int(70, 90);
+    if (last) { // drift a few BPM from the last section, bouncing off the 70–90 limits
+      const d = r.pick([3, 4, 5, 6, 7]) * (r.chance(0.5) ? 1 : -1);
+      bpm = Math.round(last.bpm + d);
+      if (bpm > 90 || bpm < 70) bpm = Math.round(last.bpm - d);
+      bpm = clamp(bpm, 70, 90);
+    }
     const pool = minor ? PROG_MINOR : PROG_MAJOR;
     const a = r.pick(pool), b = r.chance(0.5) ? a : r.pick(pool);
     const prog = [...a, ...b].map(([iv, q]) => [(tonic + iv) % 12, q]);
@@ -499,13 +555,14 @@ class LofiGen {
       swing: r.range(0.1, 0.24), groove: r.int(0, GROOVES.length - 1),
       comp: r.int(0, COMP.length - 1), bass: r.int(0, BASS.length - 1),
       intro: r.pick([2, 4, 4]), melodyOdds: r.range(0.25, 0.6), roll: r.chance(0.6), motif: null,
+      keys: r.chance(0.35) ? 'piano' : 'rhodes', swing8: r.range(0.04, 0.12),
     };
     this.cutTarget = 2200; // filter starts half closed and opens through the intro
   }
 
   get info() {
     const s = this.section, ch = s.prog[s.bar % s.prog.length];
-    return { mode: 'lofi', key: NOTE_NAMES[s.tonic] + (s.minor ? ' minor' : ' major'), bpm: s.bpm, chord: chordName(ch[0], ch[1]) };
+    return { mode: 'lofi', key: NOTE_NAMES[s.tonic] + (s.minor ? ' minor' : ' major'), bpm: s.bpm, chord: chordName(ch[0], ch[1]), keys: s.keys };
   }
 
   scheduleBar() {
@@ -516,7 +573,7 @@ class LofiGen {
     const [rootPc, q] = s.prog[bi % s.prog.length];
     const nextCh = s.prog[(bi + 1) % s.prog.length];
     const at = (st, jitterMs = 6) => {
-      const sw = (st % 2 === 1) ? s.swing * step : 0;
+      const sw = (st % 2 === 1 ? s.swing * step : 0) + (st % 4 === 2 ? s.swing8 * 2 * step : 0);
       return Math.round(t0 + (st * step + sw + r.range(-jitterMs, jitterMs) / 1000) * sr);
     };
     // filter: open over the intro, close a little for the last bar
@@ -533,7 +590,8 @@ class LofiGen {
       const durS = len * step * (isLast ? 2.2 : 0.95);
       voicing.forEach((m, j) => {
         const roll = s.roll ? j * r.range(0.008, 0.022) * sr : r.range(0, 0.006) * sr;
-        this.voices.push(new Rhodes(sr, start + Math.round(roll), m, vel * r.range(0.85, 1.05), durS, (j / 3) * 0.6 - 0.3));
+        const v = vel * r.range(0.85, 1.05), pan = (j / 3) * 0.6 - 0.3, at0 = start + Math.round(roll);
+        this.voices.push(s.keys === 'piano' ? new Piano(sr, at0, m, v, durS, pan) : new Rhodes(sr, at0, m, v, durS, pan));
       });
     }
 
@@ -553,7 +611,7 @@ class LofiGen {
 
     // drums
     const g = GROOVES[s.groove];
-    if (isLast) { const t = at(0, 3); this.voices.push(new Kick(sr, t, 0.8, this.noise)); this.kicks.push(t); }
+    if (isLast) { const t = at(0, 3); this.voices.push(new Kick(sr, t, 0.8, this.noise)); this.kicks.push(t); this.voices.push(new Riser(sr, Math.round(t0 + barS * sr * 0.25), barS * 0.8, this.noise)); }
     if (!isIntro && !isLast) {
       const ks = isFillBar && r.chance(0.5) ? g.k.filter((x) => x < 8) : g.k;
       for (const st of ks) { const t = at(st, 3); this.voices.push(new Kick(sr, t, st === 0 ? 1 : r.range(0.7, 0.85), this.noise)); this.kicks.push(t); }
@@ -586,7 +644,8 @@ class LofiGen {
           if (st % 4 === 0 && !chordPcs.includes(m % 12)) { // strong beat: nudge to the nearest chord tone
             for (const d of [1, -1, 2, -2]) if (chordPcs.includes((m + d + 12) % 12)) { m += d; break; }
           }
-          this.voices.push(new Rhodes(sr, at(st, 8), clamp(m, 64, 88), r.range(0.45, 0.65), len * step, r.range(-0.25, 0.25), 1.25));
+          const mm = clamp(m, 64, 88), mv = r.range(0.45, 0.65), mp = r.range(-0.25, 0.25);
+          this.voices.push(s.keys === 'piano' ? new Piano(sr, at(st, 8), mm, mv + 0.1, len * step * 1.5, mp) : new Rhodes(sr, at(st, 8), mm, mv, len * step, mp, 1.25));
         }
       }
     }
