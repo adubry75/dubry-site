@@ -321,3 +321,10 @@ weather changes, rapid switching, NaN injection, timing). Its real findings, all
   on. The solid-black skin is called "Kitty" there, and Callie/Soybean "Callie".
 - **Next track** (⏭ button, `N` key): moves the current track to its closing bar (or, in Ambient, to the end of the
   current chord), so the normal smooth transition plays into a new key and tempo. Checked in all four styles.
+- **Second 10-minute soak** on the near-final code (music playing, auto weather, a 2-minute day so every palette,
+  the lamp and weather changes cycle several times): JS heap 1.6 → 2.3 MB and flat, DOM nodes constant at 301,
+  headless fps 55–60 (the adaptive resolution stepped in for the software renderer), JS work ~1–2 ms a frame, no
+  console errors or warnings. Its last frame caught one artifact, the Milky Way sprite's clipped edge showing as a
+  faint rectangle in the night sky. The sprite now fades out at every edge.
+- A plain Chromium (no autoplay flag) loads the page, record mode, and record + captions + auto + storm with a
+  completely clean console.

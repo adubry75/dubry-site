@@ -795,6 +795,12 @@ export class Scene {
         const c = document.createElement('canvas'); c.width = 240; c.height = 160; const g = c.getContext('2d'), rr = seeded(31);
         g.translate(120, 80); g.rotate(-0.45);
         for (let i = 0; i < 70; i++) { const x = (rr() - 0.5) * 300, y = (rr() - 0.5) * 26 * (1 + rr()), r0 = 8 + rr() * 22; const gr = g.createRadialGradient(x, y, 0, x, y, r0); gr.addColorStop(0, 'rgba(190,200,255,0.10)'); gr.addColorStop(1, 'rgba(190,200,255,0)'); g.fillStyle = gr; g.fillRect(x - r0, y - r0, r0 * 2, r0 * 2); }
+        // fade every edge to nothing, so the band can never show the sprite's border
+        g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'destination-in';
+        let m = g.createLinearGradient(0, 0, 240, 0); m.addColorStop(0, 'rgba(0,0,0,0)'); m.addColorStop(0.25, 'rgba(0,0,0,1)'); m.addColorStop(0.75, 'rgba(0,0,0,1)'); m.addColorStop(1, 'rgba(0,0,0,0)');
+        g.fillStyle = m; g.fillRect(0, 0, 240, 160);
+        m = g.createLinearGradient(0, 0, 0, 160); m.addColorStop(0, 'rgba(0,0,0,0)'); m.addColorStop(0.25, 'rgba(0,0,0,1)'); m.addColorStop(0.75, 'rgba(0,0,0,1)'); m.addColorStop(1, 'rgba(0,0,0,0)');
+        g.fillStyle = m; g.fillRect(0, 0, 240, 160);
         this.milky = c;
       }
       ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(1, starA * 1.3 * (1 - state.moonFraction * 0.5));
