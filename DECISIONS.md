@@ -31,7 +31,7 @@ Overnight build of `/lofi/`. Each entry is a call I made without asking, and why
   soft hats while the filter opens. There is never silence, and the tempo change lands where there is no groove
   to break.
 - Mode changes crossfade over 7 s, and the new generator starts in the old one's key.
-- Master: a slow leveller (±6 dB, 2.5 s window) keeps sections and modes at a similar loudness, then a
+- Master: a slow leveller (−6 to +8 dB, 2.5 s window) keeps sections and modes at a similar loudness, then a
   look-ahead limiter at −1 dBFS and a soft clip. Target loudness is about −18 LUFS integrated: comfortable
   for background listening, with headroom.
 
@@ -76,8 +76,8 @@ Overnight build of `/lofi/`. Each entry is a call I made without asking, and why
   A normal GPU-accelerated browser composites this far under 16 ms.
 - Safety net for slow machines: if the page can't hold ~45 fps for 4 s, it renders at a lower canvas resolution
   (down to 50%). Everything is soft shapes, so it still looks right. `?quality=1` pins full resolution.
-- Memory: caches are 4 room images + 4 town images (+4 snow images if it snows), built lazily per palette and
-  rebuilt only on resize or season change. Particles are capped. The 10-minute soak stays flat (see below).
+- Memory: caches are 4 room images + 4 view images + 4 snow layers, built in idle time after load and rebuilt only on
+  resize, season, room or view change (dropped canvases are freed at once). Particles are capped. The 10-minute soak stays flat (see below).
 
 ## Polish pass 1 (cat close-ups, poses, soak)
 - Looked at every skin awake, asleep and at night, plus the yawn, the stretch and the visitor. Fixed: the window
