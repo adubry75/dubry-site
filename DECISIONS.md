@@ -147,45 +147,6 @@ Overnight build of `/lofi/`. Each entry is a call I made without asking, and why
   18 + AAC 192k). Verified on a storm test: the sky flash lands at 11.37 s, the engine scheduled it at 11.2 s, and
   the rumble follows 1.5–5 s later, as intended. ffprobe shows exact 1920×1080, 30 fps, matching audio length.
 
----
-
-# Summary (read this first)
-
-**What I built:** Lofi Cat Radio at `/lofi/`. A cozy, endless, generative scene: a cat (Daisy, Nero, Jammies,
-Callie/Soybean or solid black) napping on a windowsill above a small town. The sky, sun, moon and room lighting
-follow real Medford time, and the weather drifts (clear, cloudy, rain, gentle storms, snow, fog, or the real
-current Medford weather). Music is generated live with no loops: **Lofi** (Rhodes/piano/guitar jazz chords, dusty drums,
-bass, vinyl, tape wobble), **Jazz** (brushes, ride, walking bass), **Bossa** (nylon guitar, clave, shaker) and
-**Ambient** (pads, drone, swells, nothing plucked), plus **Auto**, which follows the clock. There's an offline renderer for long soundtracks.
-
-**Deploy (WinSCP):** upload the `lofi/` folder to `public_html/lofi/`. That's the whole page (≈ 150 KB of code;
-`lofi/samples/` is optional, about 11 MB of MP3s). For the links on the home page, re-upload `dist/index.html` to
-`public_html/index.html` and `dist/nine-lives/cabs/lofi-radio.webp` to `public_html/nine-lives/cabs/`. Nothing
-else changed.
-
-**Record a 1-hour video:**
-1. Open `https://dubry.com/lofi/?record=1` in Chrome, full screen (F11) on a 1920×1080 display. `record=1` hides
-   every control and the cursor. Click once to start the sound.
-   Handy URL options: `mode=lofi|jazz|bossa|ambient|auto`, `weather=auto|live|clear|cloudy|rain|storm|snow|fog`,
-   `cat=daisy|nero|jammies|callie|black`, `room=cozy|cabin|blue`, `caption=1` (now-playing captions),
-   `seed=42` (same seed = same music), `fast=3600` (one whole day passes in
-   one hour; `fast=1` is a 6-minute day), `time=21:30` (start at a given Medford time).
-   Example: `/lofi/?record=1&mode=lofi&weather=rain&cat=daisy&fast=3600&seed=7`.
-   (`autoplay=1` makes it start the music by itself in a Chrome launched with
-   `--autoplay-policy=no-user-gesture-required`; otherwise one click starts it.)
-2. In OBS: a Window or Display Capture of that Chrome window + Desktop Audio, output 1920×1080 at 30 or 60 fps,
-   and record for 60 minutes.
-3. **Easiest: no screen recording at all.** `tools/render-video.mjs` renders a finished MP4 (picture and music)
-   offline, frame by frame. It can't drop frames, and storms' flashes and rumbles stay in sync:
-   `node tools/render-video.mjs --minutes 60 --seed 7 --mode lofi --weather rain --cat daisy --out lofi-rain-1h.mp4`
-   (add `--fast 3600 --time 05:30` for a whole day, dawn to night, in one hour; with `--mode auto` the music follows
-   that day too: Lofi → Bossa → Jazz → Ambient). Here, without a GPU, it ran at
-   ~17 frames/s, so an hour at 30 fps takes under two hours; `--fps 24` is quicker. It needs Node, ffmpeg and
-   Playwright's Chromium (`npx playwright install chromium` once).
-4. Or record the picture only and use a rendered soundtrack, e.g.
-   `node tools/render-audio.mjs --minutes 60 --seed 7 --mode lofi --weather rain --out lofi-1h.mp3`, then
-   `ffmpeg -i video.mp4 -i lofi-1h.mp3 -map 0:v -map 1:a -c:v copy -c:a aac -b:a 192k -shortest final.mp4`.
-
 ## New moods: room themes
 - A "Room" control (and `room=` URL option, `R` key, `--room` in the video renderer): **Cozy** (the original warm
   peach room with terracotta curtains), **Cabin** (log-plank walls, green plaid curtains, darker wood) and **Blue
@@ -332,3 +293,52 @@ weather changes, rapid switching, NaN injection, timing). Its real findings, all
   synthesized crickets chirp quietly at different places in the stereo field, about 27 dB under the music.
   Silent the rest of the year, and off in the renderer unless asked for, so seeds still render identically
   (browser vs Node re-verified).
+
+---
+
+# Summary
+
+**What I built:** Lofi Cat Radio, a new page at `/lofi/`. A cozy, endless, generative scene: a cat (Daisy, Nero,
+Jammies, Callie/Soybean or solid black) napping, yawning, grooming and stretching on a windowsill above a small town
+(cats can be petted, and it purrs). Sky, sun, moon and room lighting follow real Medford time. Weather drifts
+through clear, cloudy, rain, gentle storms, snow and fog, or follows Medford's live weather. Lights come on in the
+town at dusk, and cars, birds, a rooftop cat, chimney smoke, seasonal décor and a visiting second cat keep it gently
+alive. Three room moods (Cozy, Cabin, Blue hour).
+
+The music is generated live in the browser and never loops: **Lofi** (Rhodes/piano/guitar jazz voicings, dusty
+drums, bass, vinyl, tape wobble), **Jazz** (brushes, ride, walking bass), **Bossa** (nylon guitar, clave, shaker),
+**Ambient** (pads, drone, swells, nothing plucked or bell-like), or **Auto**, which follows the clock. Rain, snow,
+fog, thunder and summer crickets are mixed in to match the weather. Everything is original and drawn or synthesized
+in code.
+
+**Deploy (WinSCP):**
+1. Upload the `lofi/` folder to `public_html/lofi/`. That's the whole page: about 220 KB of code + a 100 KB share
+   image. `lofi/samples/` (5 MP3s, about 14 MB) is optional.
+2. For the two links on the home page, upload `dist/index.html` → `public_html/index.html` and
+   `dist/nine-lives/cabs/lofi-radio.webp` → `public_html/nine-lives/cabs/lofi-radio.webp`. Nothing else on the
+   server changes (all the hashed JS files are byte-identical).
+3. If the server has its own games index page outside this repo, add `<a href="/lofi/">Lofi Cat Radio</a>` there.
+
+**Record a 1-hour video:**
+- **Easiest, no screen recording:** `node tools/render-video.mjs --minutes 60 --seed 7 --mode lofi --weather rain
+  --cat daisy --out lofi-rain-1h.mp4` renders a finished 1080p MP4 (picture and music in sync) offline. Add
+  `--fast 3600 --time 2026-11-01T05:30:00-07:00 --mode auto` for a whole day in an hour, with the music following
+  it. `--still thumb.png --size 1280x720` makes a thumbnail. It needs Node, ffmpeg and Playwright's Chromium
+  (`npx playwright install chromium` once). It ran at ~17 frames/s here without a GPU, so an hour at 30 fps takes
+  under two hours.
+- **Or screen-record:** open `https://dubry.com/lofi/?record=1` in Chrome full screen (F11) at 1920×1080, click once
+  to start the sound (`record=1` hides every control and the cursor; `&autoplay=1` starts it by itself in a Chrome
+  launched with `--autoplay-policy=no-user-gesture-required`), and record the window + desktop audio in
+  OBS for 60 minutes. URL options: `mode=lofi|jazz|bossa|ambient|auto`,
+  `weather=auto|live|clear|cloudy|rain|storm|snow|fog`, `cat=daisy|nero|jammies|callie|black`,
+  `room=cozy|cabin|blue`, `seed=7` (same seed = same music), `fast=3600` (a whole day per hour), `time=21:30`,
+  `caption=1` (now-playing captions).
+- **Soundtrack only:** `node tools/render-audio.mjs --minutes 60 --seed 7 --mode lofi --weather rain --out
+  lofi-1h.mp3` (deterministic per seed, ~2–3 minutes per hour of audio).
+
+**What I could and couldn't verify:** everything was tested in headless Chromium: screenshots of every weather ×
+time on desktop and phone, two 10-minute soaks with flat memory, console clean, live mode switching, the browser
+audio matching the Node renderer bit for bit, and level analysis of every sample plus 60-minute renders of each
+style. I couldn't test real Safari/iPhone or Firefox (only Chromium is installed here), or frame rate on a real GPU.
+In software rendering it already runs at 55–60 fps with adaptive resolution, and the Safari-specific risks I know
+of are handled in code. Worth a quick look on your phone.
