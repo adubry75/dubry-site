@@ -34,3 +34,35 @@ Overnight build of `/lofi/`. Each entry is a call I made without asking, and why
 - Master: a slow leveller (±6 dB, 2.5 s window) keeps sections and modes at a similar loudness, then a
   look-ahead limiter at −1 dBFS and a soft clip. Target loudness is about −18 LUFS integrated: comfortable
   for background listening, with headroom.
+
+## Links from the home page
+- The brief allows one link from the home page and one from the games/demos area. The games area *is* the
+  home page's Arcade, so: **one new arcade cabinet** ("Lofi Cat Radio", `/lofi/`, last in the aisle, with a real
+  frame of the scene as its screen at `src/static/cabs/lofi-radio.webp`) and **one footer link** next to
+  "54 Bench Challenge" and "Art portfolio". The only source edits are one line in `src/data/content.js` and one
+  line in `src/index.html`. `dist/` was rebuilt: `dist/index.html` changed and one image was added; every hashed
+  JS file is byte-identical. The arcade heading counts the cabinets itself, so it now says 35.
+- If the server has a separate games index page (outside this repo), it needs a link added by hand:
+  `<a href="/lofi/">Lofi Cat Radio</a>`.
+
+## Scene
+- **Everything is drawn in code on one canvas**, with a 1920×1080 logical design. Wider screens see more wall; phones
+  (portrait) zoom to the window and get the ceiling, a floor, a rug, a cat bed and a ball of yarn above and below.
+- **Lighting follows the sun's real altitude** for Medford (SunCalc-style formulas in `lofi/js/sky.js`) through four
+  palettes (night, blue hour, golden hour, day). The town and the room are pre-rendered once per palette and
+  crossfaded, which keeps frames cheap (mostly a few `drawImage` calls) and makes transitions perfectly smooth.
+- The window faces south, so the sun arcs across it and the moon (real position and phase) shows up when it's
+  in that part of the sky.
+- The town is generic and drawn freehand: rows of houses, a steeple, power lines with birds on them, street
+  lamps, a distant snowy volcano (the Rogue Valley has one on the horizon; this one is not a portrait of any real
+  mountain). Trees follow the real season: autumn colours now, bare in winter, blossom in spring.
+- Lights in town windows each have their own darkness threshold and bedtime, so they come on one by one at dusk
+  and go off one by one late at night; a few come on before sunrise. About 30% of windows never light (empty rooms).
+- Night touches: the lamp turns itself on at dusk (warm pool of light, reflected in the glass), fairy lights
+  twinkle, passing cars throw headlight sweeps across the ceiling, and a rare shooting star crosses clear skies.
+- **The cat** is procedural bezier art with a small behaviour model: sleeps (slow breathing, head on paws), wakes
+  with a yawn, loafs with slow blinks, looks around, watches birds fly past, stretches, twitches ears and flicks
+  its tail. Pupils are slits in daylight and round at night. Skins: Daisy (black, white socks), Nero (beige),
+  Jammies (orange tabby), Callie/Soybean (Siamese points, blue eyes), solid black.
+- **The second cat's cameo** is a "photobomb": every 8–23 minutes another of the five cats peeks up from the bottom
+  of the frame, looks around and sinks back. The main cat wakes up and looks at it.

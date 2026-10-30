@@ -895,7 +895,7 @@ export class Engine {
     for (let s = 0; s < n; s++) {
       const p = L[s] * L[s] + R[s] * R[s];
       this.agcEnv += this.agcA * (p - this.agcEnv);
-      const target = clamp(0.11 / Math.sqrt(this.agcEnv + 1e-9), 0.5, 2);
+      const target = clamp(0.165 / Math.sqrt(this.agcEnv + 1e-9), 0.5, 2.5);
       this.agcGain += this.agcG * (target - this.agcGain);
       L[s] *= this.agcGain; R[s] *= this.agcGain;
     }

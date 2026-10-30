@@ -41,6 +41,7 @@ export const EXTRA_CABINETS = [
   { id: 'rocket-ascent', title: 'The Karman Line', motif: 'rocket', href: '/games/rocket-ascent/' },
   { id: 'midnight-auction', title: 'Midnight Auction', motif: 'gavel', href: '/games/midnight-auction/' },
   { id: 'arkanoid', title: 'Arkanoid', motif: 'arkanoid', href: '/arkanoid/arkanoid.html' },
+  { id: 'lofi-radio', title: 'Lofi Cat Radio', motif: 'moon', href: '/lofi/' },
 ];
 
 // Life 4 — featured. `art` picks the poster theme (big.css); `img` is the game's own key art in
