@@ -314,3 +314,6 @@ weather changes, rapid switching, NaN injection, timing). Its real findings, all
   town's flat roofs (only roofs not hidden by the sill's things or the main cat), sometimes sits halfway to look
   around, and fades in and out at the roof's ends. Its eyes glint at night, and the window cat watches it. (I first
   put it on the sidewalk, but the mug, plant and pumpkin hide most of the sidewalk.)
+- The info panel has a live status line naming what the cat is up to: "Daisy is napping", "… is curled up asleep",
+  "… is washing a paw", "… is watching the birds", "… is watching a cat on the roof", "… has a visitor: Nero", and so
+  on. The solid-black skin is called "Kitty" there, and Callie/Soybean "Callie".

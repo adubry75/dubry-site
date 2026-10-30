@@ -298,6 +298,22 @@ canvas.addEventListener('pointerdown', (e) => {
 });
 canvas.addEventListener('pointermove', (e) => { canvas.style.cursor = scene.hitCat(e.clientX, e.clientY) ? 'pointer' : ''; }, { passive: true });
 
+// a little live status line: what the cat is up to
+const CAT_NAME = { daisy: 'Daisy', nero: 'Nero', jammies: 'Jammies', callie: 'Callie', black: 'Kitty' };
+function catStatus() {
+  const c = scene.cat, name = CAT_NAME[scene.skin] || 'The cat';
+  if (scene.peek) return `${name} has a visitor: ${CAT_NAME[scene.peek.skin] || 'a friend'}`;
+  if (c.action === 'yawn') return `${name} is yawning`;
+  if (c.action === 'stretch') return `${name} is stretching`;
+  if (c.action === 'groom') return `${name} is washing a paw`;
+  if (c.state === 'sleep') return c.p.wrap > 0.5 ? `${name} is curled up asleep` : `${name} is napping`;
+  if (scene.stray) return `${name} is watching a cat on the roof`;
+  if (scene.birds.length) return `${name} is watching the birds`;
+  if (scene.w.rain > 0.5) return `${name} is watching the rain`;
+  if (scene.w.snow > 0.5) return `${name} is watching the snow`;
+  return `${name} is looking out the window`;
+}
+
 // ── the loop
 let last = performance.now(), sunCache = { at: -1e9 }, lamp = 0, lampOn = false, sendT = 0, clockT = 0;
 const stats = { frames: 0, work: 0, worst: 0 };
@@ -353,7 +369,8 @@ function tick(dt, now) {
     const wl = settings.weather === 'live' ? (live.failed ? ' · live weather unavailable' : live.label ? ` · ${live.label} (live)` : '') : '';
     $('#clock').textContent = `Medford, OR · ${clockText(virtual)}` + (st.sunrise ? ` · sunrise ${clockText(st.sunrise)} · sunset ${clockText(st.sunset)}` : '') + wl;
     $('#seed').textContent = `seed ${seed}`;
-    clockT = settings.fast ? 0.2 : 5;
+    $('#status').textContent = catStatus();
+    clockT = settings.fast ? 0.2 : 1;
   }
   const work = performance.now() - t0;
   stats.frames++; stats.work += work; stats.worst = Math.max(stats.worst, work);
