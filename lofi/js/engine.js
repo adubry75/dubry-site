@@ -647,6 +647,7 @@ class LofiGen {
 
     // drums
     const g = GROOVES[s.groove];
+    if (isIntro && bi === s.intro - 1) for (const st of [0, 8]) { const t = at(st, 3); this.voices.push(new Kick(sr, t, 0.5, this.noise)); this.kicks.push(t); } // lean into the groove
     if (isLast) { const t = at(0, 3); this.voices.push(new Kick(sr, t, 0.8, this.noise)); this.kicks.push(t); this.voices.push(new Riser(sr, Math.round(t0 + barS * sr * 0.25), barS * 0.8, this.noise)); }
     if (!isIntro && !isLast) {
       const ks = isFillBar && r.chance(0.5) ? g.k.filter((x) => x < 8) : g.k;

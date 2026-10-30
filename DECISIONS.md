@@ -257,3 +257,16 @@ weather changes, rapid switching, NaN injection, timing). Its real findings, all
   music is paused, the screen wake lock is released on pause.
 - Tools: the local servers bind to 127.0.0.1 only and refuse paths outside the repo or folders; WAV headers no longer
   overflow on renders over ~6 h; very short renders fade correctly.
+- Ambient now has two pad timbres, chosen per key section: the warm detuned saws, or a rounder triangle-like
+  "soft" pad, so a long ambient session changes colour. Levels are matched (soft sections −16.4 LUFS in a 6-minute
+  test).
+- Lofi's last intro bar now has a soft kick on 1 and 3, so the full groove leans in rather than dropping in. The
+  worst 1-second loudness change across three 6-minute renders fell to 2.2–4.1 LU.
+- **Final listen-check of the samples** (rendered from the final engine; decoded MP3s, `tools/check-audio.mjs`):
+
+  | file | peak | clipped | gaps | short-term loudness | worst 1 s change | integrated |
+  |---|---|---|---|---|---|---|
+  | lofi-3min-seed10.mp3 (D minor → F major → B♭ major) | −3.5 dBFS | 0 | none | −24.5 to −15.3 LUFS | 2.0 LU | −18.1 LUFS |
+  | lofi-rain-3min-seed13.mp3 (F major → D minor, rain) | −3.4 dBFS | 0 | none | −22.4 to −14.3 LUFS | 2.2 LU | −17.5 LUFS |
+  | jazz-3min-seed41.mp3 (A♭ major → B major) | −5.4 dBFS | 0 | none | −21.2 to −15.6 LUFS | 2.2 LU | −18.0 LUFS |
+  | ambient-3min-seed21.mp3 (D dorian → A dorian) | −5.6 dBFS | 0 | none | −18.9 to −14.0 LUFS | 1.1 LU | −17.0 LUFS |
