@@ -228,7 +228,17 @@ function showInfo(i) {
 
 // ── controls
 const ui = $('#ui');
+// keep the address bar in step with the choices, so a set-up scene can be copied (add &record=1 to film it)
+function syncURL() {
+  try {
+    const u = new URL(location.href);
+    for (const k of ['mode', 'weather', 'cat', 'room', 'view']) u.searchParams.set(k, settings[k]);
+    u.searchParams.set('seed', String(seed)); // same seed, same music
+    history.replaceState(null, '', u);
+  } catch { /* file:// or sandboxed */ }
+}
 function updateUI() {
+  syncURL();
   $('#play').setAttribute('aria-pressed', String(playing));
   $('#play').setAttribute('aria-label', playing ? 'Pause' : 'Play');
   $('#play .i-play').toggleAttribute('hidden', playing); $('#play .i-pause').toggleAttribute('hidden', !playing); // (SVG has no .hidden property)
@@ -244,14 +254,14 @@ function setMode(m) {
 }
 $('#cat').innerHTML = SKIN_IDS.map((id) => `<option value="${id}">${SKINS[id].name}</option>`).join('');
 $('#room').innerHTML = Object.entries(THEMES).map(([id, t]) => `<option value="${id}">${t.name}</option>`).join('');
-$('#view').addEventListener('change', (e) => { settings.view = e.target.value; store.set('view', settings.view); scene.scenery = settings.view; });
-$('#room').addEventListener('change', (e) => { settings.room = e.target.value; store.set('room', settings.room); scene.theme = settings.room; });
+$('#view').addEventListener('change', (e) => { settings.view = e.target.value; store.set('view', settings.view); scene.scenery = settings.view; syncURL(); });
+$('#room').addEventListener('change', (e) => { settings.room = e.target.value; store.set('room', settings.room); scene.theme = settings.room; syncURL(); });
 $('#play').addEventListener('click', toggle);
 $('#next').addEventListener('click', () => { if (node && playing) node.port.postMessage({ type: 'next' }); });
 for (const b of document.querySelectorAll('#mode button')) b.addEventListener('click', () => setMode(b.dataset.mode));
 $('#vol').addEventListener('input', (e) => { settings.volume = parseFloat(e.target.value); store.set('volume', settings.volume); if (gain && playing) { rampGain(targetVolume(), 0.08); scheduleSleep(); } });
-$('#weather').addEventListener('change', (e) => { settings.weather = e.target.value; store.set('weather', settings.weather); if (settings.weather === 'auto') auto.left = 0; else if (settings.weather === 'live') { live.at = 0; } else applyWeather(settings.weather); clockT = 0; });
-$('#cat').addEventListener('change', (e) => { settings.cat = e.target.value; store.set('cat', settings.cat); scene.skin = settings.cat; });
+$('#weather').addEventListener('change', (e) => { settings.weather = e.target.value; store.set('weather', settings.weather); if (settings.weather === 'auto') auto.left = 0; else if (settings.weather === 'live') { live.at = 0; } else applyWeather(settings.weather); clockT = 0; syncURL(); });
+$('#cat').addEventListener('change', (e) => { settings.cat = e.target.value; store.set('cat', settings.cat); scene.skin = settings.cat; syncURL(); });
 $('#fast').addEventListener('change', (e) => { settings.fast = e.target.checked; if (!settings.fast) catchUp = true; });
 if (!document.fullscreenEnabled) $('#full').hidden = true; // e.g. iPhone Safari has no element fullscreen
 $('#full').addEventListener('click', () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.().catch(() => {}); });

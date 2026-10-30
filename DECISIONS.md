@@ -472,6 +472,8 @@ in code.
   `weather=auto|live|clear|cloudy|rain|storm|snow|fog`, `cat=daisy|nero|jammies|callie|black`,
   `room=cozy|cabin|blue`, `view=town|lake|city`, `seed=7` (same seed = same music), `fast=3600` (a whole day per hour), `time=21:30`,
   `caption=1` (now-playing captions).
+- **Set it up by hand, then film it:** the address bar follows the controls (style, weather, cat, room, view and the
+  session's seed), so you can arrange a scene, copy the URL, add `&record=1`, and the same scene and music come back.
 - **Ready-made recipes** (all checked by screenshot; append to `https://dubry.com/lofi/?record=1&`, or pass the same
   values to `render-video.mjs` as `--mode … --weather … --cat … --room … --view … --time …`):
   | Video | Settings |
