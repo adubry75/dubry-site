@@ -927,7 +927,7 @@ export class Scene {
     drawCat(ctx, CAT_X, SILL_Y + 2, 1, this.skin, this.cat, this.time, catL, rim, state.night * 0.3);
     this.mark('cat');
     // the visitor peeks up from the bottom of the frame
-    if (this.peek) drawPeek(ctx, this.peek.x, this.view.y1 - 40, 1.25, this.peek.skin, this.peek.t / this.peek.dur, this.time, catL);
+    if (this.peek) drawPeek(ctx, this.peek.x, this.view.y1 - 95, 1.25, this.peek.skin, this.peek.t / this.peek.dur, this.time, catL);
     // lamp glow over everything nearby (also catches the cat)
     // (the night room has the lamp's light baked in; draw only what the palette blend doesn't cover)
     const baked = ia === 0 ? (ib === 0 ? 1 : 1 - bt) : 0;

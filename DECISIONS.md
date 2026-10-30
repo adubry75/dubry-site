@@ -405,6 +405,9 @@ intact, drawing state never leaks out of the new views). Fixed:
 - The five committed MP3 samples are bit-identical (decoded PCM hashes) to what the final engine renders for the
   same seeds, so they truly represent the shipped music.
 - `npm run build` reproduces the committed `dist/` exactly (zero diff).
+- Re-checked the visitor cameo in the City, the Lake on a landscape phone and the Town on a portrait phone: it sat
+  too low (only ears and eyes showed). It now rises a bit higher, so its whole face and both front paws rest on the
+  bottom edge of the frame.
 
 ---
 
