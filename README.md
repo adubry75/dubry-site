@@ -187,7 +187,7 @@ lofi/
 | `node tools/check-audio.mjs file.wav [--png spec.png]` | peak, clipping, silence gaps, loudness over time (LUFS), smoothness of transitions |
 | `node tools/lofi-shots.mjs [--soak 10]` | Playwright screenshots of every weather × time on desktop and phone, or a long soak run |
 
-URL options: `mode=lofi|jazz|ambient`, `weather=auto|live|clear|cloudy|rain|storm|snow|fog`,
+URL options: `mode=lofi|jazz|ambient|auto`, `caption=1`, `weather=auto|live|clear|cloudy|rain|storm|snow|fog`,
 `cat=daisy|nero|jammies|callie|black`, `room=cozy|cabin|blue`, `seed=N`, `fast=1` (6-minute days) or `fast=S`
 (a day every S seconds), `time=HH:MM` or an ISO date, `record=1` (no UI, no cursor).
-Keys: Space play/pause · M music · W weather · C cat · R room · D fast day · F full screen · H hide controls.
+Keys: Space play/pause · M music (Lofi → Jazz → Ambient → Auto) · W weather · C cat · R room · D fast day · F full screen · H hide controls.
