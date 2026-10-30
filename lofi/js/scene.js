@@ -686,7 +686,7 @@ export class Scene {
     const drift = this.season === 'autumn' ? ['#d08a3a', '#c96a32', '#e0b04a'] : this.season === 'spring' && state.night < 0.5 ? ['#f2c4d0', '#f7d8e0', '#ebb0c2'] : null;
     if (drift && W.rain < 0.5 && W.snow < 0.3 && r() < dt * (this.season === 'spring' ? 0.12 : 0.05) && this.leaves.length < 6) this.leaves.push({ x: -20, y: 80 + r() * 300, vx: 50 + r() * 50, ph: r() * 6, rot: 0, col: drift[(r() * drift.length) | 0], petal: this.season === 'spring' });
     // fireflies on warm summer nights
-    const flies = this.season === 'summer' && W.rain < 0.3 && W.fog < 0.5 ? Math.round(smooth(0.5, 0.9, state.night) * 14) : 0;
+    const flies = this.season === 'summer' && this.scenery !== 'city' && W.rain < 0.3 && W.fog < 0.5 ? Math.round(smooth(0.5, 0.9, state.night) * 14) : 0;
     if (!this.fireflies) this.fireflies = [];
     while (this.fireflies.length < flies) this.fireflies.push({ x: r() * G.w, y: 430 + r() * 200, ph: r() * 6, sp: 0.5 + r(), vx: (r() - 0.5) * 12, vy: (r() - 0.5) * 6 });
     if (this.fireflies.length > flies) this.fireflies.length = flies;
@@ -783,6 +783,7 @@ export class Scene {
     if (this.scenery !== this.cachedView) { // switching views: the moving town things go
       for (const k of [...this.caches.keys()]) if (/^(town|snow)/.test(k) && !k.endsWith(this.scenery)) { const c = this.caches.get(k); c.width = c.height = 0; this.caches.delete(k); }
       if (this.scenery !== 'town') { this.cars = []; this.stray = null; }
+      if (this.scenery !== 'lake') { this.deer = null; this.rings = []; }
       this.cachedView = this.scenery;
     }
     if (this.theme !== this.cachedTheme) { // drop the other themes' room images

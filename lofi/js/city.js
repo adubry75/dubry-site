@@ -21,12 +21,12 @@ export function buildCity() {
     const b = { x, w, h, col: ['#a77f6c', '#8f8a8f', '#b49a7c', '#7c8794', '#a88a8f', '#6f7a72'][(r() * 6) | 0], tank: r() < 0.35, mast: false };
     C.near.push(b);
     // window grid
-    const cols = Math.floor(w / 16), rows = Math.floor((h - 18) / 20);
+    const cols = Math.floor(w / 16), rows = Math.max(1, Math.floor((h - 18 - (STREET - 30 - RAIL) - 6) / 20)); // (stop above the railway)
     for (let i = 0; i < rows; i++) for (let j = 0; j < cols; j++) {
       if (r() < 0.08) continue;
       C.windows.push({ x: x + 6 + j * ((w - 12) / cols), y: STREET - 30 - h + 12 + i * 20, w: Math.max(5, (w - 12) / cols - 6), h: 10, lit: r() < 0.55, col: r() < 0.12 ? '#b8d0ff' : r() < 0.5 ? '#ffd58c' : '#ffc979', blink: r() < 0.04 ? 20 + r() * 80 : 0, ph: r() * 100 });
     }
-    if (r() < 0.6 && C.signs.length < 6) { const [text, col] = NEON[C.signs.length % NEON.length]; C.signs.push({ x: x + w * (0.2 + r() * 0.4), y: STREET - 30 - h * (0.25 + r() * 0.35), text, col, vertical: r() < 0.4, ph: r() * 10, flick: r() < 0.3 }); }
+    if (r() < 0.6 && C.signs.length < 6) { const [text, col] = NEON[C.signs.length % NEON.length]; const vertical = r() < 0.4; C.signs.push({ x: x + w * (0.2 + r() * 0.4), y: Math.min(STREET - 30 - h * (0.25 + r() * 0.35), RAIL - (vertical ? 52 : 20)), text, col, vertical, ph: r() * 10, flick: r() < 0.3 }); }
     x += w + 2 + r() * 8;
   }
   const tall = C.near.reduce((a, b) => (b.h > a.h ? b : a));

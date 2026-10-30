@@ -381,6 +381,22 @@ these behaviour glitches, all fixed and re-measured:
 - **Fourth 10-minute soak** (City view, Auto music, auto weather, 2-minute days, trains and neon cycling): heap
   2.3–2.5 MB and flat, DOM nodes constant, 56–59 fps, worst frame 20 ms, no console errors or warnings.
 
+## Polish pass 8: third independent review (Lake, City, sleep timer, new sounds)
+A third reviewer checked everything since the second review (it confirmed: no NaNs, no runaway voices, determinism
+intact, drawing state never leaks out of the new views). Fixed:
+- **The sleep timer didn't work with the screen locked** (it ran from animation frames, which stop when a page is
+  hidden), which is exactly when it matters. The fade is now scheduled on the audio clock and the pause on a timer;
+  both keep running in the background. Tested with the animation loop stopped: it still paused on time.
+- A timer that ran out while paused made the next Play pause again. Now it's simply over.
+- During the final 2-minute fade, Play or the volume slider swelled back to full volume. Every volume change now
+  respects the fade (all volume changes are explicit ramps, which also fixed a WebAudio ordering subtlety I found
+  while testing: a ramp queued after `setTargetAtTime` starts from the wrong anchor). Measured: a timer's gain glides
+  down smoothly to 0 and pauses.
+- **City: lit windows were painted over the elevated railway.** The window grid and the signs now stop above it.
+- Small ones: the "watching a deer" status could follow you into other views; the tune-in could blip on the old
+  ScriptProcessor fallback (tune-in is now AudioWorklet-only); toasts no longer cover the control bar when it's up
+  (they show mid-screen then); no fireflies over the City.
+
 ---
 
 # Summary

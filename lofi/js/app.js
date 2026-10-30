@@ -170,10 +170,12 @@ async function play() {
   await startAudio();
   await actx.resume();
   const t = actx.currentTime;
-  const tuning = !playing && gain.gain.value < 0.05 && node; // switching the radio on: the engine fades the music in under a little static
+  if (sleep.end && Date.now() >= sleep.end) { sleep.end = 0; sleep.minutes = 0; } // a timer that ran out while paused is just over
+  const tuning = !playing && gain.gain.value < 0.05 && node && typeof AudioWorkletNode !== 'undefined' && node instanceof AudioWorkletNode; // switching the radio on: the engine fades the music in under a little static
   if (tuning) node.port.postMessage({ type: 'tune' });
-  gain.gain.cancelScheduledValues(t); gain.gain.setValueAtTime(gain.gain.value, t); gain.gain.linearRampToValueAtTime(settings.volume, t + (tuning ? 0.12 : 1.5));
+  gain.gain.cancelScheduledValues(t); gain.gain.setValueAtTime(gain.gain.value, t); gain.gain.linearRampToValueAtTime(targetVolume(), t + (tuning ? 0.12 : 1.5));
   playing = true; scene.playing = true; scene.audioThunder = true; updateUI();
+  scheduleSleep();
   if (q.has('sleep') && !sleep.armed) { sleep.armed = true; const m = parseFloat(q.get('sleep')); if (m > 0) setSleep(m); }
   wakeLock();
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
@@ -183,6 +185,7 @@ async function pause() {
   const t = actx.currentTime;
   gain.gain.cancelScheduledValues(t); gain.gain.setValueAtTime(gain.gain.value, t); gain.gain.linearRampToValueAtTime(0, t + 0.8);
   playing = false; scene.playing = false; scene.audioThunder = false; updateUI();
+  clearTimeout(sleepT);
   clearTimeout(suspendT); suspendT = setTimeout(() => { if (!playing && actx.state === 'running') actx.suspend(); }, 900);
   if (lock) { lock.release().catch(() => {}); lock = null; }
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
@@ -246,7 +249,7 @@ $('#room').addEventListener('change', (e) => { settings.room = e.target.value; s
 $('#play').addEventListener('click', toggle);
 $('#next').addEventListener('click', () => { if (node && playing) node.port.postMessage({ type: 'next' }); });
 for (const b of document.querySelectorAll('#mode button')) b.addEventListener('click', () => setMode(b.dataset.mode));
-$('#vol').addEventListener('input', (e) => { settings.volume = parseFloat(e.target.value); store.set('volume', settings.volume); if (gain && playing) gain.gain.setTargetAtTime(settings.volume, actx.currentTime, 0.05); });
+$('#vol').addEventListener('input', (e) => { settings.volume = parseFloat(e.target.value); store.set('volume', settings.volume); if (gain && playing) { rampGain(targetVolume(), 0.08); scheduleSleep(); } });
 $('#weather').addEventListener('change', (e) => { settings.weather = e.target.value; store.set('weather', settings.weather); if (settings.weather === 'auto') auto.left = 0; else if (settings.weather === 'live') { live.at = 0; } else applyWeather(settings.weather); clockT = 0; });
 $('#cat').addEventListener('change', (e) => { settings.cat = e.target.value; store.set('cat', settings.cat); scene.skin = settings.cat; });
 $('#fast').addEventListener('change', (e) => { settings.fast = e.target.checked; if (!settings.fast) catchUp = true; });
@@ -316,18 +319,29 @@ canvas.addEventListener('pointermove', (e) => { canvas.style.cursor = scene.hitC
 function crickets(month, night) { const W = scene.w; return month >= 6 && month <= 8 ? night * (1 - W.rain) * (1 - W.fog * 0.5) * (1 - W.snow) : 0; }
 let lastNight = 0;
 
-// sleep timer: fade the radio out over the last 2 minutes, then pause (T cycles off/30/60/90, or ?sleep=60)
+// sleep timer: fade the radio out over the last 2 minutes, then pause (T cycles off/30/60/90, or ?sleep=60).
+// The fade lives on the audio clock and the pause on a timer, so both still happen with the screen locked.
 const sleep = { minutes: 0, end: 0 };
-function setSleep(min) {
-  sleep.minutes = min; sleep.end = min ? performance.now() + min * 60e3 : 0;
-  if (gain && playing) gain.gain.setTargetAtTime(settings.volume, actx.currentTime, 0.3);
-  toast(min ? `☾ Sleep timer: ${min} min` : 'Sleep timer off', min ? 'the radio will fade out and pause' : '');
+let sleepT = 0;
+const sleepFactor = (at = Date.now()) => (sleep.end ? clamp((sleep.end - at) / 120e3, 0, 1) : 1);
+const targetVolume = () => settings.volume * sleepFactor();
+// every volume change is an explicit ramp from the current value, so a sleep fade queued after it starts in the right place
+function rampGain(to, seconds) { const t = actx.currentTime; gain.gain.cancelScheduledValues(t); gain.gain.setValueAtTime(gain.gain.value, t); gain.gain.linearRampToValueAtTime(to, t + seconds); }
+function scheduleSleep() {
+  clearTimeout(sleepT);
+  if (!sleep.end || !actx || !playing) return;
+  const now = Date.now(), t = actx.currentTime, toEnd = (sleep.end - now) / 1000;
+  if (toEnd <= 0) { sleep.end = 0; sleep.minutes = 0; pause(); return; }
+  if (toEnd - 120 > 1.6) gain.gain.setValueAtTime(settings.volume, t + toEnd - 120); // hold full volume until the last 2 minutes
+  else if (toEnd > 1.6) gain.gain.linearRampToValueAtTime(settings.volume * sleepFactor(now + 1500), t + 1.5); // already in the fade: settle onto its line first
+  gain.gain.linearRampToValueAtTime(0, t + toEnd); // (a shorter timer just ramps down from wherever the volume is)
+  sleepT = setTimeout(() => { if (playing && sleep.end && Date.now() >= sleep.end - 100) { sleep.end = 0; sleep.minutes = 0; pause(); } }, toEnd * 1000 + 150);
 }
-function sleepTick(now) {
-  if (!sleep.end || !playing || !gain) return;
-  const left = (sleep.end - now) / 1000;
-  if (left <= 0) { sleep.end = 0; sleep.minutes = 0; pause(); return; }
-  if (left < 120) gain.gain.setTargetAtTime(settings.volume * (left / 120) ** 2, actx.currentTime, 0.5);
+function setSleep(min) {
+  sleep.minutes = min; sleep.end = min ? Date.now() + min * 60e3 : 0;
+  if (gain && playing) rampGain(targetVolume(), 0.6);
+  scheduleSleep();
+  toast(min ? `☾ Sleep timer: ${min} min` : 'Sleep timer off', min ? 'the radio will fade out and pause' : '');
 }
 
 // a little live status line: what the cat is up to
@@ -358,7 +372,6 @@ function frame(now) {
   requestAnimationFrame(frame); // first, so one bad frame can never stop the scene
   const dt = Math.min(0.1, (now - last) / 1000); last = now;
   adaptQuality(dt);
-  sleepTick(now);
   try { tick(dt, now); failures = 0; } catch (err) { if (++failures < 3) console.error(err); if (failures === 30) { scene.resize(); } }
 }
 function tick(dt, now) {
@@ -405,7 +418,7 @@ function tick(dt, now) {
     const st = sunTimes(virtual);
     const wl = settings.weather === 'live' ? (live.failed ? ' · live weather unavailable' : live.label ? ` · ${live.label} (live)` : '') : '';
     $('#clock').textContent = `Medford, OR · ${clockText(virtual)}` + (st.sunrise ? ` · sunrise ${clockText(st.sunrise)} · sunset ${clockText(st.sunset)}` : '') + wl;
-    $('#seed').textContent = `seed ${seed}` + (sleep.end ? ` · sleep in ${Math.ceil((sleep.end - performance.now()) / 60e3)} min` : '');
+    $('#seed').textContent = `seed ${seed}` + (sleep.end && sleep.end > Date.now() ? ` · sleep in ${Math.ceil((sleep.end - Date.now()) / 60e3)} min` : '');
     $('#status').textContent = catStatus();
     clockT = settings.fast ? 0.2 : 1;
   }

@@ -82,6 +82,7 @@
   #caption b { font-size: 17px; font-weight: 600; letter-spacing: 0.01em; }
   #caption span { font-size: 12px; color: var(--ink-dim); }
   body.awake #caption:not(.on) { opacity: 0; }
+  body.awake #caption { left: 50%; bottom: auto; top: 36%; translate: -50% 0; } /* toasts stay clear of the controls */
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
   @media (max-width: 720px) {
