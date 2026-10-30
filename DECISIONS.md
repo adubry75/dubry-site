@@ -361,6 +361,18 @@ these behaviour glitches, all fixed and re-measured:
   faint whistle gliding down as it "locks on", while the music rises underneath (it peaks ~7 dB under the music, no
   spikes). Only on play, never in the renderers, so seeds still render identically.
 
+## New scene: the City view
+- A third view (`view=city`, `V` cycles Town → Lake → City): the classic lofi night city. A hazy far skyline,
+  then nearer mid-rise buildings with window grids, cornices, fire escapes, rooftop water tanks and a radio mast
+  with a slowly blinking red light; an elevated railway on pillars; a street below. All original and generic.
+- Live parts: hundreds of windows light up after dusk (fewer in the small hours, a few flickering like TVs); seven
+  neon signs with generic words (CAFÉ, NOODLES, OPEN, BOOKS, 24H, RECORDS, TEA) switch on at dusk, hum gently in
+  brightness, and one or two stutter now and then; their colours smear on the wet street in the rain; and every 1–2
+  minutes an elevated train of 3–4 lit carriages glides across (the status line says "… is watching the train go
+  by"). Weather, snow layers, sky, moon and palettes work as in the other views.
+- Checked: screenshot sweep (4 weathers × 7 times, desktop + phone, no console errors) and performance in software
+  rendering (8–31 ms a frame, the same as the town).
+
 ---
 
 # Summary
@@ -370,7 +382,8 @@ Jammies, Callie/Soybean or solid black) napping, yawning, grooming and stretchin
 (you can pet the cat, and it purrs). Sky, sun, moon and room lighting follow real Medford time. Weather drifts
 through clear, cloudy, rain, gentle storms, snow and fog, or follows Medford's live weather. Lights come on in the
 town at dusk, and cars, birds, a rooftop cat, chimney smoke, seasonal décor and a visiting second cat keep it gently
-alive. Two views out of the window (the town, or a forested lake with a cabin and the occasional deer) and
+alive. Three views out of the window (the town; a forested lake with a cabin and the occasional deer; a
+neon-lit city with an elevated train) and
 three room moods (Cozy, Cabin, Blue hour).
 
 The music is generated live in the browser and never loops: **Lofi** (Rhodes/piano/guitar jazz voicings, dusty
@@ -399,7 +412,7 @@ in code.
   launched with `--autoplay-policy=no-user-gesture-required`), and record the window + desktop audio in
   OBS for 60 minutes. URL options: `mode=lofi|jazz|bossa|ambient|auto`,
   `weather=auto|live|clear|cloudy|rain|storm|snow|fog`, `cat=daisy|nero|jammies|callie|black`,
-  `room=cozy|cabin|blue`, `view=town|lake`, `seed=7` (same seed = same music), `fast=3600` (a whole day per hour), `time=21:30`,
+  `room=cozy|cabin|blue`, `view=town|lake|city`, `seed=7` (same seed = same music), `fast=3600` (a whole day per hour), `time=21:30`,
   `caption=1` (now-playing captions).
 - **Ready-made recipes** (all checked by screenshot; append to `https://dubry.com/lofi/?record=1&`, or pass the same
   values to `render-video.mjs` as `--mode … --weather … --cat … --room … --view … --time …`):
@@ -411,6 +424,7 @@ in code.
   | Stormy jazz night | `mode=jazz&weather=storm&time=23:30&cat=black&room=cabin&view=town` |
   | Misty lake morning | `mode=ambient&weather=fog&time=07:45&cat=callie&room=blue&view=lake` |
   | Golden hour by the lake | `mode=lofi&weather=clear&time=17:45&cat=callie&room=cozy&view=lake` |
+  | Neon city in the rain | `mode=lofi&weather=rain&time=21:30&cat=black&room=blue&view=city` |
   | A whole day in an hour | `mode=auto&weather=auto&fast=3600&time=05:30&view=lake&room=cabin` |
 - **Keys on the page:** Space play/pause · N next track · M music style · W weather · C cat · R room · V view ·
   T sleep timer · D fast day · F full screen · H hide controls. Click the cat to pet it.

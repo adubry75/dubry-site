@@ -5,6 +5,7 @@
 // drawImage calls plus the moving things (sky, clouds, weather, lights, cars, birds, the cat).
 import { drawCat, drawPeek, CatBrain, SKIN_IDS, lit } from './cat.js';
 import { buildLake, renderLake, lakeLive } from './lake.js';
+import { buildCity, renderCity, cityLive } from './city.js';
 
 export const GLASS = { x: 470, y: 120, w: 980, h: 650 };
 const G = GLASS;
@@ -120,7 +121,7 @@ export class Scene {
     this.r = seeded(opts.seed ?? 1);
     this.town = buildTown();
     this.cat = new CatBrain(this.r);
-    this.skin = 'daisy'; this.theme = 'cozy'; this.scenery = 'town'; this.lake = buildLake();
+    this.skin = 'daisy'; this.theme = 'cozy'; this.scenery = 'town'; this.lake = buildLake(); this.city = buildCity();
     this.w = { rain: 0, snow: 0, fog: 0, cloud: 0.25, storm: 0 };
     this.flash = 0; this.flashT = -1; this.localThunder = 30; this.audioThunder = false;
     this.wt = { ...this.w };
@@ -270,6 +271,7 @@ export class Scene {
       g.globalAlpha = 1;
     }
     if (this.scenery === 'lake') { renderLake(g, this.lake, C, snow ? SN : null, this.season); return c; }
+    if (this.scenery === 'city') { renderCity(g, this.city, C, snow ? SN : null); return c; }
     const drawTrees = (row) => {
       for (const t of T.trees) if (t.row === row) this.tree(g, t, C, row === 0 ? 0.5 : row === 1 ? 0.3 : 0.08, snow ? SN : null);
     };
@@ -693,7 +695,7 @@ export class Scene {
     this.leaves = this.leaves.filter((l) => l.x < G.w + 30 && l.y < G.h);
     // cars
     this.nextCar -= dt * (state.fast ? 3 : 1);
-    if (this.nextCar <= 0 && this.scenery !== 'lake') {
+    if (this.nextCar <= 0 && this.scenery === 'town') {
       const dir = r() < 0.5 ? 1 : -1;
       this.cars.push({ x: dir > 0 ? -90 : G.w + 90, dir, v: 110 + r() * 60, col: ['#b54a3c', '#3f5f8a', '#d9cfb8', '#4d6b52', '#e0b84a', '#6d6a78'][(r() * 6) | 0], lane: dir > 0 ? 646 : 626 });
       this.nextCar = 14 + r() * 40 * (state.night > 0.5 ? 1.6 : 1);
@@ -730,7 +732,7 @@ export class Scene {
     if (!this.roofs) // flat roofs in the nearer rows that nothing on the sill (or the cat) hides
       // (the sill's things sit lower than any roof; only the cat's head can hide one, so skip roofs right behind it)
       this.roofs = this.town.rows.flat().filter((b) => b.kind === 'flat' && b.row > 0 && b.w > 50 && b.x > 10 && b.x + b.w < G.w - 10 && !(b.y - b.h > 500 && b.x < 640 && b.x + b.w > 500));
-    if (this.nextStray <= 0 && !this.stray && W.rain < 0.6 && this.roofs.length && this.scenery !== 'lake') {
+    if (this.nextStray <= 0 && !this.stray && W.rain < 0.6 && this.roofs.length && this.scenery === 'town') {
       const b = this.roofs[(r() * this.roofs.length) | 0], dir = r() < 0.5 ? 1 : -1;
       this.stray = { x0: b.x + 6, x1: b.x + b.w - 6, x: dir > 0 ? b.x + 6 : b.x + b.w - 6, y: b.y - b.h - 4, s: b.row === 2 ? 0.85 : 0.65, dir, v: 16 + r() * 8, ph: 0,
         col: ['#2a2629', '#d08a4a', '#8a8580', '#e9e2d6'][(r() * 4) | 0], sit: r() < 0.6 ? 0.35 + r() * 0.3 : -1, sat: 0 };
@@ -778,9 +780,9 @@ export class Scene {
     const sea = season(state.month, state.day);
     const dec = decorFor(state.month, state.day);
     if (sea !== this.season || dec !== this.decor) { this.season = sea; this.decor = dec; this.dropCaches(); }
-    if (this.scenery !== this.cachedView) { // switching town ↔ lake: the moving town things go
+    if (this.scenery !== this.cachedView) { // switching views: the moving town things go
       for (const k of [...this.caches.keys()]) if (/^(town|snow)/.test(k) && !k.endsWith(this.scenery)) { const c = this.caches.get(k); c.width = c.height = 0; this.caches.delete(k); }
-      if (this.scenery === 'lake') { this.cars = []; this.stray = null; }
+      if (this.scenery !== 'town') { this.cars = []; this.stray = null; }
       this.cachedView = this.scenery;
     }
     if (this.theme !== this.cachedTheme) { // drop the other themes' room images
@@ -865,8 +867,10 @@ export class Scene {
     }
     this.mark('town');
     // lit windows, street lamps, cars, birds
-    const lake = this.scenery === 'lake';
-    if (lake) lakeLive(ctx, this.lake, this, state, this.warmGlow); else this.townLights(ctx, state);
+    const lake = this.scenery !== 'town'; // (lake or city: no town lights, cars or chimneys)
+    if (this.scenery === 'lake') lakeLive(ctx, this.lake, this, state, this.warmGlow);
+    else if (this.scenery === 'city') cityLive(ctx, this.city, this, state, this.warmGlow);
+    else this.townLights(ctx, state);
     // a wet road mirrors the lamps and headlights
     const wet = Math.max(W.rain, this.wetRoad || 0);
     if (wet > 0.05 && state.dark > 0.3 && !lake) this.reflections(ctx, state, wet);
@@ -880,7 +884,7 @@ export class Scene {
     const md = state.month * 100 + state.day;
     if (!lake && (md >= 1015 || md <= 415 || W.snow > 0.2)) this.smoke(ctx, state);
     // lights glow through the fog
-    if (W.fog > 0.05 && state.dark > 0.3 && this.scenery !== 'lake') {
+    if (W.fog > 0.05 && state.dark > 0.3 && this.scenery === 'town') {
       ctx.globalCompositeOperation = 'lighter';
       for (const w of this.town.windows) if (w.a > 0.2 && w.row > 0) { ctx.globalAlpha = w.a * W.fog * 0.35; ctx.drawImage(this.warmGlow, w.x - 10, w.y - 10, w.w + 20, w.h + 20); }
       ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
@@ -1162,7 +1166,7 @@ export class Scene {
       ctx.moveTo(b.x - 8 * b.s, b.y - f); ctx.quadraticCurveTo(b.x - 3 * b.s, b.y - 2, b.x, b.y); ctx.quadraticCurveTo(b.x + 3 * b.s, b.y - 2, b.x + 8 * b.s, b.y - f);
     }
     ctx.stroke();
-    if (this.scenery === 'lake') return; // no wires out by the lake
+    if (this.scenery !== 'town') return; // the wires are in the town view only
     // birds on the wire between the poles (wire 1 from x=122 to x=842)
     ctx.fillStyle = col;
     for (const wb of this.wireBirds) {

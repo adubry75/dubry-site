@@ -175,7 +175,7 @@ The design calls are logged in `DECISIONS.md`.
 lofi/
 ├── index.html          the page (controls fade away when the mouse rests; ?record=1 hides everything)
 ├── js/app.js           time (real Medford sun and moon), weather, controls, audio wiring
-├── js/scene.js         the canvas scene (room, town, sky, weather, lights); js/lake.js the Lake view;
+├── js/scene.js         the canvas scene (room, town, sky, weather, lights); js/lake.js / js/city.js the Lake and City views;
 │                       js/cat.js the cat; js/sky.js astronomy
 ├── js/engine.js        the music engine (pure-JS DSP), run by js/worklet.js in the browser and by the tools below
 └── samples/            3-minute MP3 samples of each style (optional on the server)
@@ -189,6 +189,6 @@ lofi/
 | `node tools/lofi-shots.mjs [--soak 10]` | Playwright screenshots of every weather × time on desktop and phone, or a long soak run |
 
 URL options: `mode=lofi|jazz|bossa|ambient|auto`, `caption=1`, `weather=auto|live|clear|cloudy|rain|storm|snow|fog`,
-`cat=daisy|nero|jammies|callie|black`, `room=cozy|cabin|blue`, `view=town|lake`, `seed=N`, `fast=1` (6-minute days) or `fast=S`
+`cat=daisy|nero|jammies|callie|black`, `room=cozy|cabin|blue`, `view=town|lake|city`, `seed=N`, `fast=1` (6-minute days) or `fast=S`
 (a day every S seconds), `time=HH:MM` or an ISO date, `record=1` (no UI, no cursor).
 Keys: Space play/pause · M music (Lofi → Jazz → Bossa → Ambient → Auto) · W weather · C cat · R room · V view · T sleep timer · D fast day · F full screen · H hide controls.

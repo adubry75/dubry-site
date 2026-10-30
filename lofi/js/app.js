@@ -26,7 +26,7 @@ const settings = {
 const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 if (!own(SKINS, settings.cat)) settings.cat = 'daisy';
 if (!own(THEMES, settings.room)) settings.room = 'cozy';
-if (!['town', 'lake'].includes(settings.view)) settings.view = 'town';
+if (!['town', 'lake', 'city'].includes(settings.view)) settings.view = 'town';
 if (!['auto', 'live', 'clear', 'cloudy', 'rain', 'storm', 'snow', 'fog'].includes(settings.weather)) settings.weather = 'auto';
 if (!['lofi', 'jazz', 'bossa', 'ambient', 'auto'].includes(settings.mode)) settings.mode = 'lofi';
 // Auto: the music follows the clock: lofi in the morning, bossa in the afternoon, jazz in the evening, ambient late at night
@@ -269,7 +269,7 @@ addEventListener('keydown', (e) => {
   else if (k === 'f') $('#full').click();
   else if (k === 'n') $('#next').click();
   else if (k === 't') setSleep({ 0: 30, 30: 60, 60: 90, 90: 0 }[sleep.minutes] ?? 0);
-  else if (k === 'v') { $('#view').value = settings.view === 'town' ? 'lake' : 'town'; $('#view').dispatchEvent(new Event('change')); }
+  else if (k === 'v') { $('#view').value = { town: 'lake', lake: 'city', city: 'town' }[settings.view]; $('#view').dispatchEvent(new Event('change')); }
   else if (k === 'r') { const ids = Object.keys(THEMES), i = (ids.indexOf(settings.room) + 1) % ids.length; $('#room').value = ids[i]; $('#room').dispatchEvent(new Event('change')); }
   else if (k === 'd') { $('#fast').checked = !settings.fast; $('#fast').dispatchEvent(new Event('change')); }
   else if (k === 'h') { hidden = !hidden; document.body.classList.toggle('hide-ui', hidden); }
@@ -341,6 +341,7 @@ function catStatus() {
   if (c.state === 'sleep') return c.p.wrap > 0.5 ? `${name} is curled up asleep` : `${name} is napping`;
   if (scene.stray) return `${name} is watching a cat on the roof`;
   if (scene.deer) return `${name} is watching a deer by the lake`;
+  if (scene.scenery === 'city' && scene.city.train) return `${name} is watching the train go by`;
   if (scene.birds.length) return `${name} is watching the birds`;
   if (scene.w.rain > 0.5) return `${name} is watching the rain`;
   if (scene.w.snow > 0.5) return `${name} is watching the snow`;
