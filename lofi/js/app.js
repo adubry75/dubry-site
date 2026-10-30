@@ -239,18 +239,18 @@ $('#next').addEventListener('click', () => { if (node && playing) node.port.post
 for (const b of document.querySelectorAll('#mode button')) b.addEventListener('click', () => setMode(b.dataset.mode));
 $('#vol').addEventListener('input', (e) => { settings.volume = parseFloat(e.target.value); store.set('volume', settings.volume); if (gain && playing) gain.gain.setTargetAtTime(settings.volume, actx.currentTime, 0.05); });
 $('#weather').addEventListener('change', (e) => { settings.weather = e.target.value; store.set('weather', settings.weather); if (settings.weather === 'auto') auto.left = 0; else if (settings.weather === 'live') { live.at = 0; } else applyWeather(settings.weather); clockT = 0; });
-$('#cat').addEventListener('change', (e) => { settings.cat = e.target.value; store.set('cat', settings.cat); scene.skin = settings.cat; scene.theme = settings.room; });
+$('#cat').addEventListener('change', (e) => { settings.cat = e.target.value; store.set('cat', settings.cat); scene.skin = settings.cat; });
 $('#fast').addEventListener('change', (e) => { settings.fast = e.target.checked; if (!settings.fast) catchUp = true; });
 if (!document.fullscreenEnabled) $('#full').hidden = true; // e.g. iPhone Safari has no element fullscreen
 $('#full').addEventListener('click', () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.().catch(() => {}); });
 updateUI();
 
-// keyboard: space play/pause, M mode, W weather, C cat, F fullscreen, D fast day, H hide controls
+// keyboard: space play/pause, N next, M music, W weather, C cat, R room, F fullscreen, D fast day, H hide controls
 const WEATHER_ORDER = ['auto', 'live', 'clear', 'cloudy', 'rain', 'storm', 'snow', 'fog'];
 let hidden = RECORD;
 addEventListener('keydown', (e) => {
   if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
-  if (e.target.closest && e.target.closest('select, input, button') && e.key !== ' ') return;
+  if (e.target.closest && e.target.closest('select')) return; // selects use letters to pick options
   if (e.key === ' ' && e.target.closest && e.target.closest('button, input, select')) return; // let the control handle its own Space
   const k = e.key.toLowerCase();
   if (k === ' ' || k === 'k') { e.preventDefault(); hideStart(); toggle(); }
