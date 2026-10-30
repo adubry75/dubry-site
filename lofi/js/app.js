@@ -225,7 +225,7 @@ const ui = $('#ui');
 function updateUI() {
   $('#play').setAttribute('aria-pressed', String(playing));
   $('#play').setAttribute('aria-label', playing ? 'Pause' : 'Play');
-  $('#play .i-play').hidden = playing; $('#play .i-pause').hidden = !playing;
+  $('#play .i-play').toggleAttribute('hidden', playing); $('#play .i-pause').toggleAttribute('hidden', !playing); // (SVG has no .hidden property)
   for (const b of document.querySelectorAll('#mode button')) b.setAttribute('aria-pressed', String(b.dataset.mode === settings.mode));
   $('#weather').value = settings.weather; $('#cat').value = settings.cat; $('#room').value = settings.room; $('#view').value = settings.view; $('#fast').checked = settings.fast; $('#vol').value = settings.volume;
 }

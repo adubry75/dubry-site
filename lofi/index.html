@@ -93,6 +93,13 @@
     .bar button, .bar select { height: 36px; font-size: 13px; padding: 0 12px; }
     .lbl { display: none; }
   }
+  @media (max-height: 480px) { /* landscape phones: keep the scene visible */
+    .brand { padding: 8px 12px; } .brand h1 { font-size: 14px; } .brand p { font-size: 11px; margin-top: 2px; } .brand .status, .brand .seed { display: none; }
+    .bar { gap: 5px; padding: 6px 8px; bottom: max(8px, env(safe-area-inset-bottom)); }
+    .bar button, .bar select { height: 30px; font-size: 12px; padding: 0 10px; } .bar select { padding-right: 26px; background-position: calc(100% - 15px) 13px, calc(100% - 10px) 13px; }
+    #play { width: 36px; height: 36px; } #next, #full { width: 30px; } .seg button { height: 26px; } .lbl { display: none; } .vol input { width: 64px; }
+  }
+  @media (hover: none) { #start .hint { display: none; } }
   @media (max-width: 400px) { .seg button { padding: 0 8px; font-size: 12px; } }
   @media (prefers-reduced-motion: reduce) { #ui, #start { transition: none; } }
 </style>

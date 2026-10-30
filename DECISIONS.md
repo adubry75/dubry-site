@@ -339,6 +339,16 @@ these behaviour glitches, all fixed and re-measured:
   toast confirms, the info panel counts down, and the radio fades out over the last two minutes, then pauses. The
   scene keeps running. Tested with a 3-second timer: it paused on schedule, and the cycle and toasts work.
 
+## Polish pass 7: small screens and a real bug
+- **Bug: the play button never turned into a pause button.** The icons are SVG elements, and `svg.hidden = …` is a
+  no-op (`hidden` is an HTML property, not an SVG one). It now toggles the attribute. Found by looking closely at a
+  landscape-phone screenshot.
+- Landscape phones (height ≤ 480 px) get a compact control bar and info panel, so the cat stays visible while the
+  controls are up. Touch devices don't show the keyboard-shortcut hint on the start screen.
+- Video renderer speed: profiled per frame (about 22 ms to render in software + 24 ms to JPEG-encode + transfer).
+  Batching frames and async `toBlob` pipelining gave no gain here (Chromium encodes on the same thread and this
+  machine is CPU-bound), so I left it simple. On a machine with a GPU, rendering is the cheaper half.
+
 ---
 
 # Summary
