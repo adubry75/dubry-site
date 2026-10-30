@@ -275,6 +275,14 @@ export class Scene {
       for (const off of [0, 12]) { g.beginPath(); g.moveTo(-10, 330 + off); g.quadraticCurveTo(70, 352 + off, 140 - 18 + off * 2, 310 + off); g.quadraticCurveTo(500, 382 + off, 860 - 18 + off * 2, 322 + off); g.quadraticCurveTo(940, 350 + off, G.w + 10, 334 + off); g.stroke(); }
     } else {
       fill(SN(0.03), () => { g.rect(0, 598, G.w, 6); g.rect(0, 640, G.w, 20); });
+      // a neighbour's snowman on the far sidewalk
+      const sx = 448, sy = 600;
+      g.fillStyle = SN(0.02);
+      g.beginPath(); g.arc(sx, sy - 9, 10, 0, Math.PI * 2); g.arc(sx, sy - 24, 7.5, 0, Math.PI * 2); g.arc(sx, sy - 35, 5.5, 0, Math.PI * 2); g.fill();
+      g.fillStyle = C('#2c2a30', 0.02); g.fillRect(sx - 5, sy - 44, 10, 3); g.fillRect(sx - 3.5, sy - 50, 7, 6);
+      g.fillStyle = C('#e07a3a', 0.02); g.beginPath(); g.moveTo(sx + 1, sy - 35); g.lineTo(sx + 8, sy - 34); g.lineTo(sx + 1, sy - 33); g.fill();
+      g.fillStyle = C('#b8433a', 0.02); g.fillRect(sx - 6, sy - 30, 12, 3);
+      g.strokeStyle = C('#5a4636', 0.02); g.lineWidth = 1.2; g.beginPath(); g.moveTo(sx - 7, sy - 25); g.lineTo(sx - 16, sy - 31); g.moveTo(sx + 7, sy - 25); g.lineTo(sx + 15, sy - 32); g.stroke();
     }
     return c;
   }

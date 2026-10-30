@@ -227,3 +227,5 @@ else changed.
 - `?caption=1` (works with `record=1`): a small "♪ dusty moon · lofi · A♭ major · 76 bpm" caption fades in at the
   bottom-left for 8 s whenever a new section (track) starts, like lofi channels do. It's HTML, so it shows in screen
   recordings but not in `render-video.mjs` output, which captures only the canvas.
+- When snow has settled on the town, a small snowman (top hat, carrot nose, red scarf) stands on the far sidewalk,
+  fading in with the snow cover.
