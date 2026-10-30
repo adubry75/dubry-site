@@ -794,6 +794,9 @@ export class Scene {
     this.mark('lights');
     // fog
     if (W.fog > 0.02) this.drawFog(ctx, state, sky);
+    // chimney smoke in wood-stove season (mid-October to mid-April)
+    const md = state.month * 100 + state.day;
+    if (md >= 1015 || md <= 415 || W.snow > 0.2) this.smoke(ctx, state);
     // lights glow through the fog
     if (W.fog > 0.05 && state.dark > 0.3) {
       ctx.globalCompositeOperation = 'lighter';
@@ -1008,6 +1011,23 @@ export class Scene {
       }
     }
     this.headlight = head; this.headX = headX;
+  }
+
+  smoke(ctx, state) {
+    if (!this.chimneys) this.chimneys = this.town.rows.flat().filter((b) => b.chimney && b.row > 0).map((b, i) => ({ x: b.x + b.w * 0.7 + 4.5, y: b.y - b.h - 26, s: b.row === 2 ? 1 : 0.7, ph: i * 1.7, on: i % 3 !== 1 }));
+    const col = mix([228, 228, 234], [70, 74, 96], state.night * 0.85);
+    ctx.fillStyle = css(col);
+    const wind = 6 + this.w.rain * 10;
+    for (const c of this.chimneys) {
+      if (!c.on) continue;
+      for (let k = 0; k < 6; k++) {
+        const u = ((this.time * 0.12 + c.ph + k / 6) % 1); // each puff rises over ~8 s
+        const x = c.x + u * wind * 4 * c.s + Math.sin(this.time * 0.8 + k + c.ph) * 2 * u, y = c.y - u * 60 * c.s;
+        ctx.globalAlpha = 0.5 * (1 - u) * Math.min(1, u * 6);
+        ctx.beginPath(); ctx.arc(x, y, (3 + u * 11) * c.s, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    ctx.globalAlpha = 1;
   }
 
   drawBirds(ctx, state) {

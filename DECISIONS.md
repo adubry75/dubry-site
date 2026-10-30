@@ -221,3 +221,5 @@ else changed.
 - `tools/render-video.mjs --still thumb.png --size 1280x720 …` saves one clean frame (for YouTube thumbnails).
   The page now has a share card (`og:image` = `lofi/og.jpg`, 1200×630, the cozy room at dusk with Daisy and the
   jack-o'-lantern) plus canonical and Twitter-card tags, like the home page.
+- Chimney smoke: from mid-October to mid-April (wood-stove season in the Rogue Valley), or whenever it snows, soft
+  puffs rise from a third of the town's chimneys and lean with the breeze (more in the rain).
