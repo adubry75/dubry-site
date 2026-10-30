@@ -190,8 +190,18 @@ function trackTitle(i) {
   const a = ADJ[h % ADJ.length], n = NOUN[(h >>> 8) % NOUN.length], n2 = NOUN[(h >>> 16) % NOUN.length];
   return (h >>> 24) % 4 === 0 && n2 !== n ? `${n} & ${n2}` : `${a} ${n}`;
 }
+const CAPTION = q.get('caption') === '1';
+let lastTitle = '', capT = 0;
+function caption(text, sub) {
+  const el = $('#caption'); if (!el) return;
+  el.querySelector('b').textContent = text; el.querySelector('span').textContent = sub;
+  el.classList.add('on'); clearTimeout(capT); capT = setTimeout(() => el.classList.remove('on'), 8000);
+}
 function showInfo(i) {
   info = i;
+  const title = trackTitle(i);
+  if (CAPTION && title !== lastTitle) caption(`♪ ${title}`, i.mode === 'ambient' ? `ambient · ${i.key}` : `${i.mode} · ${i.key} · ${i.bpm} bpm`);
+  lastTitle = title;
   const el = $('#now');
   if (el) el.textContent = `“${trackTitle(i)}” · ` + (i.mode === 'ambient' ? `Ambient · ${i.key}` : `${i.mode === 'jazz' ? 'Jazz' : 'Lofi'} · ${i.key} · ${i.bpm} BPM${i.keys && i.keys !== 'rhodes' ? ' · ' + i.keys : ''}`);
 }

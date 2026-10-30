@@ -166,8 +166,9 @@ else changed.
 **Record a 1-hour video:**
 1. Open `https://dubry.com/lofi/?record=1` in Chrome, full screen (F11) on a 1920×1080 display. `record=1` hides
    every control and the cursor. Click once to start the sound.
-   Handy URL options: `mode=lofi|jazz|ambient`, `weather=auto|live|clear|cloudy|rain|storm|snow|fog`,
-   `cat=daisy|nero|jammies|callie|black`, `seed=42` (same seed = same music), `fast=3600` (one whole day passes in
+   Handy URL options: `mode=lofi|jazz|ambient|auto`, `weather=auto|live|clear|cloudy|rain|storm|snow|fog`,
+   `cat=daisy|nero|jammies|callie|black`, `room=cozy|cabin|blue`, `caption=1` (now-playing captions),
+   `seed=42` (same seed = same music), `fast=3600` (one whole day passes in
    one hour; `fast=1` is a 6-minute day), `time=21:30` (start at a given Medford time).
    Example: `/lofi/?record=1&mode=lofi&weather=rain&cat=daisy&fast=3600&seed=7`.
 2. In OBS: a Window or Display Capture of that Chrome window + Desktop Audio, output 1920×1080 at 30 or 60 fps,
@@ -223,3 +224,6 @@ else changed.
   jack-o'-lantern) plus canonical and Twitter-card tags, like the home page.
 - Chimney smoke: from mid-October to mid-April (wood-stove season in the Rogue Valley), or whenever it snows, soft
   puffs rise from a third of the town's chimneys and lean with the breeze (more in the rain).
+- `?caption=1` (works with `record=1`): a small "♪ dusty moon · lofi · A♭ major · 76 bpm" caption fades in at the
+  bottom-left for 8 s whenever a new section (track) starts, like lofi channels do. It's HTML, so it shows in screen
+  recordings but not in `render-video.mjs` output, which captures only the canvas.

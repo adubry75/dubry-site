@@ -73,6 +73,13 @@
   #start button svg { width: 20px; height: 20px; }
   #start p { margin: 14px 0 0; color: var(--ink); text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6); font-size: 15px; }
   #start .hint { font-size: 12px; color: var(--ink-dim); }
+  #caption { position: fixed; left: max(28px, env(safe-area-inset-left)); bottom: max(26px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 3px;
+    padding: 10px 16px; border-radius: 14px; background: rgba(26, 20, 34, 0.38); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; transform: translateY(6px); transition: opacity 1.6s ease, transform 1.6s ease; pointer-events: none; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35); }
+  #caption.on { opacity: 1; transform: none; }
+  #caption b { font-size: 17px; font-weight: 600; letter-spacing: 0.01em; }
+  #caption span { font-size: 12px; color: var(--ink-dim); }
+  body.awake #caption { opacity: 0; }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
   @media (max-width: 720px) {
@@ -122,6 +129,8 @@
     <button id="full" aria-label="Full screen"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
   </div>
 </div>
+
+<div id="caption" aria-live="polite"><b></b><span></span></div>
 
 <div id="start">
   <div class="card">
