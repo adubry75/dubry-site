@@ -66,3 +66,15 @@ Overnight build of `/lofi/`. Each entry is a call I made without asking, and why
   Jammies (orange tabby), Callie/Soybean (Siamese points, blue eyes), solid black.
 - **The second cat's cameo** is a "photobomb": every 8–23 minutes another of the five cats peeks up from the bottom
   of the frame, looks around and sinks back. The main cat wakes up and looks at it.
+
+## Performance
+- Measured in headless Chromium with **software** rasterization (no GPU here), forcing a canvas readback every frame:
+  first version 20–50 ms per frame at 1920×1080. Profiled per section and fixed the hotspots: film grain and the
+  glass sheen are baked into the cached room (were full-screen blends every frame), the lamp's light is one
+  pre-merged additive sprite and is baked into the night room, clouds are tinted once per colour change and
+  drawn into a third-resolution layer. Now 12–35 ms in pure software and about 1.5 ms of JavaScript per frame.
+  A normal GPU-accelerated browser composites this far under 16 ms.
+- Safety net for slow machines: if the page can't hold ~45 fps for 4 s, it renders at a lower canvas resolution
+  (down to 50%). Everything is soft shapes, so it still looks right. `?quality=1` pins full resolution.
+- Memory: caches are 4 room images + 4 town images (+4 snow images if it snows), built lazily per palette and
+  rebuilt only on resize or season change. Particles are capped. The 10-minute soak stays flat (see below).

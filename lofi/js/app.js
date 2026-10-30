@@ -55,6 +55,17 @@ function advanceClock(dt) {
 // ── scene
 const canvas = $('#scene');
 const scene = new Scene(canvas, { seed });
+if (q.has('quality')) { scene.quality = clamp(parseFloat(q.get('quality')) || 1, 0.3, 1); scene.resize(); }
+// adaptive resolution: if a slow machine can't hold ~45 fps, render fewer pixels (it's all soft shapes)
+const adapt = { t: 0, n: 0, on: !q.has('quality') && q.get('freeze') !== '1' };
+function adaptQuality(dt) {
+  if (!adapt.on || document.hidden) return;
+  adapt.t += dt; adapt.n++;
+  if (adapt.t < 4) return;
+  const fps = adapt.n / adapt.t; adapt.t = 0; adapt.n = 0;
+  const q0 = scene.quality || 1;
+  if (fps < 45 && q0 > 0.55) { scene.quality = Math.max(0.5, q0 - 0.15); scene.resize(); }
+}
 scene.skin = settings.cat;
 if (q.has('peek')) scene.nextPeek = parseFloat(q.get('peek')) || 1;
 if (q.get('awake') === '1') { scene.cat.wake(); scene.cat.action = null; }
@@ -210,6 +221,7 @@ window.__lofi = { scene, settings, stats, get virtual() { return virtual; }, set
 
 function frame(now) {
   const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  adaptQuality(dt);
   const t0 = performance.now();
   advanceClock(dt);
   const P = localParts(virtual);
@@ -237,6 +249,7 @@ function frame(now) {
   };
   scene.update(dt, state);
   scene.draw(state);
+  window.__lofi.state = state;
   // keep the music's weather sounds in step with what we see
   sendT -= dt;
   if (node && sendT <= 0) { node.port.postMessage({ type: 'weather', weather: { rain: W.rain, snow: W.snow, fog: W.fog } }); sendT = 1; }
@@ -251,3 +264,6 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+// fill the palette caches in idle time
+const idle = window.requestIdleCallback || ((f) => setTimeout(() => f({ timeRemaining: () => 8 }), 200));
+(function warm() { idle(() => { scene.prewarm(); setTimeout(warm, 300); }); })();

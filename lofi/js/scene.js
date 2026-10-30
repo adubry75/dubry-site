@@ -119,7 +119,7 @@ export class Scene {
 
   // ── sizing and the camera
   resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2) * (this.quality || 1);
     const cw = Math.max(1, Math.round(window.innerWidth * dpr)), ch = Math.max(1, Math.round(window.innerHeight * dpr));
     this.canvas.width = cw; this.canvas.height = ch;
     const vw = window.innerWidth, vh = window.innerHeight;
@@ -139,6 +139,12 @@ export class Scene {
     const mk = (w, h, f) => { const c = document.createElement('canvas'); c.width = w; c.height = h; f(c.getContext('2d'), w, h); return c; };
     this.glow = mk(128, 128, (g, w) => { const gr = g.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.25, 'rgba(255,255,255,0.45)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, w); });
     this.warmGlow = mk(256, 256, (g, w) => { const gr = g.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2); gr.addColorStop(0, 'rgba(255,196,120,0.9)'); gr.addColorStop(0.35, 'rgba(255,170,90,0.35)'); gr.addColorStop(1, 'rgba(255,150,80,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, w); });
+    // the lamp's light: three soft pools merged once, drawn additively
+    this.lampGlow = mk(450, 350, (g) => {
+      const pool = (x, y, r, a) => { const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, `rgba(255,170,90,${a})`); gr.addColorStop(0.35, `rgba(255,150,80,${a * 0.4})`); gr.addColorStop(1, 'rgba(255,140,70,0)'); g.fillStyle = gr; g.fillRect(0, 0, 450, 350); };
+      g.globalCompositeOperation = 'lighter';
+      pool(225, 175, 225, 0.32); pool(225, 160, 105, 0.42); pool(225, 150, 35, 0.4);
+    });
     this.cloudSprites = [];
     const r = seeded(9);
     for (let i = 0; i < 6; i++) {
@@ -188,6 +194,16 @@ export class Scene {
     let c = this.caches.get(id);
     if (!c) { c = build(); this.caches.set(id, c); }
     return c;
+  }
+  // build one missing palette cache (called from idle time so a palette change never stutters)
+  prewarm() {
+    if (!this.season) return false;
+    for (let i = 0; i < KEYS.length; i++) {
+      if (!this.caches.has('room' + i + this.season)) { this.cache('room', i, () => this.renderRoom(i)); return true; }
+      if (!this.caches.has('town' + i + this.season)) { this.cache('town', i, () => this.renderTown(i)); return true; }
+      if (this.w.snow > 0.05 && !this.caches.has('snow' + i + this.season)) { this.cache('snow', i, () => this.renderTown(i, true)); return true; }
+    }
+    return false;
   }
   glassCanvas() {
     const c = document.createElement('canvas');
@@ -373,6 +389,19 @@ export class Scene {
       sp.addColorStop(0, `rgba(255,235,200,${0.22 * P.spill})`); sp.addColorStop(1, 'rgba(255,235,200,0)');
       g.fillStyle = sp; g.fillRect(G.x - 70, SILL_Y - 10, G.w + 140, 160);
     }
+    // the lamp's light, baked into the night room (it's always on at night)
+    if (i === 0) { g.globalCompositeOperation = 'lighter'; g.drawImage(this.lampGlow, 1754 - 900, 0, 1800, 1400); g.globalCompositeOperation = 'source-over'; }
+    // a faint reflection sheen on the glass (baked in: the glass area is otherwise transparent)
+    const night = 1 - P.room[0];
+    const sh = g.createLinearGradient(G.x, G.y, G.x + G.w, G.y + G.h);
+    sh.addColorStop(0.15, 'rgba(255,255,255,0)'); sh.addColorStop(0.32, `rgba(255,255,255,${0.035 + night * 0.03})`); sh.addColorStop(0.42, 'rgba(255,255,255,0)');
+    sh.addColorStop(0.62, 'rgba(255,255,255,0)'); sh.addColorStop(0.7, `rgba(255,255,255,${0.025 + night * 0.02})`); sh.addColorStop(0.78, 'rgba(255,255,255,0)');
+    g.globalCompositeOperation = 'destination-over'; g.fillStyle = sh; g.fillRect(G.x, G.y, G.w, G.h); g.globalCompositeOperation = 'source-over';
+    // film grain over the room (static, so it costs nothing per frame)
+    g.save(); g.beginPath(); g.rect(v.x0 - 10, v.y0 - 10, v.x1 - v.x0 + 20, v.y1 - v.y0 + 20); g.rect(G.x, G.y, G.w, G.h); g.clip('evenodd');
+    g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'overlay'; g.globalAlpha = 0.05;
+    g.fillStyle = g.createPattern(this.grain, 'repeat'); g.fillRect(0, 0, c.width, c.height);
+    g.restore();
     // vignette, only over the room (glass stays clear)
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.globalCompositeOperation = 'source-atop';
@@ -578,6 +607,7 @@ export class Scene {
   // ── frame
   draw(state) {
     const ctx = this.ctx, k = this.k, W = this.w;
+    if (this.prof) this.profT = performance.now();
     const sea = season(state.month, state.day);
     if (sea !== this.season) { this.season = sea; this.caches.clear(); }
     const [ia, ib, bt] = keyBlend(state.sunAlt);
@@ -605,8 +635,10 @@ export class Scene {
       const gr = ctx.createLinearGradient(x - 60, y - 25, x, y); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(1, `rgba(255,255,255,${0.8 * Math.sin(u * Math.PI)})`);
       ctx.strokeStyle = gr; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(x - 60, y - 25); ctx.lineTo(x, y); ctx.stroke();
     }
+    this.mark('sky');
     // clouds
     this.drawClouds(ctx, state, sky);
+    this.mark('clouds');
     // town (two palettes crossfaded) + snow cover
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     const gx = Math.round(this.ox + G.x * k), gy = Math.round(this.oy + G.y * k);
@@ -625,19 +657,23 @@ export class Scene {
       og.addColorStop(0, css(oc, 0)); og.addColorStop(1, css(oc, W.cloud * 0.22));
       ctx.fillStyle = og; ctx.fillRect(0, 240, G.w, G.h - 240);
     }
+    this.mark('town');
     // lit windows, street lamps, cars, birds
     this.townLights(ctx, state);
     this.drawCars(ctx, state);
     this.drawBirds(ctx, state);
+    this.mark('lights');
     // fog
     if (W.fog > 0.02) this.drawFog(ctx, state, sky);
     // rain / snow outside
     this.precip(ctx, state);
     for (const l of this.leaves) { ctx.save(); ctx.translate(l.x, l.y); ctx.rotate(l.rot); ctx.fillStyle = css(mix(hex(l.col), [30, 30, 50], state.night * 0.7)); ctx.beginPath(); ctx.ellipse(0, 0, 6, 3, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
+    this.mark('fogprecip');
     // glass: drops, frost, reflections
     this.glass(ctx, state);
     ctx.restore();
 
+    this.mark('glass');
     // ── room (two palettes crossfaded)
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(this.cache('room', ia, () => this.renderRoom(ia)), 0, 0);
@@ -649,7 +685,9 @@ export class Scene {
       ctx.fillStyle = `rgba(30,32,50,${dim})`;
       const v = this.view; ctx.beginPath(); ctx.rect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); ctx.rect(G.x, G.y, G.w, G.h); ctx.fill('evenodd');
     }
+    this.mark('room');
     this.roomLights(ctx, state);
+    this.mark('roomlights');
     // the cat
     const roomL = mix(mix(KEYS[ia].room, KEYS[ib].room, bt), [0, 0, 0], 0).map((v) => v * (1 - dim * 0.8));
     const lampOn = state.lamp;
@@ -657,14 +695,16 @@ export class Scene {
     const rimCol = state.night > 0.6 ? 'rgba(150,170,230,1)' : css(mix(hex('#fff2dc'), hex('#ffc68a'), smooth(10, 0, state.sunAlt)));
     const rim = { color: rimCol, alpha: (1 - state.night * 0.75) * 0.35 * (1 - W.cloud * 0.5) + 0.08 };
     drawCat(ctx, CAT_X, SILL_Y + 2, 1, this.skin, this.cat, this.time, catL, rim, state.night * 0.3);
+    this.mark('cat');
     // the visitor peeks up from the bottom of the frame
     if (this.peek) drawPeek(ctx, this.peek.x, this.view.y1 - 40, 1.25, this.peek.skin, this.peek.t / this.peek.dur, this.time, catL);
     // lamp glow over everything nearby (also catches the cat)
-    if (lampOn > 0.01) {
-      ctx.globalCompositeOperation = 'screen';
-      ctx.globalAlpha = lampOn * 0.75; ctx.drawImage(this.warmGlow, 1754 - 900, 700 - 700, 1800, 1400);
-      ctx.globalAlpha = lampOn * 0.9; ctx.drawImage(this.warmGlow, 1754 - 420, 640 - 420, 840, 840);
-      ctx.globalAlpha = lampOn * 0.6; ctx.drawImage(this.warmGlow, 1754 - 140, 600 - 140, 280, 280);
+    // (the night room has the lamp's light baked in; draw only what the palette blend doesn't cover)
+    const baked = ia === 0 ? (ib === 0 ? 1 : 1 - bt) : 0;
+    const extra = lampOn - baked;
+    if (extra > 0.01) {
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = extra; ctx.drawImage(this.lampGlow, 1754 - 900, 0, 1800, 1400);
       ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
     }
     // headlights sweeping across the ceiling at night
@@ -676,16 +716,17 @@ export class Scene {
       ctx.fillStyle = gr; ctx.beginPath(); ctx.moveTo(x - 200, this.view.y0); ctx.lineTo(x + 260, this.view.y0); ctx.lineTo(x + 120, G.y - 40); ctx.lineTo(x - 300, G.y - 40); ctx.closePath(); ctx.fill();
       ctx.globalCompositeOperation = 'source-over';
     }
-    // film grain
+    this.mark('lampglow');
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    if (!this.grainPattern) this.grainPattern = ctx.createPattern(this.grain, 'repeat');
-    ctx.globalAlpha = 0.035; ctx.globalCompositeOperation = 'overlay';
-    const gxo = (this.r() * 256) | 0, gyo = (this.r() * 256) | 0;
-    ctx.translate(-gxo, -gyo); ctx.fillStyle = this.grainPattern; ctx.fillRect(gxo, gyo, this.canvas.width, this.canvas.height);
-    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+    this.mark('end');
   }
 
-  stars(ctx, a) {
+  mark(name) {
+    if (!this.prof) return;
+    this.ctx.getImageData(0, 0, 1, 1);
+    const t = performance.now(); this.prof[name] = (this.prof[name] || 0) + t - this.profT; this.profT = t;
+  }
+    stars(ctx, a) {
     if (!this.starField) {
       const r = seeded(77); this.starField = [];
       for (let i = 0; i < 160; i++) this.starField.push([r() * G.w, r() * 420, r() * 1.3 + 0.3, r() * 6, r()]);
@@ -741,18 +782,31 @@ export class Scene {
     const day = mix(hex('#ffffff'), hex('#ffd2b0'), smooth(14, 1, state.sunAlt));
     const base = mix(day, mix(sky[1], [30, 34, 58], 0.5), state.night * 0.9);
     const col = mix(base, [120, 126, 140], W.rain * 0.5 + W.snow * 0.2);
-    // draw sprites to a half-res layer, tint it, composite
-    const lw = Math.ceil(G.w / 2), lh = Math.ceil(G.h / 2);
+    // tinted copies of the cloud sprites, rebuilt only when the tint changes noticeably
+    const key = col.map((v) => Math.round(v / 6)).join(',');
+    if (key !== this.cloudKey) {
+      this.cloudKey = key;
+      this.tinted = this.cloudSprites.map((sp, i) => {
+        const c = (this.tinted && this.tinted[i]) || document.createElement('canvas');
+        c.width = sp.width; c.height = sp.height;
+        const g = c.getContext('2d');
+        g.clearRect(0, 0, c.width, c.height); g.globalCompositeOperation = 'source-over'; g.drawImage(sp, 0, 0);
+        g.globalCompositeOperation = 'source-atop'; g.fillStyle = css(col, 0.85); g.fillRect(0, 0, c.width, c.height);
+        return c;
+      });
+    }
+    // drawn at a third of the resolution into a layer, then scaled up once (they're soft anyway)
+    const lw = Math.ceil(G.w / 3), lh = Math.ceil(G.h / 3);
     if (!this.cloudLayer) { this.cloudLayer = document.createElement('canvas'); this.cloudLayer.width = lw; this.cloudLayer.height = lh; this.cloudCtx = this.cloudLayer.getContext('2d'); }
     const g = this.cloudCtx;
-    g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, lw, lh);
+    g.clearRect(0, 0, lw, lh);
     for (const c of this.clouds) {
       g.globalAlpha = c.a * (0.55 + W.cloud * 0.45) * (c.fa ?? 1);
       const s = c.s * (1 + W.cloud * 0.6);
-      g.drawImage(this.cloudSprites[c.i], c.x / 2, c.y / 2, 180 * s, 80 * s);
+      g.drawImage(this.tinted[c.i], c.x / 3, c.y / 3, 120 * s, 53.3 * s);
     }
-    g.globalAlpha = 1; g.globalCompositeOperation = 'source-atop'; g.fillStyle = css(col, 0.85); g.fillRect(0, 0, lw, lh);
-    ctx.drawImage(this.cloudLayer, 0, 0, G.w, G.h);
+    g.globalAlpha = 1;
+    ctx.drawImage(this.cloudLayer, 0, 0, lw * 3, lh * 3);
     // overcast veil
     if (W.cloud > 0.4) {
       const vg = ctx.createLinearGradient(0, 0, 0, 500);
@@ -865,11 +919,6 @@ export class Scene {
 
   glass(ctx, state) {
     const W = this.w;
-    // faint reflection sheen
-    const gr = ctx.createLinearGradient(0, 0, G.w, G.h);
-    gr.addColorStop(0.15, 'rgba(255,255,255,0)'); gr.addColorStop(0.32, `rgba(255,255,255,${0.035 + state.night * 0.02})`); gr.addColorStop(0.42, 'rgba(255,255,255,0)');
-    gr.addColorStop(0.62, 'rgba(255,255,255,0)'); gr.addColorStop(0.7, `rgba(255,255,255,${0.025 + state.night * 0.015})`); gr.addColorStop(0.78, 'rgba(255,255,255,0)');
-    ctx.fillStyle = gr; ctx.fillRect(0, 0, G.w, G.h);
     // the lamp reflected in the right pane at night
     if (state.lamp > 0.01) { ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = state.lamp * 0.22; ctx.drawImage(this.warmGlow, G.w - 260, 330, 300, 300); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
     // frost/condensation in the corners when it snows or fogs
