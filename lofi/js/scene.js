@@ -37,6 +37,16 @@ function keyBlend(alt) {
   for (let i = 0; i < KEYS.length - 1; i++) if (alt <= KEYS[i + 1].alt) return [i, i + 1, smooth(KEYS[i].alt, KEYS[i + 1].alt, alt)];
   return [3, 3, 0];
 }
+// room themes: same room, different moods
+export const THEMES = {
+  cozy: { name: 'Cozy', wall: ['#b98f86', '#d4ab92', '#c09a84'], speck: '#a87f74', ceil: '#cdb4a6', curtain: ['#a95f52', '#c4766a'], tie: '#e2c38c',
+    frame: ['#7f5639', '#9b6d4b', '#5e3e2a'], sill: ['#a97a55', '#c4936a', '#8a5d3e', '#a5734f'], rug: '#9e5b53' },
+  cabin: { name: 'Cabin', wall: ['#7a5236', '#946746', '#7d553a'], speck: '#5e3d27', ceil: '#6e4a32', curtain: ['#3f5e48', '#557a5c'], tie: '#c9a45a',
+    frame: ['#5a3a26', '#74503a', '#3f281a'], sill: ['#8a6242', '#a2774f', '#6a472e', '#8a6242'], rug: '#7d3b34', planks: true, plaid: '#c9a45a' },
+  blue: { name: 'Blue hour', wall: ['#7c8ea4', '#9aabbd', '#8798ad'], speck: '#6a7c92', ceil: '#a9b6c4', curtain: ['#d9cdb8', '#ece2d0'], tie: '#9aa7b8',
+    frame: ['#e6e0d6', '#f4efe6', '#c4bdb1'], sill: ['#e3ddd2', '#f1ece3', '#c9c1b4', '#e9e3d8'], rug: '#5f6f8a' },
+};
+
 // a little seasonal something on the sill, by date
 function decorFor(month, day) {
   const d = month * 100 + day;
@@ -110,7 +120,7 @@ export class Scene {
     this.r = seeded(opts.seed ?? 1);
     this.town = buildTown();
     this.cat = new CatBrain(this.r);
-    this.skin = 'daisy';
+    this.skin = 'daisy'; this.theme = 'cozy';
     this.w = { rain: 0, snow: 0, fog: 0, cloud: 0.25, storm: 0 };
     this.flash = 0; this.flashT = -1; this.localThunder = 30; this.audioThunder = false;
     this.wt = { ...this.w };
@@ -201,7 +211,7 @@ export class Scene {
 
   // ── per-palette caches
   cache(key, idx, build) {
-    const id = key + idx + this.season + (key === 'room' ? this.decor : '');
+    const id = key + idx + this.season + (key === 'room' ? this.decor + this.theme : '');
     let c = this.caches.get(id);
     if (!c) { c = build(); this.caches.set(id, c); }
     return c;
@@ -210,7 +220,7 @@ export class Scene {
   prewarm() {
     if (!this.season) return false;
     for (let i = 0; i < KEYS.length; i++) {
-      if (!this.caches.has('room' + i + this.season + this.decor)) { this.cache('room', i, () => this.renderRoom(i)); return true; }
+      if (!this.caches.has('room' + i + this.season + this.decor + this.theme)) { this.cache('room', i, () => this.renderRoom(i)); return true; }
       if (!this.caches.has('town' + i + this.season)) { this.cache('town', i, () => this.renderTown(i)); return true; }
       if (this.w.snow > 0.05 && !this.caches.has('snow' + i + this.season)) { this.cache('snow', i, () => this.renderTown(i, true)); return true; }
     }
@@ -337,20 +347,28 @@ export class Scene {
     const v = this.view;
     const lg = (x0, y0, x1, y1, stops) => { const gr = g.createLinearGradient(x0, y0, x1, y1); for (const [o, col] of stops) gr.addColorStop(o, C(col)); return gr; };
     // wall with a soft vertical gradient and faint plaster texture
-    g.fillStyle = lg(0, v.y0, 0, v.y1, [[0, '#b98f86'], [0.45, '#d4ab92'], [1, '#c09a84']]);
+    const TH = THEMES[this.theme] || THEMES.cozy;
+    g.fillStyle = lg(0, v.y0, 0, v.y1, [[0, TH.wall[0]], [0.45, TH.wall[1]], [1, TH.wall[2]]]);
     g.fillRect(v.x0 - 10, v.y0 - 10, v.x1 - v.x0 + 20, v.y1 - v.y0 + 20);
     const rr = seeded(11);
-    g.fillStyle = C('#a87f74'); g.globalAlpha = 0.05;
+    g.fillStyle = C(TH.speck); g.globalAlpha = TH.planks ? 0.12 : 0.05;
     for (let j = 0; j < 900; j++) { const x = v.x0 + rr() * (v.x1 - v.x0), y = v.y0 + rr() * (v.y1 - v.y0); g.fillRect(x, y, 2 + rr() * 5, 1 + rr() * 3); }
     g.globalAlpha = 1;
+    if (TH.planks) { // log-cabin planks
+      for (let y = Math.floor(v.y0 / 56) * 56; y < v.y1; y += 56) {
+        g.fillStyle = C('#4a2f1e'); g.globalAlpha = 0.55; g.fillRect(v.x0 - 10, y, v.x1 - v.x0 + 20, 3);
+        g.fillStyle = C('#b08058'); g.globalAlpha = 0.18; g.fillRect(v.x0 - 10, y + 3, v.x1 - v.x0 + 20, 6);
+        g.globalAlpha = 1;
+      }
+    }
     // ceiling and crown molding (portrait screens see it)
-    if (v.y0 < -40) { g.fillStyle = C('#cdb4a6'); g.fillRect(v.x0 - 10, v.y0 - 10, v.x1 - v.x0 + 20, -40 - v.y0 + 10); g.fillStyle = C('#e2cdbd'); g.fillRect(v.x0 - 10, -46, v.x1 - v.x0 + 20, 12); g.fillStyle = C('#a7887a'); g.fillRect(v.x0 - 10, -34, v.x1 - v.x0 + 20, 4); }
+    if (v.y0 < -40) { g.fillStyle = C(TH.ceil); g.fillRect(v.x0 - 10, v.y0 - 10, v.x1 - v.x0 + 20, -40 - v.y0 + 10); g.fillStyle = C('#e2cdbd'); g.fillRect(v.x0 - 10, -46, v.x1 - v.x0 + 20, 12); g.fillStyle = C('#a7887a'); g.fillRect(v.x0 - 10, -34, v.x1 - v.x0 + 20, 4); }
     // floor (portrait/tall screens) with a rug
     if (v.y1 > 1090) {
       g.fillStyle = C('#8d6a55'); g.fillRect(v.x0 - 10, 1090, v.x1 - v.x0 + 20, v.y1 - 1090 + 10);
       g.fillStyle = C('#e9d9c6'); g.fillRect(v.x0 - 10, 1078, v.x1 - v.x0 + 20, 14);
       g.strokeStyle = C('#7a5a47'); g.lineWidth = 2; for (let y = 1130; y < v.y1; y += 48) { g.beginPath(); g.moveTo(v.x0 - 10, y); g.lineTo(v.x1 + 10, y); g.stroke(); }
-      g.fillStyle = C('#9e5b53'); g.beginPath(); g.ellipse(960, 1260, 420, 90, 0, 0, Math.PI * 2); g.fill();
+      g.fillStyle = C(TH.rug); g.beginPath(); g.ellipse(960, 1260, 420, 90, 0, 0, Math.PI * 2); g.fill();
       g.strokeStyle = C('#e7c79a'); g.lineWidth = 6; g.beginPath(); g.ellipse(960, 1260, 380, 74, 0, 0, Math.PI * 2); g.stroke();
       // a cat bed on the rug, and a ball of yarn
       g.fillStyle = C('#6f7f95'); g.beginPath(); g.ellipse(760, 1240, 120, 40, 0, 0, Math.PI * 2); g.fill();
@@ -367,7 +385,7 @@ export class Scene {
     this.leftWall(g, C);
     this.rightWall(g, C);
     // window frame
-    const fr = '#7f5639', frL = '#9b6d4b', frD = '#5e3e2a';
+    const [fr, frL, frD] = TH.frame;
     g.fillStyle = C(fr); g.fillRect(G.x - 34, G.y - 34, G.w + 68, G.h + 52);
     g.globalCompositeOperation = 'destination-out';
     g.fillRect(G.x, G.y, G.w, G.h);
@@ -387,10 +405,10 @@ export class Scene {
     this.curtain(g, C, 352, 486, -1);
     this.curtain(g, C, 1434, 1568, 1);
     // sill: top surface, front lip and a shadow underneath
-    g.fillStyle = lg(0, SILL_Y - 8, 0, SILL_FRONT, [[0, '#a97a55'], [1, '#c4936a']]);
+    g.fillStyle = lg(0, SILL_Y - 8, 0, SILL_FRONT, [[0, TH.sill[0]], [1, TH.sill[1]]]);
     g.beginPath(); g.moveTo(G.x - 40, SILL_Y - 8); g.lineTo(G.x + G.w + 40, SILL_Y - 8); g.lineTo(G.x + G.w + 74, SILL_FRONT); g.lineTo(G.x - 74, SILL_FRONT); g.closePath(); g.fill();
-    g.fillStyle = C('#8a5d3e'); this.round(g, G.x - 78, SILL_FRONT, G.w + 156, 30, 5); g.fill();
-    g.fillStyle = C('#a5734f'); g.fillRect(G.x - 74, SILL_FRONT, G.w + 148, 4);
+    g.fillStyle = C(TH.sill[2]); this.round(g, G.x - 78, SILL_FRONT, G.w + 156, 30, 5); g.fill();
+    g.fillStyle = C(TH.sill[3]); g.fillRect(G.x - 74, SILL_FRONT, G.w + 148, 4);
     g.fillStyle = 'rgba(40,20,30,0.25)'; g.fillRect(G.x - 70, SILL_FRONT + 30, G.w + 140, 10);
     // things on the sill: a succulent, a mug, a little stack of books
     this.sillThings(g, C);
@@ -491,7 +509,8 @@ export class Scene {
     g.beginPath(); g.arc(316, 62, 10, 0, Math.PI * 2); g.arc(1604, 62, 10, 0, Math.PI * 2); g.fill();
     const w = x1 - x0;
     const gr = g.createLinearGradient(x0, 0, x1, 0);
-    for (let j = 0; j <= 6; j++) gr.addColorStop(j / 6, C(j % 2 ? '#a95f52' : '#c4766a'));
+    const TH = THEMES[this.theme] || THEMES.cozy;
+    for (let j = 0; j <= 6; j++) gr.addColorStop(j / 6, C(j % 2 ? TH.curtain[0] : TH.curtain[1]));
     g.fillStyle = gr;
     g.beginPath(); g.moveTo(x0, top);
     g.lineTo(x1, top);
@@ -499,7 +518,13 @@ export class Scene {
     if (side < 0) { g.quadraticCurveTo(x1 - 10, tie - 120, inX, tie); g.quadraticCurveTo(x1 + 16, tie + 140, x1 + 6, bottom); g.lineTo(x0, bottom); }
     else { g.lineTo(x1, bottom); g.lineTo(x0 - 6, bottom); g.quadraticCurveTo(x0 - 16, tie + 140, inX, tie); g.quadraticCurveTo(x0 + 10, tie - 120, x0, top); }
     g.closePath(); g.fill();
-    g.fillStyle = C('#e2c38c'); g.fillRect(inX - 12, tie - 6, 24, 12);
+    if (TH.plaid) { // a soft plaid check on the cabin curtains
+      g.save(); g.clip(); g.globalAlpha = 0.18; g.fillStyle = C(TH.plaid);
+      for (let x = x0; x < x1; x += 26) g.fillRect(x, top, 5, bottom - top);
+      for (let y = top; y < bottom; y += 26) g.fillRect(x0 - 20, y, w + 40, 5);
+      g.restore(); g.globalAlpha = 1;
+    }
+    g.fillStyle = C(TH.tie); g.fillRect(inX - 12, tie - 6, 24, 12);
     for (let x = x0 + 8; x < x1; x += 16) { g.fillStyle = C('#5a3b29'); g.beginPath(); g.arc(x, top + 2, 4, 0, Math.PI * 2); g.fill(); }
   }
 

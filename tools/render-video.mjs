@@ -12,6 +12,7 @@
 //   --mode M        lofi | jazz | ambient (default lofi)
 //   --weather W     auto | clear | cloudy | rain | storm | snow | fog (default auto)
 //   --cat C         daisy | nero | jammies | callie | black (default daisy)
+//   --room R        cozy | cabin | blue (default cozy)
 //   --time T        Medford start time, HH:MM today or an ISO date (default: now)
 //   --fast S        a whole day passes every S seconds (default: real time)
 //   --fps N         frames per second (default 30)
@@ -53,7 +54,7 @@ const server = http.createServer((req, res) => {
   fs.createReadStream(f).pipe(res);
 }).listen(0);
 
-const params = new URLSearchParams({ record: '1', manual: '1', quality: '1', seed: String(seed), mode, weather, cat, instant: '1' });
+const params = new URLSearchParams({ record: '1', manual: '1', quality: '1', seed: String(seed), mode, weather, cat, room: opt('room', 'cozy'), instant: '1' });
 if (opt('time', null)) params.set('time', opt('time'));
 if (opt('fast', null)) params.set('fast', opt('fast'));
 

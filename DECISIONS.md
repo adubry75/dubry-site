@@ -181,3 +181,13 @@ else changed.
 4. Or record the picture only and use a rendered soundtrack, e.g.
    `node tools/render-audio.mjs --minutes 60 --seed 7 --mode lofi --weather rain --out lofi-1h.mp3`, then
    `ffmpeg -i video.mp4 -i lofi-1h.mp3 -map 0:v -map 1:a -c:v copy -c:a aac -b:a 192k -shortest final.mp4`.
+
+## New moods: room themes
+- A "Room" control (and `room=` URL option, `R` key, `--room` in the video renderer): **Cozy** (the original warm
+  peach room with terracotta curtains), **Cabin** (log-plank walls, green plaid curtains, darker wood) and **Blue
+  hour** (dusty blue walls, cream curtains, white-painted window). Same layout, so the cat, lighting and weather
+  all carry over, and each theme gets its own pre-lit caches. Gives several distinct-looking videos from one page.
+- Polish pass 3 check: rendered a full day in 60 s (960×540, 24 fps) with the video renderer and measured every
+  frame. The largest frame-to-frame brightness change is 2.2/255 (sunrise and sunset are smooth crossfades, and
+  the lamp and window lights fade rather than pop). The contact sheet shows the moon at night, the sun by day, the
+  jack-o'-lantern lighting up at dusk, and no visual glitches.

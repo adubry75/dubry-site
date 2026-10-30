@@ -1,5 +1,5 @@
 // Lofi Cat Radio: wiring. Time and sky, weather, the controls, the audio.
-import { Scene } from './scene.js';
+import { Scene, THEMES } from './scene.js';
 import { SKINS, SKIN_IDS } from './cat.js';
 import { sunPosition, moonPosition, moonIllumination, localParts, clockText, sunTimes } from './sky.js';
 
@@ -18,10 +18,12 @@ const settings = {
   mode: q.get('mode') || store.get('mode', 'lofi'),
   weather: q.get('weather') || store.get('weather', 'auto'),
   cat: q.get('cat') || store.get('cat', 'daisy'),
+  room: q.get('room') || store.get('room', 'cozy'),
   volume: q.has('vol') ? clamp(parseFloat(q.get('vol')), 0, 1) : store.get('volume', 0.8),
   fast: q.has('fast') ? q.get('fast') !== '0' : false,
 };
 if (!SKINS[settings.cat]) settings.cat = 'daisy';
+if (!THEMES[settings.room]) settings.room = 'cozy';
 if (!['lofi', 'jazz', 'ambient'].includes(settings.mode)) settings.mode = 'lofi';
 const DAY_SECONDS = q.has('fast') && parseFloat(q.get('fast')) > 1 ? parseFloat(q.get('fast')) : 360; // a fast day lasts 6 minutes
 const seed = q.has('seed') ? parseInt(q.get('seed'), 10) >>> 0 : (Date.now() ^ (performance.now() * 1000)) >>> 0;
@@ -68,7 +70,7 @@ function adaptQuality(dt) {
   const q0 = scene.quality || 1;
   if (fps < 45 && q0 > 0.55) { scene.quality = Math.max(0.5, q0 - 0.15); scene.resize(); }
 }
-scene.skin = settings.cat;
+scene.skin = settings.cat; scene.theme = settings.room;
 if (q.has('peek')) scene.nextPeek = parseFloat(q.get('peek')) || 1;
 if (q.get('awake') === '1') { scene.cat.wake(); scene.cat.action = null; }
 addEventListener('resize', () => { clearTimeout(resize.t); resize.t = setTimeout(resize, 120); });
@@ -186,7 +188,7 @@ function updateUI() {
   $('#play').setAttribute('aria-label', playing ? 'Pause' : 'Play');
   $('#play .i-play').hidden = playing; $('#play .i-pause').hidden = !playing;
   for (const b of document.querySelectorAll('#mode button')) b.setAttribute('aria-pressed', String(b.dataset.mode === settings.mode));
-  $('#weather').value = settings.weather; $('#cat').value = settings.cat; $('#fast').checked = settings.fast; $('#vol').value = settings.volume;
+  $('#weather').value = settings.weather; $('#cat').value = settings.cat; $('#room').value = settings.room; $('#fast').checked = settings.fast; $('#vol').value = settings.volume;
 }
 function setMode(m) {
   settings.mode = m; store.set('mode', m);
@@ -195,11 +197,13 @@ function setMode(m) {
   updateUI();
 }
 $('#cat').innerHTML = SKIN_IDS.map((id) => `<option value="${id}">${SKINS[id].name}</option>`).join('');
+$('#room').innerHTML = Object.entries(THEMES).map(([id, t]) => `<option value="${id}">${t.name}</option>`).join('');
+$('#room').addEventListener('change', (e) => { settings.room = e.target.value; store.set('room', settings.room); scene.theme = settings.room; });
 $('#play').addEventListener('click', toggle);
 for (const b of document.querySelectorAll('#mode button')) b.addEventListener('click', () => setMode(b.dataset.mode));
 $('#vol').addEventListener('input', (e) => { settings.volume = parseFloat(e.target.value); store.set('volume', settings.volume); if (gain && playing) gain.gain.setTargetAtTime(settings.volume, actx.currentTime, 0.05); });
 $('#weather').addEventListener('change', (e) => { settings.weather = e.target.value; store.set('weather', settings.weather); if (settings.weather === 'auto') auto.left = 0; else if (settings.weather === 'live') { live.at = 0; } else applyWeather(settings.weather); clockT = 0; });
-$('#cat').addEventListener('change', (e) => { settings.cat = e.target.value; store.set('cat', settings.cat); scene.skin = settings.cat; });
+$('#cat').addEventListener('change', (e) => { settings.cat = e.target.value; store.set('cat', settings.cat); scene.skin = settings.cat; scene.theme = settings.room; });
 $('#fast').addEventListener('change', (e) => { settings.fast = e.target.checked; if (!settings.fast) catchUp = true; });
 $('#full').addEventListener('click', () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.().catch(() => {}); });
 updateUI();
@@ -215,6 +219,7 @@ addEventListener('keydown', (e) => {
   else if (k === 'w') { const i = (WEATHER_ORDER.indexOf(settings.weather) + 1) % WEATHER_ORDER.length; $('#weather').value = WEATHER_ORDER[i]; $('#weather').dispatchEvent(new Event('change')); }
   else if (k === 'c') { const i = (SKIN_IDS.indexOf(settings.cat) + 1) % SKIN_IDS.length; $('#cat').value = SKIN_IDS[i]; $('#cat').dispatchEvent(new Event('change')); }
   else if (k === 'f') $('#full').click();
+  else if (k === 'r') { const ids = Object.keys(THEMES), i = (ids.indexOf(settings.room) + 1) % ids.length; $('#room').value = ids[i]; $('#room').dispatchEvent(new Event('change')); }
   else if (k === 'd') { $('#fast').checked = !settings.fast; $('#fast').dispatchEvent(new Event('change')); }
   else if (k === 'h') { hidden = !hidden; document.body.classList.toggle('hide-ui', hidden); }
   else return;
