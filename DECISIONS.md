@@ -432,6 +432,9 @@ intact, drawing state never leaks out of the new views). Fixed:
 
   Browser and Node still match bit for bit; 6 seeds × 4 minutes of lofi, jazz and bossa: no NaN, peaks under the
   limiter ceiling. (The earlier sample tables above describe the samples as they were then.)
+- Last regression on the final code (4:30 AM): Town, Lake and City × 4 times × 3 weathers on desktop, no console
+  errors; live style switching, Next, pause/play, the sleep timer (including with animation frames stopped), the
+  URL round-trip and a clean console in plain Chromium all re-checked.
 
 ---
 
