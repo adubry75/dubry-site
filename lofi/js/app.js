@@ -221,6 +221,7 @@ $('#vol').addEventListener('input', (e) => { settings.volume = parseFloat(e.targ
 $('#weather').addEventListener('change', (e) => { settings.weather = e.target.value; store.set('weather', settings.weather); if (settings.weather === 'auto') auto.left = 0; else if (settings.weather === 'live') { live.at = 0; } else applyWeather(settings.weather); clockT = 0; });
 $('#cat').addEventListener('change', (e) => { settings.cat = e.target.value; store.set('cat', settings.cat); scene.skin = settings.cat; scene.theme = settings.room; });
 $('#fast').addEventListener('change', (e) => { settings.fast = e.target.checked; if (!settings.fast) catchUp = true; });
+if (!document.fullscreenEnabled) $('#full').hidden = true; // e.g. iPhone Safari has no element fullscreen
 $('#full').addEventListener('click', () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.().catch(() => {}); });
 updateUI();
 
