@@ -435,6 +435,9 @@ intact, drawing state never leaks out of the new views). Fixed:
 - Last regression on the final code (4:30 AM): Town, Lake and City × 4 times × 3 weathers on desktop, no console
   errors; live style switching, Next, pause/play, the sleep timer (including with animation frames stopped), the
   URL round-trip and a clean console in plain Chromium all re-checked.
+- One more profile of the town on a rainy night after all the additions: the Milky Way blend was still being drawn
+  under heavy cloud, where it's invisible. It now fades in only as the sky clears, which halves the sky's cost on
+  overcast nights (4.0 → 2.1 ms in software rendering) with no visible change.
 
 ---
 
