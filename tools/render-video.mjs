@@ -13,6 +13,7 @@
 //   --weather W     auto | clear | cloudy | rain | storm | snow | fog (default auto)
 //   --cat C         daisy | nero | jammies | callie | black (default daisy)
 //   --room R        cozy | cabin | blue (default cozy)
+//   --view V        town | lake (default town)
 //   --time T        Medford start time, HH:MM today or an ISO date (default: now). For a render that is exactly
 //                   repeatable, give a full date: auto weather and the season depend on it.
 //   --fast S        a whole day passes every S seconds (default: real time)
@@ -57,7 +58,7 @@ const server = http.createServer((req, res) => {
 });
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
 
-const params = new URLSearchParams({ record: '1', manual: '1', quality: '1', seed: String(seed), mode, weather, cat, room: opt('room', 'cozy'), instant: '1' });
+const params = new URLSearchParams({ record: '1', manual: '1', quality: '1', seed: String(seed), mode, weather, cat, room: opt('room', 'cozy'), view: opt('view', 'town'), instant: '1' });
 if (opt('time', null)) params.set('time', opt('time'));
 if (opt('fast', null)) params.set('fast', opt('fast'));
 

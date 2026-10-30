@@ -294,6 +294,22 @@ weather changes, rapid switching, NaN injection, timing). Its real findings, all
   Silent the rest of the year, and off in the renderer unless asked for, so seeds still render identically
   (browser vs Node re-verified).
 
+
+## New scene: the Lake view
+- A second view out of the same window (**View: Town / Lake**, `view=lake`, `V` key, `--view lake` in the video
+  renderer). It shows a forested lakeshore under the same distant volcano: three bands of pines with their mirror
+  images in the water, the far shore's ground, a small cabin among the trees, and on the near bank grass, reeds, a
+  wooden dock and a red canoe. It pairs naturally with the Cabin room for "cabin in the woods" videos.
+- Live parts: drifting shimmer lines on the water; the sun's or moon's path on the water (a wobbling column of light
+  under wherever the sun or moon is); rain rings on the lake when it rains; the cabin's window lights up at dusk
+  (off in the small hours), glows on the water, and its chimney smokes; and now and then a **deer** wanders along
+  the far shore at dawn or dusk and stops to graze (the cat watches it, and the status line says so). Fog, snow
+  (on the pines, the far shore, the cabin roof, the bank and the dock), stars, clouds, birds, fireflies and storms
+  all work the same as in the town. Cars, street lamps, wires, the rooftop cat and the town's chimneys are
+  town-only.
+- Built the same way as the town: drawn into per-palette caches (lit by the same four palettes, snow as a
+  separate layer), with only the moving parts drawn each frame, so it costs about the same.
+
 ---
 
 # Summary
@@ -303,7 +319,8 @@ Jammies, Callie/Soybean or solid black) napping, yawning, grooming and stretchin
 (you can pet the cat, and it purrs). Sky, sun, moon and room lighting follow real Medford time. Weather drifts
 through clear, cloudy, rain, gentle storms, snow and fog, or follows Medford's live weather. Lights come on in the
 town at dusk, and cars, birds, a rooftop cat, chimney smoke, seasonal décor and a visiting second cat keep it gently
-alive. Three room moods (Cozy, Cabin, Blue hour).
+alive. Two views out of the window (the town, or a forested lake with a cabin and the occasional deer) and
+three room moods (Cozy, Cabin, Blue hour).
 
 The music is generated live in the browser and never loops: **Lofi** (Rhodes/piano/guitar jazz voicings, dusty
 drums, bass, vinyl, tape wobble), **Jazz** (brushes, ride, walking bass), **Bossa** (nylon guitar, clave, shaker),
@@ -331,7 +348,7 @@ in code.
   launched with `--autoplay-policy=no-user-gesture-required`), and record the window + desktop audio in
   OBS for 60 minutes. URL options: `mode=lofi|jazz|bossa|ambient|auto`,
   `weather=auto|live|clear|cloudy|rain|storm|snow|fog`, `cat=daisy|nero|jammies|callie|black`,
-  `room=cozy|cabin|blue`, `seed=7` (same seed = same music), `fast=3600` (a whole day per hour), `time=21:30`,
+  `room=cozy|cabin|blue`, `view=town|lake`, `seed=7` (same seed = same music), `fast=3600` (a whole day per hour), `time=21:30`,
   `caption=1` (now-playing captions).
 - **Soundtrack only:** `node tools/render-audio.mjs --minutes 60 --seed 7 --mode lofi --weather rain --out
   lofi-1h.mp3` (deterministic per seed, ~2–3 minutes per hour of audio).

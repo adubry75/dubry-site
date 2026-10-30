@@ -19,12 +19,14 @@ const settings = {
   weather: q.get('weather') || store.get('weather', 'auto'),
   cat: q.get('cat') || store.get('cat', 'daisy'),
   room: q.get('room') || store.get('room', 'cozy'),
+  view: q.get('view') || store.get('view', 'town'),
   volume: (() => { const v = q.has('vol') ? parseFloat(q.get('vol')) : Number(store.get('volume', 0.8)); return Number.isFinite(v) ? clamp(v, 0, 1) : 0.8; })(),
   fast: q.has('fast') ? q.get('fast') !== '0' : false,
 };
 const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 if (!own(SKINS, settings.cat)) settings.cat = 'daisy';
 if (!own(THEMES, settings.room)) settings.room = 'cozy';
+if (!['town', 'lake'].includes(settings.view)) settings.view = 'town';
 if (!['auto', 'live', 'clear', 'cloudy', 'rain', 'storm', 'snow', 'fog'].includes(settings.weather)) settings.weather = 'auto';
 if (!['lofi', 'jazz', 'bossa', 'ambient', 'auto'].includes(settings.mode)) settings.mode = 'lofi';
 // Auto: the music follows the clock: lofi in the morning, bossa in the afternoon, jazz in the evening, ambient late at night
@@ -76,7 +78,7 @@ function adaptQuality(dt) {
   const q0 = scene.quality || 1;
   if (fps < 45 && q0 > 0.55) { scene.quality = Math.max(0.5, q0 - 0.15); scene.resize(); }
 }
-scene.skin = settings.cat; scene.theme = settings.room;
+scene.skin = settings.cat; scene.theme = settings.room; scene.scenery = settings.view;
 if (q.has('peek')) scene.nextPeek = parseFloat(q.get('peek')) || 1;
 if (q.has('stray')) scene.nextStray = parseFloat(q.get('stray')) || 1;
 if (q.get('awake') === '1') { scene.cat.wake(); scene.cat.action = null; }
@@ -222,7 +224,7 @@ function updateUI() {
   $('#play').setAttribute('aria-label', playing ? 'Pause' : 'Play');
   $('#play .i-play').hidden = playing; $('#play .i-pause').hidden = !playing;
   for (const b of document.querySelectorAll('#mode button')) b.setAttribute('aria-pressed', String(b.dataset.mode === settings.mode));
-  $('#weather').value = settings.weather; $('#cat').value = settings.cat; $('#room').value = settings.room; $('#fast').checked = settings.fast; $('#vol').value = settings.volume;
+  $('#weather').value = settings.weather; $('#cat').value = settings.cat; $('#room').value = settings.room; $('#view').value = settings.view; $('#fast').checked = settings.fast; $('#vol').value = settings.volume;
 }
 function setMode(m) {
   settings.mode = m; store.set('mode', m);
@@ -233,6 +235,7 @@ function setMode(m) {
 }
 $('#cat').innerHTML = SKIN_IDS.map((id) => `<option value="${id}">${SKINS[id].name}</option>`).join('');
 $('#room').innerHTML = Object.entries(THEMES).map(([id, t]) => `<option value="${id}">${t.name}</option>`).join('');
+$('#view').addEventListener('change', (e) => { settings.view = e.target.value; store.set('view', settings.view); scene.scenery = settings.view; });
 $('#room').addEventListener('change', (e) => { settings.room = e.target.value; store.set('room', settings.room); scene.theme = settings.room; });
 $('#play').addEventListener('click', toggle);
 $('#next').addEventListener('click', () => { if (node && playing) node.port.postMessage({ type: 'next' }); });
@@ -259,6 +262,7 @@ addEventListener('keydown', (e) => {
   else if (k === 'c') { const i = (SKIN_IDS.indexOf(settings.cat) + 1) % SKIN_IDS.length; $('#cat').value = SKIN_IDS[i]; $('#cat').dispatchEvent(new Event('change')); }
   else if (k === 'f') $('#full').click();
   else if (k === 'n') $('#next').click();
+  else if (k === 'v') { $('#view').value = settings.view === 'town' ? 'lake' : 'town'; $('#view').dispatchEvent(new Event('change')); }
   else if (k === 'r') { const ids = Object.keys(THEMES), i = (ids.indexOf(settings.room) + 1) % ids.length; $('#room').value = ids[i]; $('#room').dispatchEvent(new Event('change')); }
   else if (k === 'd') { $('#fast').checked = !settings.fast; $('#fast').dispatchEvent(new Event('change')); }
   else if (k === 'h') { hidden = !hidden; document.body.classList.toggle('hide-ui', hidden); }
@@ -311,6 +315,7 @@ function catStatus() {
   if (c.action === 'groom') return `${name} is washing a paw`;
   if (c.state === 'sleep') return c.p.wrap > 0.5 ? `${name} is curled up asleep` : `${name} is napping`;
   if (scene.stray) return `${name} is watching a cat on the roof`;
+  if (scene.deer) return `${name} is watching a deer by the lake`;
   if (scene.birds.length) return `${name} is watching the birds`;
   if (scene.w.rain > 0.5) return `${name} is watching the rain`;
   if (scene.w.snow > 0.5) return `${name} is watching the snow`;
