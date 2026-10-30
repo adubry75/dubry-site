@@ -819,8 +819,10 @@ export class Scene {
         g.fillStyle = m; g.fillRect(0, 0, 240, 160);
         this.milky = c;
       }
-      ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(1, starA * 1.3 * (1 - state.moonFraction * 0.5));
-      ctx.drawImage(this.milky, 120, -40, G.w * 0.85, 420); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+      if (starA > 0.35) { // (under clouds it would be invisible anyway: skip the full-width blend)
+        ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(1, starA * 1.3 * (1 - state.moonFraction * 0.5)) * smooth(0.35, 0.6, starA);
+        ctx.drawImage(this.milky, 120, -40, G.w * 0.85, 420); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+      }
       this.stars(ctx, starA);
     }
     // a plane's lights crossing far away, now and then at night
