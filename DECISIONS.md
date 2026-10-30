@@ -2,6 +2,8 @@
 
 Overnight build of `/lofi/`. Each entry is a call I made without asking, and why.
 
+**Start with the [Summary](#summary) at the end:** what was built, what to upload where, and how to record a 1-hour video.
+
 ## Where things live
 - **The page is a self-contained folder, `lofi/`, at the repo root** (not under `src/` or `dist/`).
   `npm run build` wipes and regenerates `dist/` for the Nine Lives home page. Keeping Lofi Cat Radio out of that
