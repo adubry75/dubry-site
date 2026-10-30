@@ -26,9 +26,9 @@ const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 if (!own(SKINS, settings.cat)) settings.cat = 'daisy';
 if (!own(THEMES, settings.room)) settings.room = 'cozy';
 if (!['auto', 'live', 'clear', 'cloudy', 'rain', 'storm', 'snow', 'fog'].includes(settings.weather)) settings.weather = 'auto';
-if (!['lofi', 'jazz', 'ambient', 'auto'].includes(settings.mode)) settings.mode = 'lofi';
-// Auto: the music follows the clock: lofi by day, jazz in the evening, ambient late at night
-const scheduleFor = (hour) => (hour >= 6 && hour < 17 ? 'lofi' : hour >= 17 && hour < 23 ? 'jazz' : 'ambient');
+if (!['lofi', 'jazz', 'bossa', 'ambient', 'auto'].includes(settings.mode)) settings.mode = 'lofi';
+// Auto: the music follows the clock: lofi in the morning, bossa in the afternoon, jazz in the evening, ambient late at night
+const scheduleFor = (hour) => (hour >= 6 && hour < 13 ? 'lofi' : hour >= 13 && hour < 17 ? 'bossa' : hour >= 17 && hour < 23 ? 'jazz' : 'ambient');
 let playingMode = null, lastSwitch = -1e9; // what the engine is actually playing
 const startMode = () => (settings.mode === 'auto' ? scheduleFor(localParts(virtual).hour) : settings.mode);
 const DAY_SECONDS = q.has('fast') && parseFloat(q.get('fast')) > 1 ? parseFloat(q.get('fast')) : 360; // a fast day lasts 6 minutes
@@ -211,7 +211,7 @@ function showInfo(i) {
   if (CAPTION && title !== lastTitle) caption(`♪ ${title}`, i.mode === 'ambient' ? `ambient · ${i.key}` : `${i.mode} · ${i.key} · ${i.bpm} bpm`);
   lastTitle = title;
   const el = $('#now');
-  if (el) el.textContent = `“${trackTitle(i)}” · ` + (i.mode === 'ambient' ? `Ambient · ${i.key}` : `${i.mode === 'jazz' ? 'Jazz' : 'Lofi'} · ${i.key} · ${i.bpm} BPM${i.keys && i.keys !== 'rhodes' ? ' · ' + i.keys : ''}`);
+  if (el) el.textContent = `“${trackTitle(i)}” · ` + (i.mode === 'ambient' ? `Ambient · ${i.key}` : `${{ jazz: 'Jazz', bossa: 'Bossa' }[i.mode] || 'Lofi'} · ${i.key} · ${i.bpm} BPM${i.keys && i.keys !== 'rhodes' && i.mode !== 'bossa' ? ' · ' + i.keys : ''}`);
 }
 
 // ── controls
@@ -227,7 +227,7 @@ function setMode(m) {
   settings.mode = m; store.set('mode', m);
   const real = m === 'auto' ? scheduleFor(localParts(virtual).hour) : m;
   if (node && real !== playingMode) { node.port.postMessage({ type: 'mode', mode: real }); playingMode = real; lastSwitch = performance.now(); }
-  const el = $('#now'); if (el && !node) el.textContent = { lofi: 'Lofi', jazz: 'Jazz', ambient: 'Ambient', auto: 'Auto' }[m];
+  const el = $('#now'); if (el && !node) el.textContent = { lofi: 'Lofi', jazz: 'Jazz', bossa: 'Bossa', ambient: 'Ambient', auto: 'Auto' }[m];
   updateUI();
 }
 $('#cat').innerHTML = SKIN_IDS.map((id) => `<option value="${id}">${SKINS[id].name}</option>`).join('');
@@ -252,7 +252,7 @@ addEventListener('keydown', (e) => {
   if (e.key === ' ' && e.target.closest && e.target.closest('button, input, select')) return; // let the control handle its own Space
   const k = e.key.toLowerCase();
   if (k === ' ' || k === 'k') { e.preventDefault(); hideStart(); toggle(); }
-  else if (k === 'm') setMode({ lofi: 'jazz', jazz: 'ambient', ambient: 'auto', auto: 'lofi' }[settings.mode]);
+  else if (k === 'm') setMode({ lofi: 'jazz', jazz: 'bossa', bossa: 'ambient', ambient: 'auto', auto: 'lofi' }[settings.mode]);
   else if (k === 'w') { const i = (WEATHER_ORDER.indexOf(settings.weather) + 1) % WEATHER_ORDER.length; $('#weather').value = WEATHER_ORDER[i]; $('#weather').dispatchEvent(new Event('change')); }
   else if (k === 'c') { const i = (SKIN_IDS.indexOf(settings.cat) + 1) % SKIN_IDS.length; $('#cat').value = SKIN_IDS[i]; $('#cat').dispatchEvent(new Event('change')); }
   else if (k === 'f') $('#full').click();

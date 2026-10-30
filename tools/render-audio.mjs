@@ -6,7 +6,7 @@
 // Options
 //   --minutes N        length (default 3)
 //   --seed N           any integer; the same seed always renders the same music (default 1)
-//   --mode M           lofi | jazz | ambient (default lofi)
+//   --mode M           lofi | jazz | bossa | ambient (default lofi)
 //   --weather W        clear | rain | storm | snow | fog (default clear): mixes the matching weather sounds in
 //   --out FILE         .wav, .mp3 or .flac (default lofi-<mode>-<seed>.mp3); MP3/FLAC need ffmpeg on PATH
 //   --wav              with an .mp3/.flac --out, also keep the .wav next to it
@@ -34,7 +34,7 @@ const bitrate = parseInt(opt('bitrate', '192'), 10);
 const fadeS = parseFloat(opt('fade', '4'));
 const out = path.resolve(opt('out', `lofi-${mode}-${seed}.mp3`));
 const ext = path.extname(out).toLowerCase();
-if (!['lofi', 'jazz', 'ambient'].includes(mode)) throw new Error('--mode must be lofi, jazz or ambient');
+if (!['lofi', 'jazz', 'bossa', 'ambient'].includes(mode)) throw new Error('--mode must be lofi, jazz, bossa or ambient');
 const W = { clear: {}, rain: { rain: 1 }, storm: { rain: 1, storm: 1 }, snow: { snow: 1 }, fog: { fog: 1 } }[weather];
 if (!W) throw new Error('--weather must be clear, rain, storm, snow or fog');
 

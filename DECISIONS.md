@@ -154,9 +154,9 @@ Overnight build of `/lofi/`. Each entry is a call I made without asking, and why
 **What I built:** Lofi Cat Radio at `/lofi/`. A cozy, endless, generative scene: a cat (Daisy, Nero, Jammies,
 Callie/Soybean or solid black) napping on a windowsill above a small town. The sky, sun, moon and room lighting
 follow real Medford time, and the weather drifts (clear, cloudy, rain, gentle storms, snow, fog, or the real
-current Medford weather). Music is generated live with no loops: **Lofi** (Rhodes/piano jazz chords, dusty drums,
-bass, vinyl, tape wobble), **Jazz** (brushes, ride, walking bass) and **Ambient** (pads, drone, swells, nothing
-plucked). There's an offline renderer for long soundtracks.
+current Medford weather). Music is generated live with no loops: **Lofi** (Rhodes/piano/guitar jazz chords, dusty drums,
+bass, vinyl, tape wobble), **Jazz** (brushes, ride, walking bass), **Bossa** (nylon guitar, clave, shaker) and
+**Ambient** (pads, drone, swells, nothing plucked), plus **Auto**, which follows the clock. There's an offline renderer for long soundtracks.
 
 **Deploy (WinSCP):** upload the `lofi/` folder to `public_html/lofi/`. That's the whole page (≈ 150 KB of code;
 `lofi/samples/` is optional, about 11 MB of MP3s). For the links on the home page, re-upload `dist/index.html` to
@@ -166,7 +166,7 @@ else changed.
 **Record a 1-hour video:**
 1. Open `https://dubry.com/lofi/?record=1` in Chrome, full screen (F11) on a 1920×1080 display. `record=1` hides
    every control and the cursor. Click once to start the sound.
-   Handy URL options: `mode=lofi|jazz|ambient|auto`, `weather=auto|live|clear|cloudy|rain|storm|snow|fog`,
+   Handy URL options: `mode=lofi|jazz|bossa|ambient|auto`, `weather=auto|live|clear|cloudy|rain|storm|snow|fog`,
    `cat=daisy|nero|jammies|callie|black`, `room=cozy|cabin|blue`, `caption=1` (now-playing captions),
    `seed=42` (same seed = same music), `fast=3600` (one whole day passes in
    one hour; `fast=1` is a 6-minute day), `time=21:30` (start at a given Medford time).
@@ -292,3 +292,14 @@ weather changes, rapid switching, NaN injection, timing). Its real findings, all
   sill's edge to lying along the sill in front of the body, tip curled. It unfurls again on waking. The two tail
   shapes are blended point by point, with the tip slightly ahead. Blending the bend angles was tried first, and it
   swept the tail through mid-air under the sill.
+
+## New music style: Bossa
+- A fourth style for sunny afternoons. Nylon guitar (the Karplus-Strong voice) plays the syncopated bossa comp
+  (fingers on 1, the "a" of 1, the "and" of 2, 3-and, 4) with a thumb bass on 1 and 3, sometimes pushing the next
+  chord in early. Underneath: a cross-stick clave (3-2 or 2-3, chosen per section), soft shaker 16ths, a
+  surdo-like root/fifth bass with a pickup, a feathered kick, a quiet Rhodes pad and the occasional melody. Same key
+  and tempo system (70–90 BPM, which gives a relaxed bossa).
+- Auto now runs Lofi 6 AM–1 PM, Bossa 1–5 PM, Jazz 5–11 PM, Ambient 11 PM–6 AM.
+- Sample `lofi/samples/bossa-3min-seed51.mp3`: peak −4.2 dBFS, 0 clipped, no gaps, short-term −23.8 to −14.8 LUFS,
+  worst 1 s change 2.8 LU, −17.8 LUFS integrated. Tested live: Lofi → Jazz → Bossa → Ambient → Lofi with no errors,
+  and the browser/Node bit-exactness check still passes.

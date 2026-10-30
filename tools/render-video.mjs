@@ -9,7 +9,7 @@
 // Options
 //   --minutes N     length (default 1)
 //   --seed N        music + scene seed (default 1)
-//   --mode M        lofi | jazz | ambient (default lofi)
+//   --mode M        lofi | jazz | bossa | ambient (default lofi)
 //   --weather W     auto | clear | cloudy | rain | storm | snow | fog (default auto)
 //   --cat C         daisy | nero | jammies | callie | black (default daisy)
 //   --room R        cozy | cabin | blue (default cozy)

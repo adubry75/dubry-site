@@ -91,6 +91,7 @@
     .bar button, .bar select { height: 36px; font-size: 13px; padding: 0 12px; }
     .lbl { display: none; }
   }
+  @media (max-width: 400px) { .seg button { padding: 0 8px; font-size: 12px; } }
   @media (prefers-reduced-motion: reduce) { #ui, #start { transition: none; } }
 </style>
 </head>
@@ -113,8 +114,9 @@
     <div class="seg" id="mode" role="group" aria-label="Music style">
       <button data-mode="lofi" aria-pressed="true">Lofi</button>
       <button data-mode="jazz" aria-pressed="false">Jazz</button>
+      <button data-mode="bossa" aria-pressed="false">Bossa</button>
       <button data-mode="ambient" aria-pressed="false">Ambient</button>
-      <button data-mode="auto" aria-pressed="false" title="Follows the clock: lofi by day, jazz in the evening, ambient late at night">Auto</button>
+      <button data-mode="auto" aria-pressed="false" title="Follows the clock: lofi in the morning, bossa in the afternoon, jazz in the evening, ambient late at night">Auto</button>
     </div>
     <span class="lbl" aria-hidden="true">Weather</span>
     <select id="weather" aria-label="Weather">
