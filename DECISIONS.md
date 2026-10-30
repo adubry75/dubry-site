@@ -306,3 +306,7 @@ weather changes, rapid switching, NaN injection, timing). Its real findings, all
   and the browser/Node bit-exactness check still passes.
 - `render-video.mjs --mode auto` follows the page's clock with the same 2-minute rule. Tested on a fast day
   starting at noon: Bossa at 1 PM (15 s in), Jazz at 135 s, crossfades within 2.8 LU, no clipping or gaps.
+- Bossa 60-minute render (seed 88, storm with thunder): peak −3.0 dBFS, 0 clipped, no gaps, short-term −20.9 to
+  −12.8 LUFS, worst 1 s change 3.2 LU, −16.5 LUFS integrated.
+- Desktop control bar: it wrapped onto two rows even on wide screens (an absolutely positioned box at `left: 50%`
+  shrink-wraps to half the viewport). It now sizes to its content and only wraps when the screen is narrow.
