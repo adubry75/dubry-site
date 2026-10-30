@@ -329,6 +329,6 @@ weather changes, rapid switching, NaN injection, timing). Its real findings, all
 - A plain Chromium (no autoplay flag) loads the page, record mode, and record + captions + auto + storm with a
   completely clean console.
 - Sound to match the fireflies: on summer nights (June–August, after dark, fading out with rain, fog or snow) three
-  synthesized crickets chirp quietly at different places in the stereo field, about 30 dB under the music.
+  synthesized crickets chirp quietly at different places in the stereo field, about 27 dB under the music.
   Silent the rest of the year, and off in the renderer unless asked for, so seeds still render identically
   (browser vs Node re-verified).
