@@ -412,6 +412,22 @@ intact, drawing state never leaks out of the new views). Fixed:
   same engine on a ScriptProcessor, music plays (signal measured), style switching works, and the console shows only
   the expected "using ScriptProcessor" notice. Laptop sizes (1366×768, 1024×768) checked with the controls up.
 
+## Last music pass (4:15 AM): more harmony
+- Six more chord progressions for variety: I–ii–iii–IV, IV–V–iii–vi, and the "backdoor" I–♭VII–IV–iv for major
+  keys; i–♭VII–♭VI–Vsus and iv–i–♭VI–♭VII for minor keys; I–♭III9–ii–V for jazz. All samples were re-rendered
+  from this final engine and re-checked:
+
+  | file | peak | clipped | gaps | short-term loudness | worst 1 s change | integrated |
+  |---|---|---|---|---|---|---|
+  | lofi-3min-seed10.mp3 | −3.4 dBFS | 0 | none | −24.1 to −14.2 LUFS | 2.3 LU | −18.2 LUFS |
+  | lofi-rain-3min-seed13.mp3 | −3.5 dBFS | 0 | none | −21.9 to −14.4 LUFS | 2.2 LU | −17.3 LUFS |
+  | jazz-3min-seed41.mp3 | −5.2 dBFS | 0 | none | −21.5 to −14.2 LUFS | 4.6 LU (a section change) | −17.9 LUFS |
+  | bossa-3min-seed51.mp3 | −4.2 dBFS | 0 | none | −23.8 to −14.8 LUFS | 2.8 LU | −17.8 LUFS |
+  | ambient-3min-seed21.mp3 | −5.6 dBFS | 0 | none | −18.9 to −14.0 LUFS | 1.1 LU | −17.0 LUFS |
+
+  Browser and Node still match bit for bit; 6 seeds × 4 minutes of lofi, jazz and bossa: no NaN, peaks under the
+  limiter ceiling. (The earlier sample tables above describe the samples as they were then.)
+
 ---
 
 # Summary
