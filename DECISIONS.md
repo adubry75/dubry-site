@@ -417,7 +417,7 @@ fog, thunder and summer crickets are mixed in to match the weather. Everything i
 in code.
 
 **Deploy (WinSCP):**
-1. Upload the `lofi/` folder to `public_html/lofi/`. That's the whole page: about 220 KB of code + a 100 KB share
+1. Upload the `lofi/` folder to `public_html/lofi/`. That's the whole page: about 250 KB of code + a 100 KB share
    image. `lofi/samples/` (5 MP3s, about 14 MB) is optional.
 2. For the two links on the home page, upload `dist/index.html` → `public_html/index.html` and
    `dist/nine-lives/cabs/lofi-radio.webp` → `public_html/nine-lives/cabs/lofi-radio.webp`. Nothing else on the
