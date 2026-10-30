@@ -78,3 +78,11 @@ Overnight build of `/lofi/`. Each entry is a call I made without asking, and why
   (down to 50%). Everything is soft shapes, so it still looks right. `?quality=1` pins full resolution.
 - Memory: caches are 4 room images + 4 town images (+4 snow images if it snows), built lazily per palette and
   rebuilt only on resize or season change. Particles are capped. The 10-minute soak stays flat (see below).
+
+## Polish pass 1 (cat close-ups, poses, soak)
+- Looked at every skin awake, asleep and at night, plus the yawn, the stretch and the visitor. Fixed: the window
+  rim light outlined the whole cat, so it now only catches the top edges, like real backlight; the Siamese mask
+  was a dark blob (a hole at night), so it is now a smaller, softer mask on the muzzle; the lighter chest on Nero
+  and Jammies was a visible disc, so it is now a wide, faint wash.
+- 10-minute soak (fast day cycle, auto weather, music playing): JS heap 1.4 → 2.0 MB and flat after the first
+  minute, DOM nodes constant at 224, no console errors or warnings. JS work per frame 1.3–3.4 ms on average.

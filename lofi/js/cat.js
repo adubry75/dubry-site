@@ -140,8 +140,8 @@ export function drawCat(ctx, x, y, s, skinId, brain, time, light, rim, eyeGlow =
     ctx.fillStyle = g; ctx.fillRect(40, -170, 160, 175);
   }
   if (S.muzzle) { // lighter chest
-    g = ctx.createRadialGradient(chestX + 4, -40, 4, chestX + 4, -40, 60);
-    g.addColorStop(0, C(S.muzzle)); g.addColorStop(1, lit(S.muzzle, L, 0));
+    g = ctx.createRadialGradient(chestX - 4, -30, 6, chestX - 4, -30, 75);
+    g.addColorStop(0, lit(S.muzzle, L, 0.55)); g.addColorStop(1, lit(S.muzzle, L, 0));
     ctx.fillStyle = g; ctx.fillRect(chestX - 60, -110, 130, 115);
   }
   // haunch line
@@ -149,7 +149,11 @@ export function drawCat(ctx, x, y, s, skinId, brain, time, light, rim, eyeGlow =
   ctx.beginPath(); ctx.moveTo(62, -4); ctx.bezierCurveTo(68, -72, 134, -86, 144, -30); ctx.stroke();
   ctx.globalAlpha = 1;
   // rim light from the window behind
-  if (rim && rim.alpha > 0.01) { ctx.strokeStyle = rim.color; ctx.globalAlpha = rim.alpha; ctx.lineWidth = 7; ctx.stroke(body); ctx.globalAlpha = 1; }
+  if (rim && rim.alpha > 0.01) { // backlight from the window: only the top edges catch it
+    const rg = ctx.createLinearGradient(0, rumpY - 6, 0, -50);
+    rg.addColorStop(0, rim.color); rg.addColorStop(1, rim.color.replace(/[\d.]+\)$/, '0)'));
+    ctx.strokeStyle = rg; ctx.globalAlpha = rim.alpha; ctx.lineWidth = 8; ctx.stroke(body); ctx.globalAlpha = 1;
+  }
   ctx.restore();
 
   // hind paw
@@ -240,8 +244,8 @@ function drawHead(ctx, hx, hy, tilt, S, p, brain, C, rim, eyeGlow) {
   g.addColorStop(0, C(S.light)); g.addColorStop(0.5, C(S.base)); g.addColorStop(1, C(S.shade));
   ctx.globalAlpha = 0.45; ctx.fillStyle = g; ctx.fillRect(-70, -60, 140, 112); ctx.globalAlpha = 1;
   if (S.point) { // siamese mask
-    g = ctx.createRadialGradient(0, 18, 4, 0, 14, 52);
-    g.addColorStop(0, C(S.point)); g.addColorStop(0.55, C(S.point).replace(/[\d.]+\)$/, '0.75)')); g.addColorStop(1, C(S.point).replace(/[\d.]+\)$/, '0)'));
+    g = ctx.createRadialGradient(0, 20, 3, 0, 18, 40);
+    g.addColorStop(0, C(S.point).replace(/[\d.]+\)$/, '0.92)')); g.addColorStop(0.5, C(S.point).replace(/[\d.]+\)$/, '0.55)')); g.addColorStop(1, C(S.point).replace(/[\d.]+\)$/, '0)'));
     ctx.fillStyle = g; ctx.fillRect(-70, -40, 140, 100);
   }
   if (S.muzzle) {
@@ -254,7 +258,11 @@ function drawHead(ctx, hx, hy, tilt, S, p, brain, C, rim, eyeGlow) {
     for (const sx of [-1, 1]) { ctx.beginPath(); ctx.moveTo(sx * 62, 0); ctx.lineTo(sx * 44, 4); ctx.moveTo(sx * 63, 12); ctx.lineTo(sx * 46, 14); ctx.stroke(); }
     ctx.globalAlpha = 1;
   }
-  if (rim && rim.alpha > 0.01) { ctx.strokeStyle = rim.color; ctx.globalAlpha = rim.alpha; ctx.lineWidth = 6; ctx.stroke(head); ctx.globalAlpha = 1; }
+  if (rim && rim.alpha > 0.01) {
+    const rg = ctx.createLinearGradient(0, -58, 0, 10);
+    rg.addColorStop(0, rim.color); rg.addColorStop(1, rim.color.replace(/[\d.]+\)$/, '0)'));
+    ctx.strokeStyle = rg; ctx.globalAlpha = rim.alpha; ctx.lineWidth = 7; ctx.stroke(head); ctx.globalAlpha = 1;
+  }
   ctx.restore();
 
   // eyes
