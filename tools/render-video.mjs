@@ -19,6 +19,7 @@
 //   --size WxH      video size (default 1920x1080)
 //   --crf N         x264 quality, lower is better (default 18)
 //   --out FILE      output .mp4 (default lofi-cat-radio.mp4)
+//   --still FILE    instead of a video, save one frame as PNG (e.g. a thumbnail: --size 1280x720 --still thumb.png)
 // Needs Playwright's Chromium and ffmpeg (with libx264) on PATH.
 import http from 'node:http';
 import fs from 'node:fs';
@@ -66,6 +67,13 @@ await page.goto(`http://localhost:${server.address().port}/lofi/?${params}`);
 await page.waitForFunction(() => window.__lofi && window.__lofi.step);
 await page.evaluate(() => { window.__lofi.scene.playing = true; });
 
+if (opt('still', null)) { // one frame (after a few seconds so everything has settled) → PNG
+  for (let i = 0; i < 4 * fps; i++) await page.evaluate((dt) => window.__lofi.step(dt), 1 / fps);
+  const png = await page.evaluate(() => window.__lofi.scene.canvas.toDataURL('image/png').slice(22));
+  fs.writeFileSync(path.resolve(opt('still')), Buffer.from(png, 'base64'));
+  console.log('Wrote', path.resolve(opt('still')));
+  await browser.close(); server.close(); process.exit(0);
+}
 // video: JPEG frames from the canvas → x264
 const tmpVideo = out.replace(/\.mp4$/i, '') + '.video.tmp.mp4', tmpAudio = out.replace(/\.mp4$/i, '') + '.audio.tmp.wav';
 const fadeS = Math.min(3, minutes * 60 / 4);

@@ -218,3 +218,6 @@ else changed.
   `mode=auto`, also in the `M` cycle): Lofi 6 AM–5 PM, Jazz 5–11 PM, Ambient 11 PM–6 AM by Medford time, switching
   with the usual 7 s crossfade and at most every 2 minutes, so a fast day never makes the music lurch. Checked live:
   10:00 → Lofi, 20:00 → Jazz, 02:00 → Ambient. The video renderer takes a fixed style (`--mode`), not Auto.
+- `tools/render-video.mjs --still thumb.png --size 1280x720 …` saves one clean frame (for YouTube thumbnails).
+  The page now has a share card (`og:image` = `lofi/og.jpg`, 1200×630, the cozy room at dusk with Daisy and the
+  jack-o'-lantern) plus canonical and Twitter-card tags, like the home page.
