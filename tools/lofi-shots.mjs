@@ -1,6 +1,6 @@
 // Lofi Cat Radio: Playwright checks. Serves the repo root, then for desktop (1920×1080) and a phone:
 // screenshots every weather × time of day, collects console errors, and measures frame times.
-//   node tools/lofi-shots.mjs [--only desktop|phone] [--times 07:50,13:00] [--weathers rain] [--out shots/lofi]
+//   node tools/lofi-shots.mjs [--only desktop|phone] [--times 07:50,13:00] [--weathers rain] [--view lake] [--room cabin] [--out shots/lofi]
 //   node tools/lofi-shots.mjs --soak 10     (10-minute run: frame times + JS heap over time)
 import http from 'node:http';
 import fs from 'node:fs';
@@ -69,7 +69,7 @@ if (soak) {
   for (const dev of Object.keys(DEVICES)) {
     if (only && only !== dev) continue;
     for (const w of weathers) for (const t of times) {
-      const params = `record=1&freeze=1&instant=1&seed=3&awake=${t === '13:00' ? 1 : 0}&weather=${w}&time=2026-10-30T${t}:00-07:00`;
+      const params = `record=1&freeze=1&instant=1&seed=3&awake=${t === '13:00' ? 1 : 0}&weather=${w}&time=2026-10-30T${t}:00-07:00&view=${opt('view', 'town')}&room=${opt('room', 'cozy')}`;
       const { ctx, page } = await open(dev, params);
       await page.waitForTimeout(1500);
       const file = path.join(out, `${dev}-${w}-${t.replace(':', '')}.png`);

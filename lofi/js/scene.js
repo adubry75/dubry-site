@@ -877,7 +877,7 @@ export class Scene {
     const md = state.month * 100 + state.day;
     if (!lake && (md >= 1015 || md <= 415 || W.snow > 0.2)) this.smoke(ctx, state);
     // lights glow through the fog
-    if (W.fog > 0.05 && state.dark > 0.3) {
+    if (W.fog > 0.05 && state.dark > 0.3 && this.scenery !== 'lake') {
       ctx.globalCompositeOperation = 'lighter';
       for (const w of this.town.windows) if (w.a > 0.2 && w.row > 0) { ctx.globalAlpha = w.a * W.fog * 0.35; ctx.drawImage(this.warmGlow, w.x - 10, w.y - 10, w.w + 20, w.h + 20); }
       ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';

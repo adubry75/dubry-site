@@ -307,6 +307,8 @@ weather changes, rapid switching, NaN injection, timing). Its real findings, all
   (on the pines, the far shore, the cabin roof, the bank and the dock), stars, clouds, birds, fireflies and storms
   all work the same as in the town. Cars, street lamps, wires, the rooftop cat and the town's chimneys are
   town-only.
+- Checked with the full screenshot sweep (6 weathers × 7 times, desktop + phone, Cabin room): no console errors.
+  It caught the town's window lights "glowing through the fog" over the lake, now town-only.
 - Built the same way as the town: drawn into per-palette caches (lit by the same four palettes, snow as a
   separate layer), with only the moving parts drawn each frame, so it costs about the same.
 
