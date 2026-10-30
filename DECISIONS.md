@@ -348,6 +348,8 @@ these behaviour glitches, all fixed and re-measured:
 - Video renderer speed: profiled per frame (about 22 ms to render in software + 24 ms to JPEG-encode + transfer).
   Batching frames and async `toBlob` pipelining gave no gain here (Chromium encodes on the same thread and this
   machine is CPU-bound), so I left it simple. On a machine with a GPU, rendering is the cheaper half.
+- Accessibility: with the OS "reduce motion" setting, lightning is a slow 2-second glow at half the brightness
+  instead of a quick flicker (measured: peak 0.35 over 1 s, versus a 0.72 flicker). The thunder still rumbles.
 
 ---
 

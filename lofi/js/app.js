@@ -78,6 +78,7 @@ function adaptQuality(dt) {
   const q0 = scene.quality || 1;
   if (fps < 45 && q0 > 0.55) { scene.quality = Math.max(0.5, q0 - 0.15); scene.resize(); }
 }
+scene.calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
 scene.skin = settings.cat; scene.theme = settings.room; scene.scenery = settings.view;
 if (q.has('peek')) scene.nextPeek = parseFloat(q.get('peek')) || 1;
 if (q.get('awake') === '1') { scene.cat.wake(); scene.cat.action = null; }

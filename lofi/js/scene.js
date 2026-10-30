@@ -646,7 +646,9 @@ export class Scene {
     if (!this.audioThunder && this.w.storm > 0.3) { this.localThunder -= dt; if (this.localThunder <= 0) { this.lightning(); this.localThunder = 22 + this.r() * 53; } }
     if (this.flashT >= 0) {
       this.flashT += dt; const t = this.flashT;
-      this.flash = Math.exp(-t / 0.09) * (t < 0.3 ? 1 : 0) + 0.7 * (t > 0.18 ? Math.exp(-(t - 0.18) / 0.35) : 0);
+      this.flash = this.calm // reduced motion: a slow, faint glow instead of a flicker
+        ? 0.35 * Math.sin(Math.PI * Math.min(1, t / 2))
+        : Math.exp(-t / 0.09) * (t < 0.3 ? 1 : 0) + 0.7 * (t > 0.18 ? Math.exp(-(t - 0.18) / 0.35) : 0);
       if (t > 2) { this.flashT = -1; this.flash = 0; }
     }
     const W = this.w;
