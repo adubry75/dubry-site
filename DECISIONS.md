@@ -194,3 +194,6 @@ else changed.
 - Full screenshot re-run (6 weathers × 7 times × desktop/phone = 84 shots + controls): no console errors. Fixed what
   it showed: night fog was drawn with untinted white sprites and looked like a glowing band, so fog banks are now
   tinted to the sky's colour (darker at night), and lit windows and street lamps glow through fog.
+- Phones (portrait) showed a big empty band of wall above the window, so there's now a high floating shelf up there
+  (framed photos, books, a little cat figurine, a jar, a trailing pothos). It sits above y=0 in the design, so a
+  16:9 screen never shows it and the desktop composition is unchanged.

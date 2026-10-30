@@ -363,6 +363,8 @@ export class Scene {
     }
     // ceiling and crown molding (portrait screens see it)
     if (v.y0 < -40) { g.fillStyle = C(TH.ceil); g.fillRect(v.x0 - 10, v.y0 - 10, v.x1 - v.x0 + 20, -40 - v.y0 + 10); g.fillStyle = C('#e2cdbd'); g.fillRect(v.x0 - 10, -46, v.x1 - v.x0 + 20, 12); g.fillStyle = C('#a7887a'); g.fillRect(v.x0 - 10, -34, v.x1 - v.x0 + 20, 4); }
+    // a high shelf above the window (only tall/portrait screens see this part of the wall)
+    if (v.y0 < -120) this.highShelf(g, C);
     // floor (portrait/tall screens) with a rug
     if (v.y1 > 1090) {
       g.fillStyle = C('#8d6a55'); g.fillRect(v.x0 - 10, 1090, v.x1 - v.x0 + 20, v.y1 - 1090 + 10);
@@ -480,6 +482,40 @@ export class Scene {
       x = sx; y = 384;
       for (let j = 0; j < len; j += 20) { x += Math.sin(j * 0.04 + sx) * 4; y += 20; leaf(x, y, 0.8 + rr() * 0.3, (j / 20) % 2 ? 2.2 : -2.2, rr() < 0.5 ? '#4f7a4a' : '#5f8c4c'); }
     }
+  }
+
+  highShelf(g, C) {
+    const y = -150;
+    g.fillStyle = C('#7a5238'); g.fillRect(600, y, 720, 14); g.fillStyle = C('#5f3f2b'); g.fillRect(600, y + 14, 720, 5);
+    g.fillStyle = C('#4b3324'); g.fillRect(640, y + 19, 8, 16); g.fillRect(1272, y + 19, 8, 16);
+    // framed photos
+    for (const [x, w, h, col] of [[640, 70, 88, '#e8b38a'], [722, 56, 70, '#9cc0d8']]) {
+      g.fillStyle = C('#3e2b20'); g.fillRect(x, y - h, w, h); g.fillStyle = C('#efe4d2'); g.fillRect(x + 6, y - h + 6, w - 12, h - 12);
+      g.fillStyle = C(col); g.fillRect(x + 11, y - h + 11, w - 22, h - 22);
+      g.fillStyle = C('#3a2f36'); g.beginPath(); g.ellipse(x + w / 2, y - 20, w * 0.18, 9, 0, Math.PI, 0); g.fill(); // a little cat silhouette
+      g.beginPath(); g.moveTo(x + w / 2 - 8, y - 26); g.lineTo(x + w / 2 - 5, y - 34); g.lineTo(x + w / 2 - 1, y - 27); g.lineTo(x + w / 2 + 3, y - 34); g.lineTo(x + w / 2 + 6, y - 26); g.fill();
+    }
+    // books
+    let bx = 820;
+    for (const [col, w, h] of [['#6e7f5a', 18, 66], ['#c9a35c', 14, 58], ['#7d4b5e', 20, 72], ['#5b7488', 16, 62]]) { g.fillStyle = C(col); g.fillRect(bx, y - h, w, h); bx += w + 1; }
+    // a sleepy cat figurine (lucky-cat-ish shape, just a simple loaf)
+    g.fillStyle = C('#f0e6d8'); g.beginPath(); g.ellipse(960, y - 18, 30, 18, 0, Math.PI, 0); g.fill(); g.fillRect(930, y - 18, 60, 18);
+    g.beginPath(); g.arc(940, y - 30, 14, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.moveTo(930, y - 38); g.lineTo(933, y - 50); g.lineTo(940, y - 42); g.lineTo(947, y - 50); g.lineTo(950, y - 38); g.fill();
+    g.strokeStyle = C('#3a2f36'); g.lineWidth = 1.5; g.beginPath(); g.moveTo(933, y - 30); g.quadraticCurveTo(936, y - 27, 939, y - 30); g.moveTo(942, y - 30); g.quadraticCurveTo(945, y - 27, 948, y - 30); g.stroke();
+    // a jar and a trailing plant
+    g.fillStyle = C('#cfe0e4'); g.globalAlpha = 0.75; this.round(g, 1050, y - 54, 40, 54, 8); g.fill(); g.globalAlpha = 1;
+    g.fillStyle = C('#c56f4d'); g.beginPath(); g.moveTo(1150, y - 46); g.lineTo(1214, y - 46); g.lineTo(1206, y); g.lineTo(1158, y); g.closePath(); g.fill();
+    const rr = seeded(13);
+    g.strokeStyle = C('#4a6a3e'); g.lineWidth = 2;
+    for (const [sx, len] of [[1160, 180], [1182, 260], [1204, 140]]) {
+      let x = sx, yy = y - 40; g.beginPath(); g.moveTo(x, yy);
+      const pts = [];
+      for (let j = 0; j < len; j += 18) { x += Math.sin(j * 0.05 + sx) * 5; yy += 18; g.lineTo(x, yy); pts.push([x, yy]); }
+      g.stroke();
+      for (const [px, py] of pts) { g.save(); g.translate(px, py); g.rotate(rr() * 2 - 1 + (rr() < 0.5 ? 2.2 : -2.2)); g.fillStyle = C(rr() < 0.5 ? '#4f7a4a' : '#6a9a52'); g.beginPath(); g.moveTo(0, 0); g.quadraticCurveTo(8, -6, 0, -16); g.quadraticCurveTo(-8, -6, 0, 0); g.fill(); g.restore(); }
+    }
+    for (let j = 0; j < 8; j++) { g.save(); g.translate(1162 + rr() * 40, y - 46); g.rotate(-1 + rr() * 2); g.fillStyle = C(rr() < 0.5 ? '#4f7a4a' : '#6a9a52'); g.beginPath(); g.moveTo(0, 0); g.quadraticCurveTo(9, -7, 0, -18); g.quadraticCurveTo(-9, -7, 0, 0); g.fill(); g.restore(); }
   }
 
   rightWall(g, C) {
