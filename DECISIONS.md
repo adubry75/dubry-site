@@ -137,3 +137,32 @@ Overnight build of `/lofi/`. Each entry is a call I made without asking, and why
   −15.6 LUFS, worst 1 s change 2.4 LU, −18.0 LUFS integrated. Tonal balance is like lofi with ~4 dB more air (ride).
 - Tested live in Chromium: Lofi → Jazz → Ambient → Lofi on desktop and phone. The info line follows each switch, the
   new style starts in the old one's key, play/pause works, no console errors. `M` cycles the three styles.
+
+---
+
+# Summary (read this first)
+
+**What I built:** Lofi Cat Radio at `/lofi/`. A cozy, endless, generative scene: a cat (Daisy, Nero, Jammies,
+Callie/Soybean or solid black) napping on a windowsill above a small town. The sky, sun, moon and room lighting
+follow real Medford time, and the weather drifts (clear, cloudy, rain, gentle storms, snow, fog, or the real
+current Medford weather). Music is generated live with no loops: **Lofi** (Rhodes/piano jazz chords, dusty drums,
+bass, vinyl, tape wobble), **Jazz** (brushes, ride, walking bass) and **Ambient** (pads, drone, swells, nothing
+plucked). There's an offline renderer for long soundtracks.
+
+**Deploy (WinSCP):** upload the `lofi/` folder to `public_html/lofi/`. That's the whole page (≈ 150 KB of code;
+`lofi/samples/` is optional, about 11 MB of MP3s). For the links on the home page, re-upload `dist/index.html` to
+`public_html/index.html` and `dist/nine-lives/cabs/lofi-radio.webp` to `public_html/nine-lives/cabs/`. Nothing
+else changed.
+
+**Record a 1-hour video:**
+1. Open `https://dubry.com/lofi/?record=1` in Chrome, full screen (F11) on a 1920×1080 display. `record=1` hides
+   every control and the cursor. Click once to start the sound.
+   Handy URL options: `mode=lofi|jazz|ambient`, `weather=auto|live|clear|cloudy|rain|storm|snow|fog`,
+   `cat=daisy|nero|jammies|callie|black`, `seed=42` (same seed = same music), `fast=3600` (one whole day passes in
+   one hour; `fast=1` is a 6-minute day), `time=21:30` (start at a given Medford time).
+   Example: `/lofi/?record=1&mode=lofi&weather=rain&cat=daisy&fast=3600&seed=7`.
+2. In OBS: a Window or Display Capture of that Chrome window + Desktop Audio, output 1920×1080 at 30 or 60 fps,
+   and record for 60 minutes.
+3. Or record the picture only and use a rendered soundtrack, e.g.
+   `node tools/render-audio.mjs --minutes 60 --seed 7 --mode lofi --weather rain --out lofi-1h.mp3`, then
+   `ffmpeg -i video.mp4 -i lofi-1h.mp3 -map 0:v -map 1:a -c:v copy -c:a aac -b:a 192k -shortest final.mp4`.

@@ -237,7 +237,11 @@ function hideStart() { start.classList.add('gone'); setTimeout(() => (start.hidd
 if (RECORD || q.get('ui') === '0') { start.hidden = true; }
 start.querySelector('button').addEventListener('click', (e) => { e.stopPropagation(); hideStart(); play(); poke(); });
 start.addEventListener('click', () => { hideStart(); play(); poke(); });
-if (RECORD) addEventListener('pointerdown', () => { if (!playing) play(); }, { once: true });
+if (RECORD) {
+  addEventListener('pointerdown', () => { if (!playing) play(); }, { once: true });
+  // where autoplay is allowed (e.g. Chrome started with --autoplay-policy=no-user-gesture-required) start right away
+  startAudio().then(() => { if (actx.state === 'running') play(); }).catch(() => {});
+}
 if (!RECORD) poke();
 
 // ── the loop
