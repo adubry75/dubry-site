@@ -77,7 +77,7 @@ function buildTown() {
         const wx = bx + (c + 0.5) * (w / cols) - ww / 2, wy = row.y - h + 10 + f * (h - 14) / floors;
         if (wy + wh > row.y - 3) continue;
         const warm = ['#ffd58c', '#ffc979', '#ffe3a6', '#ffcf9a', '#f7b56d'][(r() * 5) | 0];
-        T.windows.push({ x: wx, y: wy, w: ww, h: wh, row: ri, col: r() < 0.07 ? '#a8c4ff' : warm, tv: r() < 0.07, thr: r() < 0.3 ? 2 : 0.3 + r() * 0.55, off: 20.5 + r() * 5.5, morning: r() < 0.25 ? 5.4 + r() * 1.4 : 99, a: 0 });
+        T.windows.push({ x: wx, y: wy, w: ww, h: wh, row: ri, col: r() < 0.07 ? '#a8c4ff' : warm, tv: r() < 0.07, thr: r() < 0.3 ? 2 : 0.3 + r() * 0.55, off: r() < 0.12 ? 27 + r() * 3.5 : 20.5 + r() * 5.5, morning: r() < 0.25 ? 5.4 + r() * 1.4 : 99, a: 0 });
       }
       bx += w + (r() < 0.3 ? 8 + r() * 30 : 0);
     }
@@ -102,7 +102,8 @@ export class Scene {
     this.town = buildTown();
     this.cat = new CatBrain(this.r);
     this.skin = 'daisy';
-    this.w = { rain: 0, snow: 0, fog: 0, cloud: 0.25 };
+    this.w = { rain: 0, snow: 0, fog: 0, cloud: 0.25, storm: 0 };
+    this.flash = 0; this.flashT = -1; this.localThunder = 30; this.audioThunder = false;
     this.wt = { ...this.w };
     this.snowCover = 0;
     this.caches = new Map(); this.season = null;
@@ -187,6 +188,7 @@ export class Scene {
   }
 
   setWeather(t) { Object.assign(this.wt, t); }
+  lightning() { this.flashT = 0; this.flashX = 150 + this.r() * (G.w - 300); }
 
   // ── per-palette caches
   cache(key, idx, build) {
@@ -514,7 +516,14 @@ export class Scene {
     this.time += dt;
     // weather eases toward its target over ~20 s
     const kw = 1 - Math.exp(-dt / 7);
-    for (const key of ['rain', 'snow', 'fog', 'cloud']) this.w[key] += (this.wt[key] - this.w[key]) * kw;
+    for (const key of ['rain', 'snow', 'fog', 'cloud', 'storm']) this.w[key] += ((this.wt[key] || 0) - this.w[key]) * kw;
+    // lightning: soft double flicker (the music engine sends flashes when it's playing, so the rumble follows)
+    if (!this.audioThunder && this.w.storm > 0.3) { this.localThunder -= dt; if (this.localThunder <= 0) { this.lightning(); this.localThunder = 22 + this.r() * 53; } }
+    if (this.flashT >= 0) {
+      this.flashT += dt; const t = this.flashT;
+      this.flash = Math.exp(-t / 0.09) * (t < 0.3 ? 1 : 0) + 0.7 * (t > 0.18 ? Math.exp(-(t - 0.18) / 0.35) : 0);
+      if (t > 2) { this.flashT = -1; this.flash = 0; }
+    }
     const W = this.w;
     this.snowCover = clamp(this.snowCover + (W.snow > 0.3 ? dt / 120 : -dt / 300) * (state.fast ? 6 : 1), 0, 1);
     // clouds
@@ -639,6 +648,13 @@ export class Scene {
     // clouds
     this.drawClouds(ctx, state, sky);
     this.mark('clouds');
+    if (this.flash > 0.01) {
+      ctx.globalCompositeOperation = 'lighter';
+      const fg = ctx.createRadialGradient(this.flashX, 120, 0, this.flashX, 120, 700);
+      fg.addColorStop(0, `rgba(200,210,255,${0.45 * this.flash})`); fg.addColorStop(1, `rgba(160,170,230,${0.12 * this.flash})`);
+      ctx.fillStyle = fg; ctx.fillRect(0, 0, G.w, 480);
+      ctx.globalCompositeOperation = 'source-over';
+    }
     // town (two palettes crossfaded) + snow cover
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     const gx = Math.round(this.ox + G.x * k), gy = Math.round(this.oy + G.y * k);
@@ -707,6 +723,10 @@ export class Scene {
       ctx.globalAlpha = extra; ctx.drawImage(this.lampGlow, 1754 - 900, 0, 1800, 1400);
       ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
     }
+    if (this.flash > 0.01) { // the room catches a little of the lightning
+      ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = `rgba(150,160,210,${0.07 * this.flash})`;
+      const v = this.view; ctx.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); ctx.globalCompositeOperation = 'source-over';
+    }
     // headlights sweeping across the ceiling at night
     if (this.headlight > 0.01) {
       const h = this.headlight, x = this.headX;
@@ -742,7 +762,7 @@ export class Scene {
   // map azimuth (0 south, + west) / altitude to the view: the window faces south-west
   skyXY(az, alt) {
     const deg = az * 180 / Math.PI, a = alt * 180 / Math.PI;
-    return [G.w / 2 + deg * (G.w / 230), 440 - a * 8.5];
+    return [G.w / 2 + deg * (G.w / 230), 430 - a * 5.6];
   }
 
   sunMoon(ctx, state, sky) {

@@ -8,6 +8,7 @@ class LofiRadio extends AudioWorkletProcessor {
     this.engine = new Engine({ sampleRate, seed: o.seed >>> 0, mode: o.mode || 'lofi' });
     if (o.weather) { this.engine.setWeather(o.weather); Object.assign(this.engine.weather, o.weather); }
     this.engine.onInfo = (info) => this.port.postMessage({ type: 'info', info });
+    this.engine.onFlash = (delay) => this.port.postMessage({ type: 'flash', delay });
     this.port.onmessage = (e) => {
       const m = e.data;
       if (m.type === 'mode') this.engine.setMode(m.mode);

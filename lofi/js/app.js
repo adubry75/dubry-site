@@ -74,17 +74,42 @@ function resize() { scene.resize(); }
 
 // ── weather
 const WEATHER = {
-  clear: { rain: 0, snow: 0, fog: 0, cloud: 0.12 },
-  cloudy: { rain: 0, snow: 0, fog: 0, cloud: 0.75 },
-  rain: { rain: 1, snow: 0, fog: 0, cloud: 0.9 },
-  snow: { rain: 0, snow: 1, fog: 0, cloud: 0.8 },
-  fog: { rain: 0, snow: 0, fog: 1, cloud: 0.45 },
+  clear: { rain: 0, snow: 0, fog: 0, cloud: 0.12, storm: 0 },
+  cloudy: { rain: 0, snow: 0, fog: 0, cloud: 0.75, storm: 0 },
+  rain: { rain: 1, snow: 0, fog: 0, cloud: 0.9, storm: 0 },
+  storm: { rain: 1, snow: 0, fog: 0, cloud: 1, storm: 1 },
+  snow: { rain: 0, snow: 1, fog: 0, cloud: 0.8, storm: 0 },
+  fog: { rain: 0, snow: 0, fog: 1, cloud: 0.45, storm: 0 },
 };
+// Live: the real current weather in Medford from Open-Meteo (free, no key), every 15 minutes
+const live = { at: 0, label: '', failed: false, pending: false };
+function wmo(code, cloud) { // WMO weather code → our presets (+ how heavy)
+  if (code >= 95) return ['storm', 1];
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return ['snow', code === 71 || code === 85 ? 0.6 : 1];
+  if (code >= 51 && code <= 67 || code >= 80 && code <= 82) return ['rain', [51, 56, 61, 80].includes(code) ? 0.55 : code === 53 ? 0.7 : 1];
+  if (code === 45 || code === 48) return ['fog', 1];
+  if (code === 3 || cloud > 70) return ['cloudy', 1];
+  return ['clear', 1];
+}
+async function fetchLive() {
+  if (live.pending) return; live.pending = true;
+  try {
+    const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=42.33&longitude=-122.87&current=weather_code,cloud_cover&timezone=America%2FLos_Angeles', { signal: AbortSignal.timeout ? AbortSignal.timeout(10000) : undefined });
+    const j = await r.json();
+    const [name, amt] = wmo(j.current.weather_code, j.current.cloud_cover);
+    const w = { ...WEATHER[name] };
+    if (w.rain) w.rain *= amt; if (w.snow) w.snow *= amt;
+    if (name === 'clear' || name === 'cloudy') w.cloud = Math.max(0.08, Math.min(0.85, j.current.cloud_cover / 100));
+    if (settings.weather === 'live') scene.setWeather(w);
+    live.label = name; live.failed = false; live.at = Date.now();
+  } catch { live.failed = true; live.at = Date.now() - 13 * 60e3; /* retry in ~2 min */ }
+  live.pending = false;
+}
 const auto = { current: 'clear', left: 0 };
 const wr = (() => { let a = seed ^ 0x5bd1e995; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; })();
 function autoPick(month) {
   const winter = month === 12 || month <= 2, shoulder = month === 3 || month === 11 || month === 10 || month === 4;
-  const w = winter ? { clear: 2, cloudy: 2, rain: 3, snow: 3, fog: 3 } : shoulder ? { clear: 3, cloudy: 2, rain: 4, snow: month === 11 || month === 3 ? 1 : 0, fog: 2 } : { clear: 6, cloudy: 2, rain: 1.5, snow: 0, fog: 0.5 };
+  const w = winter ? { clear: 2, cloudy: 2, rain: 3, storm: 0.4, snow: 3, fog: 3 } : shoulder ? { clear: 3, cloudy: 2, rain: 4, storm: 0.7, snow: month === 11 || month === 3 ? 1 : 0, fog: 2 } : { clear: 6, cloudy: 2, rain: 1.5, storm: 0.8, snow: 0, fog: 0.5 };
   let x = wr() * Object.values(w).reduce((a, b) => a + b, 0);
   for (const [k, v] of Object.entries(w)) { x -= v; if (x <= 0) return k; }
   return 'clear';
@@ -100,17 +125,18 @@ async function startAudio() {
   starting = (async () => {
     actx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'playback' });
     gain = actx.createGain(); gain.gain.value = 0; gain.connect(actx.destination);
-    const weather = { rain: scene.w.rain, snow: scene.w.snow, fog: scene.w.fog };
+    const weather = { rain: scene.w.rain, snow: scene.w.snow, fog: scene.w.fog, storm: scene.w.storm };
     try {
       await actx.audioWorklet.addModule(new URL('./worklet.js', import.meta.url));
       node = new AudioWorkletNode(actx, 'lofi-radio', { numberOfInputs: 0, outputChannelCount: [2], processorOptions: { seed, mode: settings.mode, weather } });
-      node.port.onmessage = (e) => { if (e.data.type === 'info') showInfo(e.data.info); };
+      node.port.onmessage = (e) => { if (e.data.type === 'info') showInfo(e.data.info); else if (e.data.type === 'flash') scene.lightning(); };
+      scene.audioThunder = true;
       node.connect(gain);
     } catch (err) { // older browsers: run the same engine on the main thread
       console.warn('AudioWorklet unavailable, using ScriptProcessor', err);
       const { Engine } = await import('./engine.js');
       const engine = new Engine({ sampleRate: actx.sampleRate, seed, mode: settings.mode });
-      engine.setWeather(weather); engine.onInfo = showInfo;
+      engine.setWeather(weather); engine.onInfo = showInfo; engine.onFlash = () => scene.lightning(); scene.audioThunder = true;
       const sp = actx.createScriptProcessor(4096, 0, 2);
       sp.onaudioprocess = (ev) => { const L = ev.outputBuffer.getChannelData(0), R = ev.outputBuffer.getChannelData(1); engine.process(L, R, L.length); };
       node = { port: { postMessage: (m) => { if (m.type === 'mode') engine.setMode(m.mode); else if (m.type === 'weather') engine.setWeather(m.weather); } }, connect: (d) => sp.connect(d) };
@@ -170,14 +196,14 @@ $('#cat').innerHTML = SKIN_IDS.map((id) => `<option value="${id}">${SKINS[id].na
 $('#play').addEventListener('click', toggle);
 for (const b of document.querySelectorAll('#mode button')) b.addEventListener('click', () => setMode(b.dataset.mode));
 $('#vol').addEventListener('input', (e) => { settings.volume = parseFloat(e.target.value); store.set('volume', settings.volume); if (gain && playing) gain.gain.setTargetAtTime(settings.volume, actx.currentTime, 0.05); });
-$('#weather').addEventListener('change', (e) => { settings.weather = e.target.value; store.set('weather', settings.weather); if (settings.weather === 'auto') auto.left = 0; else applyWeather(settings.weather); });
+$('#weather').addEventListener('change', (e) => { settings.weather = e.target.value; store.set('weather', settings.weather); if (settings.weather === 'auto') auto.left = 0; else if (settings.weather === 'live') { live.at = 0; } else applyWeather(settings.weather); clockT = 0; });
 $('#cat').addEventListener('change', (e) => { settings.cat = e.target.value; store.set('cat', settings.cat); scene.skin = settings.cat; });
 $('#fast').addEventListener('change', (e) => { settings.fast = e.target.checked; if (!settings.fast) catchUp = true; });
 $('#full').addEventListener('click', () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.().catch(() => {}); });
 updateUI();
 
 // keyboard: space play/pause, M mode, W weather, C cat, F fullscreen, D fast day, H hide controls
-const WEATHER_ORDER = ['auto', 'clear', 'cloudy', 'rain', 'snow', 'fog'];
+const WEATHER_ORDER = ['auto', 'live', 'clear', 'cloudy', 'rain', 'storm', 'snow', 'fog'];
 let hidden = RECORD;
 addEventListener('keydown', (e) => {
   if (e.target.closest && e.target.closest('select, input[type=range]') && e.key !== ' ') return;
@@ -226,6 +252,7 @@ function frame(now) {
   advanceClock(dt);
   const P = localParts(virtual);
   // weather auto-pilot: a new pattern every 8–20 minutes (sooner on a fast day)
+  if (settings.weather === 'live' && Date.now() - live.at > 15 * 60e3) fetchLive();
   if (settings.weather === 'auto') {
     auto.left -= dt * (settings.fast ? 8 : 1);
     if (auto.left <= 0) { auto.current = autoPick(P.month); applyWeather(auto.current); auto.left = 480 + wr() * 720; }
@@ -252,11 +279,12 @@ function frame(now) {
   window.__lofi.state = state;
   // keep the music's weather sounds in step with what we see
   sendT -= dt;
-  if (node && sendT <= 0) { node.port.postMessage({ type: 'weather', weather: { rain: W.rain, snow: W.snow, fog: W.fog } }); sendT = 1; }
+  if (node && sendT <= 0) { node.port.postMessage({ type: 'weather', weather: { rain: W.rain, snow: W.snow, fog: W.fog, storm: W.storm } }); sendT = 1; }
   clockT -= dt;
   if (clockT <= 0 && !hidden) {
     const st = sunTimes(virtual);
-    $('#clock').textContent = `Medford, OR · ${clockText(virtual)}` + (st.sunrise ? ` · sunrise ${clockText(st.sunrise)} · sunset ${clockText(st.sunset)}` : '');
+    const wl = settings.weather === 'live' ? (live.failed ? ' · live weather unavailable' : live.label ? ` · ${live.label} (live)` : '') : '';
+    $('#clock').textContent = `Medford, OR · ${clockText(virtual)}` + (st.sunrise ? ` · sunrise ${clockText(st.sunrise)} · sunset ${clockText(st.sunset)}` : '') + wl;
     clockT = settings.fast ? 0.2 : 5;
   }
   const work = performance.now() - t0;

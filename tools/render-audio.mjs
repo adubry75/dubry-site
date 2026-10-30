@@ -7,7 +7,7 @@
 //   --minutes N        length (default 3)
 //   --seed N           any integer; the same seed always renders the same music (default 1)
 //   --mode M           lofi | ambient (default lofi)
-//   --weather W        clear | rain | snow | fog (default clear): mixes the matching weather sounds in
+//   --weather W        clear | rain | storm | snow | fog (default clear): mixes the matching weather sounds in
 //   --out FILE         .wav, .mp3 or .flac (default lofi-<mode>-<seed>.mp3); MP3/FLAC need ffmpeg on PATH
 //   --wav              with an .mp3/.flac --out, also keep the .wav next to it
 //   --rate HZ          sample rate (default 48000, the rate YouTube uses)
@@ -35,12 +35,12 @@ const fadeS = parseFloat(opt('fade', '4'));
 const out = path.resolve(opt('out', `lofi-${mode}-${seed}.mp3`));
 const ext = path.extname(out).toLowerCase();
 if (!['lofi', 'ambient'].includes(mode)) throw new Error('--mode must be lofi or ambient');
-const W = { clear: {}, rain: { rain: 1 }, snow: { snow: 1 }, fog: { fog: 1 } }[weather];
-if (!W) throw new Error('--weather must be clear, rain, snow or fog');
+const W = { clear: {}, rain: { rain: 1 }, storm: { rain: 1, storm: 1 }, snow: { snow: 1 }, fog: { fog: 1 } }[weather];
+if (!W) throw new Error('--weather must be clear, rain, storm, snow or fog');
 
 const total = Math.round(minutes * 60 * rate);
 const engine = new Engine({ sampleRate: rate, seed, mode });
-engine.setWeather({ rain: 0, snow: 0, fog: 0, ...W });
+engine.setWeather({ rain: 0, snow: 0, fog: 0, storm: 0, ...W });
 engine.weather.rain = W.rain || 0; engine.weather.snow = W.snow || 0; engine.weather.fog = W.fog || 0; // start at full strength
 const infos = [];
 engine.onInfo = (i) => { const last = infos[infos.length - 1]; if (!last || last.key !== i.key || last.bpm !== i.bpm) infos.push({ at: engine.t / rate, ...i }); };

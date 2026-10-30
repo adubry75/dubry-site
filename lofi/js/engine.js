@@ -819,10 +819,34 @@ class WeatherSound {
     this.lpL = new OnePole(sr, 3200); this.lpR = new OnePole(sr, 3200); this.hpL = new OnePole(sr, 250); this.hpR = new OnePole(sr, 250);
     this.wL = new SVF(sr, 400, 0.9); this.wR = new SVF(sr, 430, 0.9); this.wph = r(); this.winc = 0.045 / sr; this.wph2 = r(); this.winc2 = 0.013 / sr;
     this.drops = [];
+    // distant thunder for storms: a soft rumble a few seconds after each (visual) flash
+    this.t = 0; this.nextThunder = Math.round(r.range(6, 20) * sr); this.rumbles = []; this.onFlash = null;
+    this.brownL = 0; this.brownR = 0;
   }
   set(t) { Object.assign(this.target, t); }
+  thunder() {
+    const r = this.r, sr = this.sr, delay = r.range(1.5, 5);
+    const f = new SVF(sr, r.range(90, 150), 0.8), f2 = new SVF(sr, r.range(90, 150), 0.8);
+    this.rumbles.push({ start: this.t + Math.round(delay * sr), k: 0, atk: Math.round(r.range(0.5, 1.1) * sr), d: Math.exp(-1 / (sr * r.range(1.6, 2.8))), len: Math.round(10 * sr), e: 0,
+      g: r.range(0.45, 0.9) * (1 - delay / 8), f, f2, m1: r.range(0.5, 0.9), m2: r.range(1.1, 1.7), ph: r() });
+    if (this.onFlash) this.onFlash(delay);
+  }
   process(L, R, n) {
     const sr = this.sr, T = this.target, k = this.k, r = this.r;
+    if ((T.storm || 0) > 0.3 && this.t >= this.nextThunder) { this.thunder(); this.nextThunder = this.t + Math.round(r.range(22, 75) * sr); }
+    for (let i = this.rumbles.length - 1; i >= 0; i--) {
+      const q = this.rumbles[i];
+      let s0 = q.start - this.t; if (s0 >= n) continue; if (s0 < 0) s0 = 0;
+      for (let s = s0; s < n && q.k < q.len; s++, q.k++) {
+        q.e = q.k < q.atk ? 0.5 - 0.5 * Math.cos(Math.PI * q.k / q.atk) : q.e * q.d;
+        this.brownL = this.brownL * 0.995 + this.nL() * 0.06; this.brownR = this.brownR * 0.995 + this.nR() * 0.06;
+        const u = q.k / sr, roll = 0.65 + 0.35 * Math.sin(TAU * (q.m1 * u + q.ph)) * Math.sin(TAU * q.m2 * u);
+        const a = q.e * roll * q.g * 0.55;
+        L[s] += q.f.run(this.brownL) * a; R[s] += q.f2.run(this.brownR) * a;
+      }
+      if (q.k >= q.len) this.rumbles.splice(i, 1);
+    }
+    this.t += n;
     for (let s = 0; s < n; s++) {
       this.rain = T.rain + (this.rain - T.rain) * k; this.snow = T.snow + (this.snow - T.snow) * k; this.fog = T.fog + (this.fog - T.fog) * k;
       let l = 0, rr = 0;
@@ -930,6 +954,7 @@ export class Engine {
     this.gens.push({ gen, gain: instant ? 1 : 0, target: 1 });
   }
   setWeather(w) { this.weather.set(w); }
+  set onFlash(f) { this.weather.onFlash = f; }
   _info(i) { this.lastInfo = i; if (this.onInfo) this.onInfo(i); }
   process(L, R, n) {
     if (this.mL.length < n) { this.mL = new Float32Array(n); this.mR = new Float32Array(n); }

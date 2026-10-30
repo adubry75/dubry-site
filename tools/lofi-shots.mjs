@@ -29,7 +29,7 @@ const DEVICES = {
   phone: { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true },
 };
 const times = (opt('times', '02:00,06:55,07:50,13:00,17:55,18:30,21:30')).split(',');
-const weathers = (opt('weathers', 'clear,cloudy,rain,snow,fog')).split(',');
+const weathers = (opt('weathers', 'clear,cloudy,rain,storm,snow,fog')).split(',');
 const only = opt('only', null);
 const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required', '--enable-gpu-rasterization', '--ignore-gpu-blocklist'] });
 const errors = [];
