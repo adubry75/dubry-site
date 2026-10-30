@@ -38,10 +38,12 @@ if (q.has('time')) { // ?time=21:30 (Medford local, today) or a full ISO date
   } else if (!isNaN(Date.parse(t))) offset = Date.parse(t) - Date.now();
 }
 const freeze = q.get('freeze') === '1'; // hold the clock still (for screenshots)
+const MANUAL = q.get('manual') === '1'; // tools/render-video.mjs drives frames itself, on a virtual clock
 let virtual = Date.now() + offset, catchUp = false;
 function advanceClock(dt) {
   const real = Date.now() + offset;
   if (freeze) return;
+  if (MANUAL) { virtual += dt * 1000 * (settings.fast ? 86400 / DAY_SECONDS : 1); return; }
   if (settings.fast) { virtual += dt * 1000 * (86400 / DAY_SECONDS); catchUp = false; return; }
   if (catchUp) { // after a fast run, roll forward to the real time of day instead of jumping
     const target = real + Math.ceil((virtual - real) / 864e5) * 864e5;
@@ -57,7 +59,7 @@ const canvas = $('#scene');
 const scene = new Scene(canvas, { seed });
 if (q.has('quality')) { scene.quality = clamp(parseFloat(q.get('quality')) || 1, 0.3, 1); scene.resize(); }
 // adaptive resolution: if a slow machine can't hold ~45 fps, render fewer pixels (it's all soft shapes)
-const adapt = { t: 0, n: 0, on: !q.has('quality') && q.get('freeze') !== '1' };
+const adapt = { t: 0, n: 0, on: !q.has('quality') && q.get('freeze') !== '1' && q.get('manual') !== '1' };
 function adaptQuality(dt) {
   if (!adapt.on || document.hidden) return;
   adapt.t += dt; adapt.n++;
@@ -252,6 +254,10 @@ window.__lofi = { scene, settings, stats, get virtual() { return virtual; }, set
 function frame(now) {
   const dt = Math.min(0.1, (now - last) / 1000); last = now;
   adaptQuality(dt);
+  tick(dt, now);
+  requestAnimationFrame(frame);
+}
+function tick(dt, now) {
   const t0 = performance.now();
   advanceClock(dt);
   const P = localParts(virtual);
@@ -293,9 +299,17 @@ function frame(now) {
   }
   const work = performance.now() - t0;
   stats.frames++; stats.work += work; stats.worst = Math.max(stats.worst, work);
-  requestAnimationFrame(frame);
 }
-requestAnimationFrame(frame);
+if (MANUAL) { // the video renderer calls step() for each frame; flashes come from its own audio engine
+  let manualNow = 0;
+  scene.audioThunder = true;
+  window.__lofi.step = (dt, flashes = 0) => {
+    for (let i = 0; i < flashes; i++) scene.lightning();
+    manualNow += dt * 1000; tick(dt, manualNow);
+    const w = scene.w; return { rain: w.rain, snow: w.snow, fog: w.fog, storm: w.storm };
+  };
+  window.__lofi.mode = settings.mode;
+} else requestAnimationFrame(frame);
 // fill the palette caches in idle time
 const idle = window.requestIdleCallback || ((f) => setTimeout(() => f({ timeRemaining: () => 8 }), 200));
 (function warm() { idle(() => { scene.prewarm(); setTimeout(warm, 300); }); })();

@@ -138,6 +138,15 @@ Overnight build of `/lofi/`. Each entry is a call I made without asking, and why
 - Tested live in Chromium: Lofi → Jazz → Ambient → Lofi on desktop and phone. The info line follows each switch, the
   new style starts in the old one's key, play/pause works, no console errors. `M` cycles the three styles.
 
+## Offline video renderer
+- `tools/render-video.mjs` loads the page with `?manual=1` (a virtual clock: the page exposes `__lofi.step(dt)` and
+  stops its own animation loop), steps it once per frame, grabs each frame from the canvas as a high-quality JPEG
+  and pipes it to x264. Meanwhile the same music engine runs in Node in lockstep: each frame it takes the page's
+  current weather (so rain and snow sounds fade with what you see), and each thunder it schedules is passed back
+  to the page as a flash. Fades in and out at both ends, then audio and video are muxed into one MP4 (H.264 CRF
+  18 + AAC 192k). Verified on a storm test: the sky flash lands at 11.37 s, the engine scheduled it at 11.2 s, and
+  the rumble follows 1.5–5 s later, as intended. ffprobe shows exact 1920×1080, 30 fps, matching audio length.
+
 ---
 
 # Summary (read this first)
@@ -163,6 +172,12 @@ else changed.
    Example: `/lofi/?record=1&mode=lofi&weather=rain&cat=daisy&fast=3600&seed=7`.
 2. In OBS: a Window or Display Capture of that Chrome window + Desktop Audio, output 1920×1080 at 30 or 60 fps,
    and record for 60 minutes.
-3. Or record the picture only and use a rendered soundtrack, e.g.
+3. **Easiest: no screen recording at all.** `tools/render-video.mjs` renders a finished MP4 (picture and music)
+   offline, frame by frame. It can't drop frames, and storms' flashes and rumbles stay in sync:
+   `node tools/render-video.mjs --minutes 60 --seed 7 --mode lofi --weather rain --cat daisy --out lofi-rain-1h.mp4`
+   (add `--fast 3600 --time 05:30` for a whole day, dawn to night, in one hour). Here, without a GPU, it ran at
+   ~17 frames/s, so an hour at 30 fps takes under two hours; `--fps 24` is quicker. It needs Node, ffmpeg and
+   Playwright's Chromium (`npx playwright install chromium` once).
+4. Or record the picture only and use a rendered soundtrack, e.g.
    `node tools/render-audio.mjs --minutes 60 --seed 7 --mode lofi --weather rain --out lofi-1h.mp3`, then
    `ffmpeg -i video.mp4 -i lofi-1h.mp3 -map 0:v -map 1:a -c:v copy -c:a aac -b:a 192k -shortest final.mp4`.
