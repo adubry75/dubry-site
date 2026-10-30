@@ -465,6 +465,10 @@ in code.
    `dist/nine-lives/cabs/lofi-radio.webp` → `public_html/nine-lives/cabs/lofi-radio.webp`. Nothing else on the
    server changes (all the hashed JS files are byte-identical).
 3. If the server has its own games index page outside this repo, add `<a href="/lofi/">Lofi Cat Radio</a>` there.
+4. Nothing to configure: no server code and no build step. Serve it over HTTPS as the rest of dubry.com is (the
+   AudioWorklet audio path needs a secure page; over plain HTTP it automatically falls back to the older
+   ScriptProcessor path and still plays). Visiting `/lofi` without the slash relies on Apache's usual redirect to
+   `/lofi/`; all links use `/lofi/`.
 
 **Record a 1-hour video:**
 - **Easiest, no screen recording:** `node tools/render-video.mjs --minutes 60 --seed 7 --mode lofi --weather rain
