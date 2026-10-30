@@ -1050,6 +1050,8 @@ export class Scene {
   }
 
   townLights(ctx, state) {
+    if (this.townCatWindow === undefined) // a near-row window that's often lit and not hidden behind the sill's things
+      this.townCatWindow = this.town.windows.find((w) => w.row === 2 && w.thr < 1 && w.off > 23 && w.x > 30 && w.x < 420 && w.y < 540) || null;
     const W = this.w;
     // lit windows
     for (const w of this.town.windows) {
@@ -1057,6 +1059,12 @@ export class Scene {
       let a = w.a * (w.row === 2 ? 1 : w.row === 1 ? 0.85 : 0.65);
       if (w.tv) a *= 0.7 + 0.3 * Math.sin(this.time * 7 + w.x) * Math.sin(this.time * 3.1 + w.y);
       ctx.globalAlpha = a; ctx.fillStyle = w.col; ctx.fillRect(w.x, w.y, w.w, w.h);
+      if (w === this.townCatWindow) { // a neighbour's cat sitting in its window
+        const cx = w.x + w.w * 0.62, by = w.y + w.h; ctx.fillStyle = '#2a2230';
+        ctx.beginPath(); ctx.ellipse(cx, by - 2.6, 2.6, 2.8, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx, by - 6.3, 1.9, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(cx - 1.9, by - 7); ctx.lineTo(cx - 1.4, by - 9.1); ctx.lineTo(cx - 0.3, by - 7.7); ctx.lineTo(cx + 0.3, by - 7.7); ctx.lineTo(cx + 1.4, by - 9.1); ctx.lineTo(cx + 1.9, by - 7); ctx.fill();
+      }
     }
     ctx.globalAlpha = 1;
     // window glows (cheap: only the near rows)

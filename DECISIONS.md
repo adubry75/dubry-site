@@ -56,6 +56,7 @@ Overnight build of `/lofi/`. Each entry is a call I made without asking, and why
 - The town is generic and drawn freehand: rows of houses, a steeple, power lines with birds on them, street
   lamps, a distant snowy volcano (the Rogue Valley has one on the horizon; this one is not a portrait of any real
   mountain). Trees follow the real season: autumn colours now, bare in winter, blossom in spring.
+- One of the near houses has a cat sitting in its lit window in the evenings (a neighbour's cat).
 - Lights in town windows each have their own darkness threshold and bedtime, so they come on one by one at dusk
   and go off one by one late at night; a few come on before sunrise. About 30% of windows never light (empty rooms).
 - Night touches: the lamp turns itself on at dusk (warm pool of light, reflected in the glass), fairy lights
