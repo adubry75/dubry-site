@@ -391,6 +391,8 @@ in code.
   `weather=auto|live|clear|cloudy|rain|storm|snow|fog`, `cat=daisy|nero|jammies|callie|black`,
   `room=cozy|cabin|blue`, `view=town|lake`, `seed=7` (same seed = same music), `fast=3600` (a whole day per hour), `time=21:30`,
   `caption=1` (now-playing captions).
+- **Keys on the page:** Space play/pause · N next track · M music style · W weather · C cat · R room · V view ·
+  T sleep timer · D fast day · F full screen · H hide controls. Click the cat to pet it.
 - **Soundtrack only:** `node tools/render-audio.mjs --minutes 60 --seed 7 --mode lofi --weather rain --out
   lofi-1h.mp3` (deterministic per seed, ~2–3 minutes per hour of audio).
 
