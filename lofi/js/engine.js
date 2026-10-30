@@ -1194,6 +1194,31 @@ class Purr {
   }
 }
 
+// A distant elevated train crossing: a low rumble that swells and fades, soft rail clacks in pairs,
+// panned across the field in the train's direction.
+class TrainPass {
+  constructor(sr, start, durS, dir, noise) {
+    this.start = start; this.len = Math.round(durS * sr); this.k = 0; this.sr = sr; this.noise = noise; this.dir = dir;
+    this.lp = new SVF(sr, 110, 0.9); this.lp2 = new SVF(sr, 160, 0.9); this.clk = 0; this.cf = new SVF(sr, 1400, 3);
+    this.period = Math.round(sr * 0.42); this.e = 0;
+  }
+  process(L, R, t0, n) {
+    let i = this.start - t0; if (i >= n) return true; if (i < 0) i = 0;
+    for (; i < n && this.k < this.len; i++, this.k++) {
+      const u = this.k / this.len, env = Math.pow(Math.sin(Math.PI * u), 2);
+      const pan = (u * 2 - 1) * 0.8 * this.dir, gl = Math.cos((pan + 1) * Math.PI / 4), gr = Math.sin((pan + 1) * Math.PI / 4);
+      const x = this.noise();
+      this.lp.run(x); this.lp2.run(this.lp.low * 3);
+      const p = this.k % this.period; // clack-clack every ~0.4 s
+      if (p === 0 || p === Math.round(this.period * 0.18)) this.e = 1;
+      this.cf.run(this.noise() * this.e); this.e *= 0.993;
+      const y = (this.lp2.low * 0.5 + this.cf.band * 0.12) * env;
+      L[i] += y * gl; R[i] += y * gr;
+    }
+    return this.k < this.len;
+  }
+}
+
 // Tuning in: a soft sweep of band-passed static with a faint heterodyne whistle, ~1.6 s, when the radio is switched on.
 class TuneIn {
   constructor(sr, start, noise) {
@@ -1300,6 +1325,7 @@ export class Engine {
       g.newKey(); g.needDrone = true; g.next = Math.min(g.next, this.t + Math.round(1.5 * this.sr));
     }
   }
+  train(seconds = 9, dir = 1) { if (this.extras.filter((x) => x instanceof TrainPass).length < 1) this.extras.push(new TrainPass(this.sr, this.t, seconds, dir, this.purrNoise)); }
   tune() { if (!this.extras.some((x) => x instanceof TuneIn)) { this.extras.push(new TuneIn(this.sr, this.t, this.purrNoise)); this.musicFade = 0; } }
   purr(seconds = 4) { // one purr at a time: petting again just keeps it going
     const p = this.extras.find((x) => x instanceof Purr);

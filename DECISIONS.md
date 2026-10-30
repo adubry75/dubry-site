@@ -372,6 +372,10 @@ these behaviour glitches, all fixed and re-measured:
   by"). Weather, snow layers, sky, moon and palettes work as in the other views.
 - Checked: screenshot sweep (4 weathers × 7 times, desktop + phone, no console errors) and performance in software
   rendering (8–31 ms a frame, the same as the town).
+- The train is heard too: a soft, distant rumble with paired rail clacks every ~0.4 s, swelling and fading over exactly
+  the time the train takes to cross, panned in its direction, about 13 dB under the music. Like thunder, it's sent
+  from the scene to the engine, so videos rendered with `render-video.mjs --view city` include it (checked: two trains
+  in a 2-minute render, each passing its 15.6 s crossing time to the rumble; peak −2.9 dBFS, no clipping).
 
 ---
 

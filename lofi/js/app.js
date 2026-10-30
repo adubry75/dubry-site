@@ -157,7 +157,7 @@ async function startAudio() {
       const sp = actx.createScriptProcessor(4096, 0, 2);
       // 128-frame quanta, like the worklet, so the same seed plays the same music
       sp.onaudioprocess = (ev) => { const L = ev.outputBuffer.getChannelData(0), R = ev.outputBuffer.getChannelData(1); for (let i = 0; i < L.length; i += 128) engine.process(L.subarray(i, i + 128), R.subarray(i, i + 128), Math.min(128, L.length - i)); };
-      node = { port: { postMessage: (m) => { if (m.type === 'mode') engine.setMode(m.mode); else if (m.type === 'weather') engine.setWeather(m.weather); else if (m.type === 'purr') engine.purr(); else if (m.type === 'next') engine.next(); else if (m.type === 'tune') engine.tune(); } }, connect: (d) => sp.connect(d) };
+      node = { port: { postMessage: (m) => { if (m.type === 'mode') engine.setMode(m.mode); else if (m.type === 'weather') engine.setWeather(m.weather); else if (m.type === 'purr') engine.purr(); else if (m.type === 'next') engine.next(); else if (m.type === 'tune') engine.tune(); else if (m.type === 'train') engine.train(m.seconds, m.dir); } }, connect: (d) => sp.connect(d) };
       sp.connect(gain);
     }
   })();
@@ -418,10 +418,13 @@ if (MANUAL) { // the video renderer calls step() for each frame; flashes come fr
   window.__lofi.step = (dt, flashes = 0) => {
     for (let i = 0; i < flashes; i++) scene.lightning();
     manualNow += dt * 1000; tick(dt, manualNow);
-    const w = scene.w, lp = localParts(virtual); return { rain: w.rain, snow: w.snow, fog: w.fog, storm: w.storm, crickets: crickets(lp.month, lastNight), hour: lp.hour };
+    const w = scene.w, lp = localParts(virtual); return { rain: w.rain, snow: w.snow, fog: w.fog, storm: w.storm, crickets: crickets(lp.month, lastNight), hour: lp.hour, trains: pendingTrains.splice(0) };
   };
   window.__lofi.mode = settings.mode;
 } else requestAnimationFrame(frame);
+// the city's train is heard as well as seen
+scene.onTrain = (seconds, dir) => { if (node && playing) node.port.postMessage({ type: 'train', seconds, dir }); else if (MANUAL) pendingTrains.push([seconds, dir]); };
+const pendingTrains = [];
 // fill the palette caches in idle time
 const idle = window.requestIdleCallback || ((f) => setTimeout(() => f({ timeRemaining: () => 8 }), 200));
 (function warm() { idle(() => { scene.prewarm(); setTimeout(warm, 300); }); })();

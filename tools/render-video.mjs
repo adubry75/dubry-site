@@ -113,6 +113,7 @@ for (let f = 0; f < frames; f++) {
   }, [1 / fps, fl]);
   await write(Buffer.from(res.jpg, 'base64'));
   engine.setWeather(res.w);
+  for (const [secs, dir] of res.w.trains || []) engine.train(secs, dir);
   if (mode === 'auto' && f / fps - lastSwitch > 120) { // same rule as the page: at most one style change every 2 minutes
     const want = scheduleFor(res.w.hour);
     if (want !== playingMode) { engine.setMode(want); playingMode = want; lastSwitch = f / fps; process.stderr.write(`\n  ${(f / fps).toFixed(0)} s: ${want}\n`); }

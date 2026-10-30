@@ -130,7 +130,11 @@ export function cityLive(ctx, C, scene, state, glow) {
   }
   // the train
   C.nextTrain -= dt;
-  if (!C.train && C.nextTrain <= 0) { const dir = scene.r() < 0.5 ? 1 : -1; C.train = { x: dir > 0 ? -420 : W + 20, dir, v: 70 + scene.r() * 30, cars: 3 + ((scene.r() * 2) | 0) }; }
+  if (!C.train && C.nextTrain <= 0) {
+    const dir = scene.r() < 0.5 ? 1 : -1, v = 70 + scene.r() * 30, cars = 3 + ((scene.r() * 2) | 0);
+    C.train = { x: dir > 0 ? -cars * 92 - 20 : W + 20, dir, v, cars };
+    if (scene.onTrain) scene.onTrain((W + cars * 92 + 40) / v, dir); // tell the sound how long it takes to cross
+  }
   if (C.train) {
     const tr = C.train; tr.x += tr.dir * tr.v * dt;
     const len = tr.cars * 92, x0 = tr.x;
