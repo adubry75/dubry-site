@@ -378,6 +378,8 @@ these behaviour glitches, all fixed and re-measured:
   the time the train takes to cross, panned in its direction, about 13 dB under the music. Like thunder, it's sent
   from the scene to the engine, so videos rendered with `render-video.mjs --view city` include it (checked: two trains
   in a 2-minute render, each passing its 15.6 s crossing time to the rumble; peak −2.9 dBFS, no clipping).
+- **Fourth 10-minute soak** (City view, Auto music, auto weather, 2-minute days, trains and neon cycling): heap
+  2.3–2.5 MB and flat, DOM nodes constant, 56–59 fps, worst frame 20 ms, no console errors or warnings.
 
 ---
 
@@ -438,7 +440,7 @@ in code.
   lofi-1h.mp3` (deterministic per seed, ~2–3 minutes per hour of audio).
 
 **What I could and couldn't verify:** everything was tested in headless Chromium: screenshots of every weather ×
-time on desktop and phone (town and lake), three 10-minute soaks with flat memory, console clean, live mode switching, the browser
+time on desktop and phone (town, lake and city), four 10-minute soaks (town, lake, city) with flat memory, console clean, live mode switching, the browser
 audio matching the Node renderer bit for bit, and level analysis of every sample plus 60-minute renders of each
 style. I couldn't test real Safari/iPhone or Firefox (only Chromium is installed here), or frame rate on a real GPU.
 In software rendering it already runs at 55–60 fps with adaptive resolution, and the Safari-specific risks I know
