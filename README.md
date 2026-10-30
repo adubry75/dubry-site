@@ -191,4 +191,4 @@ lofi/
 URL options: `mode=lofi|jazz|bossa|ambient|auto`, `caption=1`, `weather=auto|live|clear|cloudy|rain|storm|snow|fog`,
 `cat=daisy|nero|jammies|callie|black`, `room=cozy|cabin|blue`, `view=town|lake`, `seed=N`, `fast=1` (6-minute days) or `fast=S`
 (a day every S seconds), `time=HH:MM` or an ISO date, `record=1` (no UI, no cursor).
-Keys: Space play/pause · M music (Lofi → Jazz → Bossa → Ambient → Auto) · W weather · C cat · R room · V view · D fast day · F full screen · H hide controls.
+Keys: Space play/pause · M music (Lofi → Jazz → Bossa → Ambient → Auto) · W weather · C cat · R room · V view · T sleep timer · D fast day · F full screen · H hide controls.

@@ -334,6 +334,11 @@ these behaviour glitches, all fixed and re-measured:
   Node + ffmpeg together stayed flat at ~710–790 MB. Output is ~175 MB per 10 minutes at the default `--crf 18`;
   use `--crf 22` for files about half the size.
 
+## Sleep timer
+- For falling asleep to it: `T` cycles the sleep timer through 30, 60, 90 minutes and off (or `?sleep=60`). A small
+  toast confirms, the info panel counts down, and the radio fades out over the last two minutes, then pauses. The
+  scene keeps running. Tested with a 3-second timer: it paused on schedule, and the cycle and toasts work.
+
 ---
 
 # Summary

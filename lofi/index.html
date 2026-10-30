@@ -81,7 +81,7 @@
   #caption.on { opacity: 1; transform: none; }
   #caption b { font-size: 17px; font-weight: 600; letter-spacing: 0.01em; }
   #caption span { font-size: 12px; color: var(--ink-dim); }
-  body.awake #caption { opacity: 0; }
+  body.awake #caption:not(.on) { opacity: 0; }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
   @media (max-width: 720px) {
@@ -144,7 +144,7 @@
   <div class="card">
     <button><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 4.5v15l13-7.5z"/></svg>Tune in</button>
     <p>Lofi cats to relax to</p>
-    <p class="hint">Space play/pause · N next · M music · W weather · C cat · R room · V view · D fast day · F full screen · H hide</p>
+    <p class="hint">Space play/pause · N next · M music · W weather · C cat · R room · V view · T sleep timer · D fast day · F full screen · H hide</p>
   </div>
 </div>
 

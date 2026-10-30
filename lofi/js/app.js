@@ -171,6 +171,7 @@ async function play() {
   const t = actx.currentTime;
   gain.gain.cancelScheduledValues(t); gain.gain.setValueAtTime(gain.gain.value, t); gain.gain.linearRampToValueAtTime(settings.volume, t + 1.5);
   playing = true; scene.playing = true; scene.audioThunder = true; updateUI();
+  if (q.has('sleep') && !sleep.armed) { sleep.armed = true; const m = parseFloat(q.get('sleep')); if (m > 0) setSleep(m); }
   wakeLock();
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
 }
@@ -202,6 +203,8 @@ function trackTitle(i) {
   return (h >>> 24) % 4 === 0 && n2 !== n ? `${n} & ${n2}` : `${a} ${n}`;
 }
 const CAPTION = q.get('caption') === '1';
+// a toast in the caption spot (for things like the sleep timer)
+function toast(text, sub = '') { caption(text, sub); }
 let lastTitle = '', capT = 0;
 function caption(text, sub) {
   const el = $('#caption'); if (!el) return;
@@ -262,6 +265,7 @@ addEventListener('keydown', (e) => {
   else if (k === 'c') { const i = (SKIN_IDS.indexOf(settings.cat) + 1) % SKIN_IDS.length; $('#cat').value = SKIN_IDS[i]; $('#cat').dispatchEvent(new Event('change')); }
   else if (k === 'f') $('#full').click();
   else if (k === 'n') $('#next').click();
+  else if (k === 't') setSleep({ 0: 30, 30: 60, 60: 90, 90: 0 }[sleep.minutes] ?? 0);
   else if (k === 'v') { $('#view').value = settings.view === 'town' ? 'lake' : 'town'; $('#view').dispatchEvent(new Event('change')); }
   else if (k === 'r') { const ids = Object.keys(THEMES), i = (ids.indexOf(settings.room) + 1) % ids.length; $('#room').value = ids[i]; $('#room').dispatchEvent(new Event('change')); }
   else if (k === 'd') { $('#fast').checked = !settings.fast; $('#fast').dispatchEvent(new Event('change')); }
@@ -309,6 +313,20 @@ canvas.addEventListener('pointermove', (e) => { canvas.style.cursor = scene.hitC
 function crickets(month, night) { const W = scene.w; return month >= 6 && month <= 8 ? night * (1 - W.rain) * (1 - W.fog * 0.5) * (1 - W.snow) : 0; }
 let lastNight = 0;
 
+// sleep timer: fade the radio out over the last 2 minutes, then pause (T cycles off/30/60/90, or ?sleep=60)
+const sleep = { minutes: 0, end: 0 };
+function setSleep(min) {
+  sleep.minutes = min; sleep.end = min ? performance.now() + min * 60e3 : 0;
+  if (gain && playing) gain.gain.setTargetAtTime(settings.volume, actx.currentTime, 0.3);
+  toast(min ? `☾ Sleep timer: ${min} min` : 'Sleep timer off', min ? 'the radio will fade out and pause' : '');
+}
+function sleepTick(now) {
+  if (!sleep.end || !playing || !gain) return;
+  const left = (sleep.end - now) / 1000;
+  if (left <= 0) { sleep.end = 0; sleep.minutes = 0; pause(); return; }
+  if (left < 120) gain.gain.setTargetAtTime(settings.volume * (left / 120) ** 2, actx.currentTime, 0.5);
+}
+
 // a little live status line: what the cat is up to
 const CAT_NAME = { daisy: 'Daisy', nero: 'Nero', jammies: 'Jammies', callie: 'Callie', black: 'Kitty' };
 function catStatus() {
@@ -336,6 +354,7 @@ function frame(now) {
   requestAnimationFrame(frame); // first, so one bad frame can never stop the scene
   const dt = Math.min(0.1, (now - last) / 1000); last = now;
   adaptQuality(dt);
+  sleepTick(now);
   try { tick(dt, now); failures = 0; } catch (err) { if (++failures < 3) console.error(err); if (failures === 30) { scene.resize(); } }
 }
 function tick(dt, now) {
@@ -382,7 +401,7 @@ function tick(dt, now) {
     const st = sunTimes(virtual);
     const wl = settings.weather === 'live' ? (live.failed ? ' · live weather unavailable' : live.label ? ` · ${live.label} (live)` : '') : '';
     $('#clock').textContent = `Medford, OR · ${clockText(virtual)}` + (st.sunrise ? ` · sunrise ${clockText(st.sunrise)} · sunset ${clockText(st.sunset)}` : '') + wl;
-    $('#seed').textContent = `seed ${seed}`;
+    $('#seed').textContent = `seed ${seed}` + (sleep.end ? ` · sleep in ${Math.ceil((sleep.end - performance.now()) / 60e3)} min` : '');
     $('#status').textContent = catStatus();
     clockT = settings.fast ? 0.2 : 1;
   }
