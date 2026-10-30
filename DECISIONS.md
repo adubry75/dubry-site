@@ -438,6 +438,9 @@ intact, drawing state never leaks out of the new views). Fixed:
 - One more profile of the town on a rainy night after all the additions: the Milky Way blend was still being drawn
   under heavy cloud, where it's invisible. It now fades in only as the sky clears, which halves the sky's cost on
   overcast nights (4.0 → 2.1 ms in software rendering) with no visible change.
+- Accessibility audit with axe-core (WCAG 2 A/AA + best practices, controls showing): one moderate finding (content
+  outside landmarks) fixed by wrapping the page in `<main>`. Now 0 violations, 34 passes. Every control has a label;
+  the play button exposes its state (`aria-pressed`); the cat canvas has a text description.
 
 ---
 
