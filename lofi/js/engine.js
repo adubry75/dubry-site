@@ -1194,6 +1194,27 @@ class Purr {
   }
 }
 
+// Tuning in: a soft sweep of band-passed static with a faint heterodyne whistle, ~1.6 s, when the radio is switched on.
+class TuneIn {
+  constructor(sr, start, noise) {
+    this.start = start; this.len = Math.round(1.6 * sr); this.k = 0; this.sr = sr; this.noise = noise;
+    this.f = new SVF(sr, 700, 1.6); this.lp = new OnePole(sr, 3500); this.ph = 0;
+  }
+  process(L, R, t0, n) {
+    let i = this.start - t0; if (i >= n) return true; if (i < 0) i = 0;
+    for (; i < n && this.k < this.len; i++, this.k++) {
+      const u = this.k / this.len;
+      if ((this.k & 63) === 0) this.f.set(700 + 2200 * Math.sin(Math.PI * u * 0.8), 1.6);
+      const env = Math.sin(Math.PI * Math.min(1, u * 1.1)) ** 2 * (1 - u);
+      this.f.run(this.noise());
+      this.ph += (1900 - 1500 * u) / this.sr; if (this.ph > 1) this.ph -= 1; // the whistle glides down as it locks on
+      const y = this.lp.lp(this.f.band * 0.9 + sinc(this.ph) * 0.05 * (1 - u)) * env * 0.6;
+      L[i] += y; R[i] += y * 0.9;
+    }
+    return this.k < this.len;
+  }
+}
+
 // Vinyl crackle and hiss; level follows how much lofi is playing.
 class Crackle {
   constructor(sr, r) {
@@ -1243,7 +1264,7 @@ export class Engine {
     this.crackle = new Crackle(sampleRate, this.r.fork());
     this.wobble = new Wobble(sampleRate, this.r.fork());
     this.genRng = this.r.fork();
-    this.gens = []; this.onInfo = null; this.lastInfo = null; this.extras = []; this.purrNoise = noiseGen(this.r() * 4294967296);
+    this.gens = []; this.onInfo = null; this.lastInfo = null; this.extras = []; this.purrNoise = noiseGen(this.r() * 4294967296); this.musicFade = 1;
     this.mL = new Float32Array(0); this.mR = new Float32Array(0);
     this.agcEnv = 0.02; this.agcGain = 1; this.agcA = 1 - Math.exp(-1 / (sampleRate * 2.5)); this.agcG = 1 - Math.exp(-1 / (sampleRate * 4));
     this.lim = 1; this.limRel = 1 - Math.exp(-1 / (sampleRate * 0.25));
@@ -1279,6 +1300,7 @@ export class Engine {
       g.newKey(); g.needDrone = true; g.next = Math.min(g.next, this.t + Math.round(1.5 * this.sr));
     }
   }
+  tune() { if (!this.extras.some((x) => x instanceof TuneIn)) { this.extras.push(new TuneIn(this.sr, this.t, this.purrNoise)); this.musicFade = 0; } }
   purr(seconds = 4) { // one purr at a time: petting again just keeps it going
     const p = this.extras.find((x) => x instanceof Purr);
     if (p) p.len = Math.max(p.len, Math.min(p.k + Math.round(seconds * this.sr), Math.round(20 * this.sr)));
@@ -1314,6 +1336,9 @@ export class Engine {
       L[s] *= this.agcGain; R[s] *= this.agcGain;
     }
     lofiW = clamp(lofiW, 0, 1);
+    if (this.musicFade < 1) { // tuning in: the music rises under the static
+      for (let s = 0; s < n; s++) { this.musicFade = Math.min(1, this.musicFade + 1 / (1.4 * this.sr)); const g = this.musicFade * this.musicFade; L[s] *= g; R[s] *= g; }
+    }
     for (let i = this.extras.length - 1; i >= 0; i--) if (!this.extras[i].process(L, R, this.t, n)) this.extras.splice(i, 1);
     this.wobble.process(L, R, n, 0.4 + 0.6 * lofiW);
     this.weather.process(L, R, n);

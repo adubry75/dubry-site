@@ -157,7 +157,7 @@ async function startAudio() {
       const sp = actx.createScriptProcessor(4096, 0, 2);
       // 128-frame quanta, like the worklet, so the same seed plays the same music
       sp.onaudioprocess = (ev) => { const L = ev.outputBuffer.getChannelData(0), R = ev.outputBuffer.getChannelData(1); for (let i = 0; i < L.length; i += 128) engine.process(L.subarray(i, i + 128), R.subarray(i, i + 128), Math.min(128, L.length - i)); };
-      node = { port: { postMessage: (m) => { if (m.type === 'mode') engine.setMode(m.mode); else if (m.type === 'weather') engine.setWeather(m.weather); else if (m.type === 'purr') engine.purr(); else if (m.type === 'next') engine.next(); } }, connect: (d) => sp.connect(d) };
+      node = { port: { postMessage: (m) => { if (m.type === 'mode') engine.setMode(m.mode); else if (m.type === 'weather') engine.setWeather(m.weather); else if (m.type === 'purr') engine.purr(); else if (m.type === 'next') engine.next(); else if (m.type === 'tune') engine.tune(); } }, connect: (d) => sp.connect(d) };
       sp.connect(gain);
     }
   })();
@@ -170,7 +170,9 @@ async function play() {
   await startAudio();
   await actx.resume();
   const t = actx.currentTime;
-  gain.gain.cancelScheduledValues(t); gain.gain.setValueAtTime(gain.gain.value, t); gain.gain.linearRampToValueAtTime(settings.volume, t + 1.5);
+  const tuning = !playing && gain.gain.value < 0.05 && node; // switching the radio on: the engine fades the music in under a little static
+  if (tuning) node.port.postMessage({ type: 'tune' });
+  gain.gain.cancelScheduledValues(t); gain.gain.setValueAtTime(gain.gain.value, t); gain.gain.linearRampToValueAtTime(settings.volume, t + (tuning ? 0.12 : 1.5));
   playing = true; scene.playing = true; scene.audioThunder = true; updateUI();
   if (q.has('sleep') && !sleep.armed) { sleep.armed = true; const m = parseFloat(q.get('sleep')); if (m > 0) setSleep(m); }
   wakeLock();

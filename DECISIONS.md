@@ -357,6 +357,9 @@ these behaviour glitches, all fixed and re-measured:
 - Refreshed the arcade cabinet image (`lofi-radio.webp`, in `src/static/cabs/` and `dist/nine-lives/cabs/`) and the
   share image (`lofi/og.jpg`, now `?v=2` so social sites refetch it) with the current look (dusk, chimney smoke,
   window-shaped sunbeam, birds on the wire). Both were rendered with `render-video.mjs --still`.
+- **Tuning in**: pressing play now sounds like switching on a radio. A 1.6 s sweep of soft band-passed static with a
+  faint whistle gliding down as it "locks on", while the music rises underneath (it peaks ~7 dB under the music, no
+  spikes). Only on play, never in the renderers, so seeds still render identically.
 
 ---
 
