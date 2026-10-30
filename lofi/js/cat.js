@@ -34,8 +34,8 @@ export class CatBrain {
     this.r = rand;
     this.state = 'sleep'; this.stateLeft = 40 + rand() * 60;
     // smoothed pose parameters
-    this.p = { head: 0, eyes: 0, paws: 0.35, yawn: 0, stretch: 0, earL: 0, earR: 0, lookX: 0, lookY: 0, tail: 0, curl: 0 };
-    this.t = { head: 0, eyes: 0, paws: 0.35, yawn: 0, stretch: 0, lookX: 0, lookY: 0 };
+    this.p = { head: 0, eyes: 0, paws: 0.35, yawn: 0, stretch: 0, groom: 0, earL: 0, earR: 0, lookX: 0, lookY: 0, tail: 0, curl: 0 };
+    this.t = { head: 0, eyes: 0, paws: 0.35, yawn: 0, stretch: 0, groom: 0, lookX: 0, lookY: 0 };
     this.action = null; this.actionT = 0; this.nextAction = 8 + rand() * 10;
     this.blinkT = 3; this.blink = 0;
     this.ear = [0, 0]; this.earT = [0, 0]; this.nextEar = 4 + rand() * 8;
@@ -55,13 +55,13 @@ export class CatBrain {
     }
     const awake = this.state === 'awake';
     t.head = awake ? 1 : 0; t.eyes = awake ? 0.85 : 0; t.paws = awake ? 0.7 : 0.35;
-    t.yawn = 0; t.stretch = 0;
+    t.yawn = 0; t.stretch = 0; t.groom = 0;
     // occasional actions
     this.nextAction -= dt;
     if (!this.action && this.nextAction <= 0) {
       this.nextAction = 25 + r() * 60;
       const roll = r();
-      if (awake) this.start(roll < 0.35 ? 'yawn' : roll < 0.55 ? 'stretch' : roll < 0.8 ? 'look' : 'slowblink');
+      if (awake) this.start(roll < 0.28 ? 'yawn' : roll < 0.45 ? 'stretch' : roll < 0.65 ? 'groom' : roll < 0.85 ? 'look' : 'slowblink');
       else if (roll < 0.25) this.start('stirr'); else if (roll < 0.4) this.start('dreamtwitch');
     }
     if (this.action) {
@@ -70,6 +70,7 @@ export class CatBrain {
       if (a === 'yawn') { const d = 3.2; t.yawn = ease(clamp(bell(d) * 1.4, 0, 1)); t.head = 1; t.eyes = 0; if (k > d) this.action = null; }
       else if (a === 'stretch') { const d = 4.5; t.stretch = ease(clamp(bell(d) * 1.3, 0, 1)); t.eyes = 0.1; if (k > d) this.action = null; }
       else if (a === 'look') { const d = 6; const s = Math.sin(k * 0.9); t.lookX = s * 0.8; t.lookY = -0.2; if (k > d) { this.action = null; } }
+      else if (a === 'groom') { const d = 7; t.groom = clamp(Math.min(k / 0.9, (d - k) / 0.9), 0, 1); t.head = 1; t.eyes = 0; if (k > d) this.action = null; }
       else if (a === 'slowblink') { const d = 2.6; t.eyes = 0.85 * (1 - ease(bell(d))); if (k > d) this.action = null; }
       else if (a === 'stirr') { const d = 5; t.head = 0.25 * bell(d); t.eyes = 0.25 * clamp(bell(d) * 2 - 1, 0, 1); if (k > d) this.action = null; }
       else if (a === 'dreamtwitch') { this.ear[0] = Math.sin(k * 40) * 0.12 * (1 - k); this.flick = Math.max(this.flick, 0.5); if (k > 1) this.action = null; }
@@ -91,6 +92,7 @@ export class CatBrain {
     // smooth everything (critically damped-ish)
     const k = 1 - Math.exp(-dt * 2.2), kf = 1 - Math.exp(-dt * 5);
     for (const key of ['head', 'paws', 'stretch', 'lookX', 'lookY']) p[key] += (t[key] - p[key]) * k;
+    p.groom += (t.groom - p.groom) * kf;
     p.eyes += (t.eyes - p.eyes) * kf; p.yawn += (t.yawn - p.yawn) * kf;
     p.earL = this.ear[0]; p.earR = this.ear[1];
   }
@@ -160,7 +162,9 @@ export function drawCat(ctx, x, y, s, skinId, brain, time, light, rim, eyeGlow =
   paw(ctx, 112, -4, 26, 13, S, C, 0);
   // front paws (tucked → sphinx → stretched)
   const reach = lerp(0, 54, clamp(p.paws, 0, 1)) + st * 60;
+  const gr = clamp(p.groom, 0, 1);
   for (const [dx, dy] of [[0, 0], [26, 3]]) {
+    if (dx === 0 && gr > 0.02) continue; // this paw is up being washed (drawn after the head)
     const px = chestX - reach + dx + 10, py = -7 + dy;
     ctx.fillStyle = C(S.point || S.base);
     ctx.beginPath(); ctx.moveTo(chestX + 20 + dx, -36); ctx.quadraticCurveTo(px + 20, -22, px + 8, py - 12); ctx.lineTo(px + 30, py + 6); ctx.quadraticCurveTo(chestX + 40 + dx, -6, chestX + 36 + dx, -40); ctx.fill();
@@ -170,8 +174,16 @@ export function drawCat(ctx, x, y, s, skinId, brain, time, light, rim, eyeGlow =
   // head
   const hx = lerp(-112, -122, 1 - p.head) - st * 34 + p.lookX * 4;
   const hy = lerp(-58, -128, p.head) - br * 1.6 + st * 36 + p.yawn * -6;
-  const tilt = lerp(-0.22, 0, p.head) + p.yawn * 0.16 + p.lookX * 0.05 - st * 0.1;
-  drawHead(ctx, hx, hy, tilt, S, p, brain, C, rim, eyeGlow);
+  const lick = gr * Math.sin(time * 7) * 3; // little bobs while washing a paw
+  const tilt = lerp(-0.22, 0, p.head) + p.yawn * 0.16 + p.lookX * 0.05 - st * 0.1 - gr * 0.18;
+  drawHead(ctx, hx - gr * 4, hy + gr * 8 + lick, tilt, S, p, brain, C, rim, eyeGlow);
+  if (gr > 0.02) { // the raised paw, from resting on the sill up to just under the chin
+    const rx = chestX - reach + 20, ry = -7, ux = hx + 4, uy = hy + 58 + lick * 0.5;
+    const x = lerp(rx, ux, gr), y = lerp(ry, uy, gr) + Math.sin(time * 7 + 1) * 2 * gr;
+    ctx.strokeStyle = C(S.point || S.base); ctx.lineWidth = 24; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(chestX + 26, -34); ctx.quadraticCurveTo(lerp(chestX - 10, chestX + 6, gr), lerp(-20, -50, gr), x + 6, y + 6); ctx.stroke();
+    ctx.save(); ctx.translate(x, y); ctx.rotate(-1.1 * gr); paw(ctx, 0, 0, 20, 12, S, C, 0); ctx.restore();
+  }
   ctx.restore();
 }
 

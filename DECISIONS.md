@@ -210,3 +210,6 @@ else changed.
   info line.
 - 60-minute renders (seed 77, rain) of Lofi and Jazz: peak −3.0 dBFS, 0 clipped samples, no silence gaps, 1-second
   RMS stays between −26 and −12 dBFS for the whole hour. Rendering takes about 2–3 minutes per hour of audio.
+- New cat behaviour: **grooming**. An awake cat now sometimes lifts a front paw to its chin and washes it for ~7 s
+  (eyes closed, small head bobs) before setting it back down. It joins yawns, stretches, looking around, slow blinks,
+  ear twitches, tail flicks, sleeping and waking.
