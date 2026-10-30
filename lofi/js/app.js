@@ -180,7 +180,7 @@ if ('mediaSession' in navigator) {
 function showInfo(i) {
   info = i;
   const el = $('#now');
-  if (el) el.textContent = i.mode === 'ambient' ? `Ambient · ${i.key}` : `${i.mode === 'jazz' ? 'Jazz' : 'Lofi'} · ${i.key} · ${i.bpm} BPM${i.keys === 'piano' ? ' · piano' : ''}`;
+  if (el) el.textContent = i.mode === 'ambient' ? `Ambient · ${i.key}` : `${i.mode === 'jazz' ? 'Jazz' : 'Lofi'} · ${i.key} · ${i.bpm} BPM${i.keys && i.keys !== 'rhodes' ? ' · ' + i.keys : ''}`;
 }
 
 // ── controls

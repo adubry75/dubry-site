@@ -201,3 +201,7 @@ else changed.
   drifting past (like the autumn leaves), and the info panel shows the session's **seed**. Same seed, same
   music: open `?seed=N` or render it offline with `--seed N`. Switching room themes now drops the other themes'
   cached room images, so cycling themes can't pile up memory.
+- Lofi gained a third keys instrument: a soft **fingerpicked nylon guitar** (Karplus-Strong string synthesis with a
+  small body resonance) for about one section in five, picking the jazz voicing as broken-chord 8ths and strumming
+  the long chord at the section's end. The keys split is Rhodes 50%, felt piano 30%, guitar 20%. The info line names
+  the instrument when it isn't the Rhodes.

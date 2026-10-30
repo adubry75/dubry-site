@@ -181,6 +181,34 @@ class Piano { // soft felt piano: a few slightly stretched partials, the higher 
   }
 }
 
+class Guitar { // soft nylon string (Karplus-Strong): a filtered noise pluck in a tuned, gently damped delay loop
+  constructor(sr, start, midi, vel, durS, pan, noise) {
+    this.start = start; this.end = start + Math.round(durS * sr);
+    const len = sr / mtof(midi);
+    this.N = Math.floor(len); this.frac = len - this.N; this.buf = new Float32Array(this.N + 2); this.w = 0;
+    const lp = new OnePole(sr, 1100 + vel * 1400);
+    for (let i = 0; i < this.buf.length; i++) this.buf[i] = lp.lp(noise()) * 1.4; // the pluck
+    this.loss = 0.996 - clamp((midi - 50) / 400, 0, 0.004); this.last = 0; this.rel = Math.exp(-1 / (sr * 0.08)); this.e = 1;
+    this.body = new SVF(sr, 220, 1.2); this.gain = vel * 0.65; [this.gl, this.gr] = panGains(pan); this.k = 0; this.maxK = 12 * sr; // never ring longer than 12 s
+  }
+  process(L, R, t0, n) {
+    let i = this.start - t0; if (i >= n) return true; if (i < 0) i = 0;
+    const B = this.buf, N = this.N + 1;
+    for (; i < n; i++, this.k++) {
+      const t = t0 + i;
+      if (t >= this.end) this.e *= this.rel;
+      const r1 = (this.w + 1) % N, r2 = (this.w + 2) % N;
+      const out = B[r1] + (B[r2] - B[r1]) * this.frac;
+      const y = (out + this.last) * 0.5 * this.loss; this.last = out;
+      B[this.w] = y; this.w = r1;
+      const fade = this.k < 32 ? this.k / 32 : 1;
+      const v = (out + this.body.run(out) * 0.6) * this.e * this.gain * fade;
+      L[i] += v * this.gl; R[i] += v * this.gr;
+    }
+    return !(t0 + n > this.end && this.e < 1e-4) && this.k < this.maxK;
+  }
+}
+
 class Riser { // a soft noise swell that leads into the next section
   constructor(sr, start, durS, noise) {
     this.start = start; this.len = Math.round(durS * sr); this.k = 0; this.noise = noise;
@@ -555,7 +583,7 @@ class LofiGen {
       swing: r.range(0.1, 0.24), groove: r.int(0, GROOVES.length - 1),
       comp: r.int(0, COMP.length - 1), bass: r.int(0, BASS.length - 1),
       intro: r.pick([2, 4, 4]), melodyOdds: r.range(0.25, 0.6), roll: r.chance(0.6), motif: null,
-      keys: r.chance(0.35) ? 'piano' : 'rhodes', swing8: r.range(0.04, 0.12),
+      keys: r.weighted([['rhodes', 0.5], ['piano', 0.3], ['guitar', 0.2]]), swing8: r.range(0.04, 0.12),
     };
     this.cutTarget = 2200; // filter starts half closed and opens through the intro
   }
@@ -585,13 +613,20 @@ class LofiGen {
     const voicing = voiceChord(rootPc, q, this.prevVoicing, r);
     this.prevVoicing = voicing;
     const comp = isLast ? [[0, 16, 0.9]] : (isIntro ? [[0, 15, 0.9]] : COMP[(s.comp + (bi % 8 === 4 && r.chance(0.4) ? 1 : 0)) % COMP.length]);
-    for (const [st, len, vs] of comp) {
+    if (s.keys === 'guitar' && !isLast) { // fingerpicking: a broken chord on the 8ths, each string left to ring
+      const order = r.pick([[0, 2, 1, 3, 2, 1, 3, 2], [0, 1, 2, 3, 2, 1, 2, 3], [0, 2, 3, 1, 2, 3, 1, 2]]);
+      const steps = isIntro ? [0, 2, 4, 6, 8, 10, 12, 14].slice(0, 4 + (bi % 2) * 4) : [0, 2, 4, 6, 8, 10, 12, 14];
+      steps.forEach((st, j) => {
+        const m = voicing[order[j] % voicing.length];
+        this.voices.push(new Guitar(sr, at(st, 6), m, r.range(0.45, 0.7) * (j === 0 ? 1.15 : 1), step * 7, ((order[j] / 3) * 0.5 - 0.25), this.noise));
+      });
+    } else for (const [st, len, vs] of comp) {
       const start = at(st, 5), vel = clamp(vs * r.range(0.55, 0.75), 0.2, 1);
       const durS = len * step * (isLast ? 2.2 : 0.95);
       voicing.forEach((m, j) => {
         const roll = s.roll ? j * r.range(0.008, 0.022) * sr : r.range(0, 0.006) * sr;
         const v = vel * r.range(0.85, 1.05), pan = (j / 3) * 0.6 - 0.3, at0 = start + Math.round(roll);
-        this.voices.push(s.keys === 'piano' ? new Piano(sr, at0, m, v, durS, pan) : new Rhodes(sr, at0, m, v, durS, pan));
+        this.voices.push(s.keys === 'piano' ? new Piano(sr, at0, m, v, durS, pan) : s.keys === 'guitar' ? new Guitar(sr, at0, m, v, durS, pan, this.noise) : new Rhodes(sr, at0, m, v, durS, pan));
       });
     }
 
