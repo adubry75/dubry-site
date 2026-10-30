@@ -171,6 +171,9 @@ A separate, self-contained page: an endless generative "lofi cats to relax to" s
 (Lofi, Jazz, Bossa, Ambient, or Auto by time of day). No build step: deploy by uploading the `lofi/` folder to `public_html/lofi/`.
 The design calls are logged in `DECISIONS.md`.
 
+Preview locally from the repo root with any static server, e.g. `python3 -m http.server 8000`, then open
+<http://localhost:8000/lofi/> (opening `index.html` straight from disk won't work: browsers block ES modules on `file://`).
+
 ```
 lofi/
 ├── index.html          the page (controls fade away when the mouse rests; ?record=1 hides everything)
