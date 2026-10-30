@@ -162,3 +162,32 @@ tools/                    build, preview server, fixtures, screenshots, checks, 
   and drop a 360×270 `src/static/cabs/<id>.webp` frame of it (without one, the cabinet gets generated art from
   the motif you pick in `src/js/art.js`). `npm run og` re-renders the share image `src/static/og.jpg` from the
   current art (needs `npm run serve` running); bump the `?v=` on the `og:image` URL so social sites refetch it.
+
+---
+
+## Lofi Cat Radio (`/lofi/`)
+
+A separate, self-contained page: an endless generative "lofi cats to relax to" scene with live-generated music
+(Lofi, Jazz, Ambient). No build step: deploy by uploading the `lofi/` folder to `public_html/lofi/`.
+The design calls are logged in `DECISIONS.md`.
+
+```
+lofi/
+├── index.html          the page (controls fade away when the mouse rests; ?record=1 hides everything)
+├── js/app.js           time (real Medford sun and moon), weather, controls, audio wiring
+├── js/scene.js         the canvas scene (room, town, sky, weather, lights); js/cat.js the cat; js/sky.js astronomy
+├── js/engine.js        the music engine (pure-JS DSP), run by js/worklet.js in the browser and by the tools below
+└── samples/            3-minute MP3 samples of each style (optional on the server)
+```
+
+| Tool | What it does |
+|---|---|
+| `node tools/render-audio.mjs --minutes 60 --seed 7 --mode lofi --weather rain --out lofi-1h.mp3` | N minutes of music to WAV/MP3/FLAC, deterministic per seed (same seed = same music as the page) |
+| `node tools/render-video.mjs --minutes 60 --seed 7 --mode lofi --weather rain --out lofi-1h.mp4` | a finished 1080p MP4 (picture + music in sync), rendered offline frame by frame |
+| `node tools/check-audio.mjs file.wav [--png spec.png]` | peak, clipping, silence gaps, loudness over time (LUFS), smoothness of transitions |
+| `node tools/lofi-shots.mjs [--soak 10]` | Playwright screenshots of every weather × time on desktop and phone, or a long soak run |
+
+URL options: `mode=lofi|jazz|ambient`, `weather=auto|live|clear|cloudy|rain|storm|snow|fog`,
+`cat=daisy|nero|jammies|callie|black`, `room=cozy|cabin|blue`, `seed=N`, `fast=1` (6-minute days) or `fast=S`
+(a day every S seconds), `time=HH:MM` or an ISO date, `record=1` (no UI, no cursor).
+Keys: Space play/pause · M music · W weather · C cat · R room · D fast day · F full screen · H hide controls.

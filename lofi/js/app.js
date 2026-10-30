@@ -127,6 +127,8 @@ let actx = null, node = null, gain = null, playing = false, starting = null, inf
 async function startAudio() {
   if (starting) return starting;
   starting = (async () => {
+    // iOS: play like a music app, even with the ring/silent switch on
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch { /* older Safari */ }
     actx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'playback' });
     gain = actx.createGain(); gain.gain.value = 0; gain.connect(actx.destination);
     const weather = { rain: scene.w.rain, snow: scene.w.snow, fog: scene.w.fog, storm: scene.w.storm };
