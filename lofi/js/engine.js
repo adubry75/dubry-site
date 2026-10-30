@@ -1135,6 +1135,9 @@ export class Engine {
     if (gen.barPos !== undefined) gen.barPos = this.t + (instant ? 0 : Math.round(1.5 * this.sr));
     if (gen.next !== undefined) gen.next = this.t;
     for (const g of this.gens) g.target = 0;
+    // rapid switching: drop generators that are already (nearly) silent, and never run more than three at once
+    this.gens = this.gens.filter((g) => g.gain > 0.02);
+    while (this.gens.length > 2) { let qi = 0; for (let i = 1; i < this.gens.length; i++) if (this.gens[i].gain < this.gens[qi].gain) qi = i; this.gens.splice(qi, 1); }
     this.gens.push({ gen, gain: instant ? 1 : 0, target: 1 });
   }
   setWeather(w) { this.weather.set(w); }
