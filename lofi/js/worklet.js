@@ -13,6 +13,7 @@ class LofiRadio extends AudioWorkletProcessor {
       const m = e.data;
       if (m.type === 'mode') this.engine.setMode(m.mode);
       else if (m.type === 'weather') this.engine.setWeather(m.weather);
+      else if (m.type === 'purr') this.engine.purr();
     };
     this.L = new Float32Array(128); this.R = new Float32Array(128);
   }

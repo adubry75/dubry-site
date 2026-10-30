@@ -153,7 +153,7 @@ async function startAudio() {
       const sp = actx.createScriptProcessor(4096, 0, 2);
       // 128-frame quanta, like the worklet, so the same seed plays the same music
       sp.onaudioprocess = (ev) => { const L = ev.outputBuffer.getChannelData(0), R = ev.outputBuffer.getChannelData(1); for (let i = 0; i < L.length; i += 128) engine.process(L.subarray(i, i + 128), R.subarray(i, i + 128), Math.min(128, L.length - i)); };
-      node = { port: { postMessage: (m) => { if (m.type === 'mode') engine.setMode(m.mode); else if (m.type === 'weather') engine.setWeather(m.weather); } }, connect: (d) => sp.connect(d) };
+      node = { port: { postMessage: (m) => { if (m.type === 'mode') engine.setMode(m.mode); else if (m.type === 'weather') engine.setWeather(m.weather); else if (m.type === 'purr') engine.purr(); } }, connect: (d) => sp.connect(d) };
       sp.connect(gain);
     }
   })();
@@ -287,6 +287,15 @@ if (RECORD) {
   startAudio().then(() => { if (actx.state === 'running') play(); }).catch(() => {});
 }
 if (!RECORD) poke();
+
+// pet the cat: tap or click it
+canvas.addEventListener('pointerdown', (e) => {
+  if (!start.hidden && !start.classList.contains('gone')) return;
+  if (!scene.hitCat(e.clientX, e.clientY)) return;
+  scene.cat.pet();
+  if (node && playing) node.port.postMessage({ type: 'purr' });
+});
+canvas.addEventListener('pointermove', (e) => { canvas.style.cursor = scene.hitCat(e.clientX, e.clientY) ? 'pointer' : ''; }, { passive: true });
 
 // ── the loop
 let last = performance.now(), sunCache = { at: -1e9 }, lamp = 0, lampOn = false, sendT = 0, clockT = 0;

@@ -1071,6 +1071,27 @@ class WeatherSound {
   }
 }
 
+// A purr, for when someone pets the cat: ~26 breaths-of-rumble a second, louder on the exhale.
+class Purr {
+  constructor(sr, start, durS, noise) {
+    this.start = start; this.len = Math.round(durS * sr); this.k = 0; this.sr = sr; this.noise = noise;
+    this.bp = new SVF(sr, 130, 1.1); this.lp = new OnePole(sr, 420); this.ph = 0; this.inc = 26 / sr;
+  }
+  process(L, R, t0, n) {
+    let i = this.start - t0; if (i >= n) return true; if (i < 0) i = 0;
+    for (; i < n && this.k < this.len; i++, this.k++) {
+      const u = this.k / this.len, env = Math.min(1, u * 6, (1 - u) * 4);
+      const breath = 0.6 + 0.4 * Math.sin(TAU * this.k / this.sr * 0.45);
+      this.ph += this.inc; if (this.ph > 1) this.ph -= 1;
+      const pulse = Math.pow(Math.max(0, Math.sin(TAU * this.ph)), 2);
+      this.bp.run(this.noise());
+      const y = this.lp.lp(this.bp.band * pulse) * env * breath * 4;
+      L[i] += y; R[i] += y;
+    }
+    return this.k < this.len;
+  }
+}
+
 // Vinyl crackle and hiss; level follows how much lofi is playing.
 class Crackle {
   constructor(sr, r) {
@@ -1120,7 +1141,7 @@ export class Engine {
     this.crackle = new Crackle(sampleRate, this.r.fork());
     this.wobble = new Wobble(sampleRate, this.r.fork());
     this.genRng = this.r.fork();
-    this.gens = []; this.onInfo = null; this.lastInfo = null;
+    this.gens = []; this.onInfo = null; this.lastInfo = null; this.extras = []; this.purrNoise = noiseGen(this.r() * 4294967296);
     this.mL = new Float32Array(0); this.mR = new Float32Array(0);
     this.agcEnv = 0.02; this.agcGain = 1; this.agcA = 1 - Math.exp(-1 / (sampleRate * 2.5)); this.agcG = 1 - Math.exp(-1 / (sampleRate * 4));
     this.lim = 1; this.limRel = 1 - Math.exp(-1 / (sampleRate * 0.25));
@@ -1145,6 +1166,7 @@ export class Engine {
     this.gens.push({ gen, gain: instant ? 1 : 0, target: 1 });
   }
   setWeather(w) { this.weather.set(w); }
+  purr(seconds = 4) { if (this.extras.length < 2) this.extras.push(new Purr(this.sr, this.t, seconds, this.purrNoise)); }
   set onFlash(f) { this.weather.onFlash = f; }
   _info(i) { this.lastInfo = i; if (this.onInfo) this.onInfo(i); }
   process(L, R, n) {
@@ -1175,6 +1197,7 @@ export class Engine {
       L[s] *= this.agcGain; R[s] *= this.agcGain;
     }
     lofiW = clamp(lofiW, 0, 1);
+    for (let i = this.extras.length - 1; i >= 0; i--) if (!this.extras[i].process(L, R, this.t, n)) this.extras.splice(i, 1);
     this.wobble.process(L, R, n, 0.4 + 0.6 * lofiW);
     this.weather.process(L, R, n);
     this.crackle.process(L, R, n, lofiW, 1 - lofiW);

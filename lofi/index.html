@@ -24,7 +24,7 @@
   [hidden] { display: none !important; }
   html, body { margin: 0; height: 100%; background: #1a1626; overflow: hidden; color: var(--ink); font-family: var(--font); }
   canvas#scene { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; display: block; }
-  body:not(.awake) { cursor: none; }
+  body:not(.awake), body:not(.awake) * { cursor: none !important; }
 
   #ui { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.9s ease; }
   body.awake #ui { opacity: 1; transition-duration: 0.25s; }

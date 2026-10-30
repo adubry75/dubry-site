@@ -270,3 +270,11 @@ weather changes, rapid switching, NaN injection, timing). Its real findings, all
   | lofi-rain-3min-seed13.mp3 (F major → D minor, rain) | −3.4 dBFS | 0 | none | −22.4 to −14.3 LUFS | 2.2 LU | −17.5 LUFS |
   | jazz-3min-seed41.mp3 (A♭ major → B major) | −5.4 dBFS | 0 | none | −21.2 to −15.6 LUFS | 2.2 LU | −18.0 LUFS |
   | ambient-3min-seed21.mp3 (D dorian → A dorian) | −5.6 dBFS | 0 | none | −18.9 to −14.0 LUFS | 1.1 LU | −17.0 LUFS |
+
+## Pet the cat
+- Click or tap the cat (the cursor turns into a hand over it): it flicks an ear, wakes if asleep, turns to you and slow
+  blinks. With the music on it also **purrs**, a synthesized rumble (band-passed noise pulsing ~26 times a second,
+  breathing in and out) mixed after the leveller at about 7 dB under the music. It's measured by rendering the same
+  seed with and without a purr and subtracting, which works because the engine is deterministic. Nothing changes
+  for recordings: `record=1` has no cursor, and the purr only happens on a tap. The cursor stays hidden when idle,
+  even over the cat.

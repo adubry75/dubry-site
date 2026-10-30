@@ -45,6 +45,11 @@ export class CatBrain {
   }
   wake() { if (this.state === 'sleep') { this.state = 'awake'; this.stateLeft = 50 + this.r() * 90; this.start('yawn'); } }
   start(a) { this.action = a; this.actionT = 0; }
+  pet() { // someone said hello: an ear flick, a look, a slow blink (and wake up if asleep)
+    this.earT[this.r() < 0.5 ? 0 : 1] = 0.35;
+    if (this.state === 'sleep') { this.state = 'awake'; this.stateLeft = 40 + this.r() * 60; }
+    this.start('slowblink'); this.nextAction = Math.max(this.nextAction, 20);
+  }
   update(dt, look) {
     const r = this.r, t = this.t, p = this.p;
     this.breath += dt * (this.state === 'sleep' ? 0.23 : 0.3) * Math.PI * 2;

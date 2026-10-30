@@ -209,6 +209,12 @@ export class Scene {
   }
 
   setWeather(t) { Object.assign(this.wt, t); }
+  // is this client point (CSS px) on the cat?
+  hitCat(cx, cy) {
+    const dpr = this.canvas.width / window.innerWidth;
+    const x = (cx * dpr - this.ox) / this.k, y = (cy * dpr - this.oy) / this.k;
+    return x > CAT_X - 220 && x < CAT_X + 190 && y > SILL_Y - 210 && y < SILL_Y + 140;
+  }
   lightning() { this.flashT = 0; this.flashX = 150 + this.r() * (G.w - 300); }
 
   // ── per-palette caches
