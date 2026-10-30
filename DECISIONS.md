@@ -285,3 +285,6 @@ weather changes, rapid switching, NaN injection, timing). Its real findings, all
 - Night atmosphere: on a wet road (during rain and for a while after) the street lamps, headlights and tail lights
   leave soft shimmering reflections; clear dark nights show a faint Milky Way band (dimmer when the moon is
   bright); and now and then a distant plane's blinking lights crawl across the night sky.
+- Layout QA beyond the two required sizes: landscape phone (844×390), tablet portrait (1024×1366), ultrawide
+  (2560×1080, more room shows), tiny (320×480), 1366×768, 1080×1920, and live resizing through a hidden 0×0 state
+  and back. All compose sensibly with no console errors.
