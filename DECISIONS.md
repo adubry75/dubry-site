@@ -205,3 +205,8 @@ else changed.
   small body resonance) for about one section in five, picking the jazz voicing as broken-chord 8ths and strumming
   the long chord at the section's end. The keys split is Rhodes 50%, felt piano 30%, guitar 20%. The info line names
   the instrument when it isn't the Rhodes.
+- Radio flavour: every section gets a made-up track title, like "sleepy radiator", "tea & whiskers" or "faraway
+  moon". It's derived from the section's key, tempo and the seed, so it's stable, and it's shown in quotes in the
+  info line.
+- 60-minute renders (seed 77, rain) of Lofi and Jazz: peak −3.0 dBFS, 0 clipped samples, no silence gaps, 1-second
+  RMS stays between −26 and −12 dBFS for the whole hour. Rendering takes about 2–3 minutes per hour of audio.
