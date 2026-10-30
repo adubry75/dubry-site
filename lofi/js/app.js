@@ -22,7 +22,7 @@ const settings = {
   fast: q.has('fast') ? q.get('fast') !== '0' : false,
 };
 if (!SKINS[settings.cat]) settings.cat = 'daisy';
-if (!['lofi', 'ambient'].includes(settings.mode)) settings.mode = 'lofi';
+if (!['lofi', 'jazz', 'ambient'].includes(settings.mode)) settings.mode = 'lofi';
 const DAY_SECONDS = q.has('fast') && parseFloat(q.get('fast')) > 1 ? parseFloat(q.get('fast')) : 360; // a fast day lasts 6 minutes
 const seed = q.has('seed') ? parseInt(q.get('seed'), 10) >>> 0 : (Date.now() ^ (performance.now() * 1000)) >>> 0;
 
@@ -174,7 +174,7 @@ if ('mediaSession' in navigator) {
 function showInfo(i) {
   info = i;
   const el = $('#now');
-  if (el) el.textContent = i.mode === 'lofi' ? `Lofi · ${i.key} · ${i.bpm} BPM` : `Ambient · ${i.key}`;
+  if (el) el.textContent = i.mode === 'ambient' ? `Ambient · ${i.key}` : `${i.mode === 'jazz' ? 'Jazz' : 'Lofi'} · ${i.key} · ${i.bpm} BPM${i.keys === 'piano' ? ' · piano' : ''}`;
 }
 
 // ── controls
@@ -189,7 +189,7 @@ function updateUI() {
 function setMode(m) {
   settings.mode = m; store.set('mode', m);
   if (node) node.port.postMessage({ type: 'mode', mode: m });
-  const el = $('#now'); if (el && !node) el.textContent = m === 'lofi' ? 'Lofi' : 'Ambient';
+  const el = $('#now'); if (el && !node) el.textContent = { lofi: 'Lofi', jazz: 'Jazz', ambient: 'Ambient' }[m];
   updateUI();
 }
 $('#cat').innerHTML = SKIN_IDS.map((id) => `<option value="${id}">${SKINS[id].name}</option>`).join('');
@@ -209,7 +209,7 @@ addEventListener('keydown', (e) => {
   if (e.target.closest && e.target.closest('select, input[type=range]') && e.key !== ' ') return;
   const k = e.key.toLowerCase();
   if (k === ' ' || k === 'k') { e.preventDefault(); hideStart(); toggle(); }
-  else if (k === 'm') setMode(settings.mode === 'lofi' ? 'ambient' : 'lofi');
+  else if (k === 'm') setMode({ lofi: 'jazz', jazz: 'ambient', ambient: 'lofi' }[settings.mode]);
   else if (k === 'w') { const i = (WEATHER_ORDER.indexOf(settings.weather) + 1) % WEATHER_ORDER.length; $('#weather').value = WEATHER_ORDER[i]; $('#weather').dispatchEvent(new Event('change')); }
   else if (k === 'c') { const i = (SKIN_IDS.indexOf(settings.cat) + 1) % SKIN_IDS.length; $('#cat').value = SKIN_IDS[i]; $('#cat').dispatchEvent(new Event('change')); }
   else if (k === 'f') $('#full').click();

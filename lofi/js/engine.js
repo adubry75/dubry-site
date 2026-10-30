@@ -546,7 +546,7 @@ class LofiGen {
       if (bpm > 90 || bpm < 70) bpm = Math.round(last.bpm - d);
       bpm = clamp(bpm, 70, 90);
     }
-    const pool = minor ? PROG_MINOR : PROG_MAJOR;
+    const pool = this.pools ? this.pools(minor) : minor ? PROG_MINOR : PROG_MAJOR;
     const a = r.pick(pool), b = r.chance(0.5) ? a : r.pick(pool);
     const prog = [...a, ...b].map(([iv, q]) => [(tonic + iv) % 12, q]);
     const bars = r.pick([24, 32, 32, 40, 48]);
@@ -677,7 +677,7 @@ class LofiGen {
     const vs = this.voices;
     for (let i = vs.length - 1; i >= 0; i--) {
       const v = vs[i];
-      const drum = v instanceof Kick || v instanceof Snare || v instanceof Hat || v instanceof Shaker;
+      const drum = v instanceof Kick || v instanceof Snare || v instanceof Hat || v instanceof Shaker || v instanceof Ride || v instanceof Brush;
       if (!v.process(drum ? dL : mL, drum ? dR : mR, t0, n)) vs.splice(i, 1);
     }
     // kicks duck the chords slightly
@@ -687,7 +687,7 @@ class LofiGen {
       while (kk.length && kk[0] <= t) { kk.shift(); this.duck = 1; }
       const d = 1 - 0.22 * this.duck; this.duck *= this.duckD;
       // the "dusty" drum bus: hold every other sample (half sample rate) + soft clip
-      if ((t & 1) === 0) { this.hL = dL[s]; this.hR = dR[s]; }
+      if (!this.clean ? (t & 1) === 0 : true) { this.hL = dL[s]; this.hR = dR[s]; }
       const drl = Math.tanh((this.hL || 0) * 1.4) * 0.8, drr = Math.tanh((this.hR || 0) * 1.4) * 0.8;
       mL[s] = mL[s] * d + drl; mR[s] = mR[s] * d + drr;
     }
@@ -702,6 +702,153 @@ class LofiGen {
     }
     for (let s = 0; s < n; s++) { L[s] += mL[s]; R[s] += mR[s]; }
     this.reverb.process(mL, mR, L, R, n, 0.28);
+  }
+}
+
+// ── Jazz generator: a late-night trio. Brushes and a ride, walking upright bass, comping on swung 8ths.
+class Ride { // a soft ride cymbal: inharmonic partials + a little filtered noise
+  constructor(sr, start, vel, noise, pan = 0.35) {
+    this.start = start; this.len = Math.round(1.2 * sr); this.k = 0; this.noise = noise; this.vel = vel * 0.022;
+    this.p = [3127, 4211, 5323, 6011, 7417, 8603].map((f, i) => ({ inc: f * (1 + i * 0.0031) / sr, ph: i * 0.17, a: 1 / (1 + i * 0.4) }));
+    this.hp = new OnePole(sr, 4000); this.d = Math.exp(-1 / (sr * 0.55)); this.e = 1; this.ping = Math.exp(-1 / (sr * 0.02)); this.pe = 1;
+    [this.gl, this.gr] = panGains(pan);
+  }
+  process(L, R, t0, n) {
+    let i = this.start - t0; if (i >= n) return true; if (i < 0) i = 0;
+    const P = this.p;
+    for (; i < n && this.k < this.len; i++, this.k++) {
+      let y = 0;
+      for (let j = 0; j < P.length; j++) { const q = P[j]; q.ph += q.inc; if (q.ph > 1) q.ph -= 1; y += (q.ph < 0.5 ? 1 : -1) * q.a; }
+      y = this.hp.hp(y * 0.35 + this.noise() * 0.5) * this.e * (1 + 1.5 * this.pe) * this.vel * (this.k < 24 ? this.k / 24 : 1);
+      this.e *= this.d; this.pe *= this.ping;
+      L[i] += y * this.gl; R[i] += y * this.gr;
+    }
+    return this.k < this.len;
+  }
+}
+class Brush { // a brush sweep on the snare: band-passed noise that swells and fades over a beat or two
+  constructor(sr, start, durS, vel, noise, pan = -0.15) {
+    this.start = start; this.len = Math.round(durS * sr); this.k = 0; this.noise = noise; this.vel = vel * 0.05;
+    this.bp = new SVF(sr, 3200, 0.9); this.lp = new OnePole(sr, 7000); [this.gl, this.gr] = panGains(pan);
+  }
+  process(L, R, t0, n) {
+    let i = this.start - t0; if (i >= n) return true; if (i < 0) i = 0;
+    for (; i < n && this.k < this.len; i++, this.k++) {
+      const u = this.k / this.len, env = Math.pow(Math.sin(Math.PI * u), 1.5);
+      if ((this.k & 63) === 0) this.bp.set(2600 + 1400 * Math.sin(Math.PI * u), 0.9);
+      this.bp.run(this.noise());
+      const y = this.lp.lp(this.bp.band) * env * this.vel;
+      L[i] += y * this.gl; R[i] += y * this.gr;
+    }
+    return this.k < this.len;
+  }
+}
+class Upright { // plucked-string-ish upright bass: sine + soft 2nd/3rd, a thumpy attack, gentle decay
+  constructor(sr, start, midi, vel, durS) {
+    this.start = start; this.end = start + Math.round(durS * sr);
+    this.inc = mtof(midi) / sr; this.ph = 0; this.k = 0; this.sr = sr;
+    this.d = Math.exp(-1 / (sr * 0.9)); this.rel = Math.exp(-1 / (sr * 0.06)); this.e = 1; this.gain = 0.24 * vel;
+    this.lp = new OnePole(sr, 900);
+  }
+  process(L, R, t0, n) {
+    let i = this.start - t0; if (i >= n) return true; if (i < 0) i = 0;
+    for (; i < n; i++, this.k++) {
+      const t = t0 + i;
+      this.e *= t < this.end ? this.d : this.rel;
+      const a = this.k < 96 ? this.k / 96 : 1;
+      const bright = 1 + 2.2 * Math.exp(-this.k / (this.sr * 0.03));
+      let y = sinc(this.ph) + 0.3 * bright * sinc(2 * this.ph) + 0.12 * bright * sinc(3 * this.ph);
+      this.ph += this.inc; if (this.ph > 1) this.ph -= 1;
+      y = this.lp.lp(Math.tanh(y * 1.2)) * this.e * a * this.gain;
+      L[i] += y; R[i] += y;
+    }
+    return !(t0 + n > this.end && this.e < 1e-4);
+  }
+}
+const PROG_JAZZ = [
+  [[2, 'm9'], [7, '13'], [0, 'maj9'], [9, '7b9']],
+  [[0, 'maj9'], [9, 'm9'], [2, 'm9'], [7, '13']],
+  [[4, 'm7'], [9, '7b9'], [2, 'm9'], [7, '13']],
+  [[5, 'maj9'], [10, '9'], [0, 'maj9'], [0, '6/9']],
+  [[2, 'm11'], [7, '7b9'], [0, '6/9'], [0, 'maj9']],
+];
+const PROG_JAZZ_MINOR = [
+  [[2, 'm7b5'], [7, '7b9'], [0, 'm9'], [0, 'm9']],
+  [[0, 'm9'], [5, 'm9'], [2, 'm7b5'], [7, '7b9']],
+  [[0, 'm11'], [8, 'maj9'], [2, 'm7b5'], [7, '7b9']],
+];
+class JazzGen extends LofiGen {
+  constructor(sr, r, prev = null) {
+    super(sr, r, prev);
+    this.mode = 'jazz'; this.clean = true;
+    this.reverb = new FDN(sr, 1.1, 2.2, 5200, 20);
+  }
+  pools(minor) { return minor ? PROG_JAZZ_MINOR : PROG_JAZZ; }
+  get info() { const i = super.info; i.mode = 'jazz'; return i; }
+  scheduleBar() {
+    const r = this.r, sr = this.sr, s = this.section;
+    const beat = 60 / s.bpm, barS = beat * 4;
+    const t0 = this.barPos, bi = s.bar;
+    const isIntro = bi < Math.min(2, s.intro), isLast = bi === s.bars - 1;
+    const [rootPc, q] = s.prog[bi % s.prog.length];
+    const nextCh = s.prog[(bi + 1) % s.prog.length];
+    const sw = 0.62 + (s.swing - 0.17) * 0.3; // triplet-ish swing for the off-beat 8ths
+    const at = (b8, jitterMs = 7) => { const beatN = Math.floor(b8 / 2), off = b8 % 2 ? sw : 0; return Math.round(t0 + ((beatN + off) * beat + r.range(-jitterMs, jitterMs) / 1000) * sr); };
+    this.cut = 6500; this.cutTarget = isLast ? 4200 : 9000; this.cutRate = (this.cutTarget - this.cut) / (barS * sr);
+    // comping: Charleston rhythm, a push into the next bar, or long chords in intros and at the end
+    const voicing = voiceChord(rootPc, q, this.prevVoicing, r);
+    this.prevVoicing = voicing;
+    const pattern = isIntro || isLast ? [[0, 8, 0.8]] : r.pick([[[0, 2, 0.8], [3, 3, 0.65]], [[0, 3, 0.75], [5, 2, 0.6]], [[1, 2, 0.7], [4, 3, 0.65]], [[0, 4, 0.75], [6, 2, 0.6]], [[3, 2, 0.7], [7, 1, 0.55]]]);
+    for (const [b8, len8, vs] of pattern) {
+      const start = at(b8, 6), vel = vs * r.range(0.55, 0.75);
+      voicing.forEach((m, j) => {
+        const v = vel * r.range(0.85, 1.05), pan = (j / 3) * 0.6 - 0.3, st = start + Math.round(j * r.range(0.003, 0.012) * sr);
+        const dur = len8 * beat / 2 * (isLast ? 3 : 0.9);
+        this.voices.push(s.keys === 'piano' ? new Piano(sr, st, m, v, dur, pan) : new Rhodes(sr, st, m, v, dur, pan));
+      });
+    }
+    // walking bass: root, chord tones / scale steps, a chromatic approach on beat 4
+    const rootM = 33 + ((rootPc - 33 % 12 + 24) % 12), nextRoot = 33 + ((nextCh[0] - 33 % 12 + 24) % 12);
+    const tones = QUAL[q].map((iv) => iv % 12);
+    const third = tones.includes(3) ? 3 : 4, fifth = q === 'm7b5' ? 6 : 7;
+    if (isIntro || isLast) this.voices.push(new Upright(sr, at(0, 4), rootM, 0.9, barS * (isLast ? 1.5 : 0.95)));
+    else {
+      const line = r.pick([[0, third, fifth], [0, fifth, third], [0, 2, third], [0, 12, fifth], [0, fifth, 12 - 2]]);
+      const approach = nextRoot + (r.chance(0.6) ? -1 : 1) + (Math.abs(nextRoot - rootM - line[2]) > 7 ? 0 : 0);
+      [...line, approach - rootM].forEach((iv, b) => {
+        let m = rootM + iv; while (m > 50) m -= 12; while (m < 31) m += 12;
+        this.voices.push(new Upright(sr, at(b * 2, 5), m, b === 0 ? 1 : r.range(0.75, 0.9), beat * 0.92));
+        if (r.chance(0.08) && b === 2) this.voices.push(new Upright(sr, at(b * 2 + 1, 5), m + (r.chance(0.5) ? 1 : -1), 0.6, beat * 0.3)); // a little skip
+      });
+    }
+    // drums: ride "ding, ding-a, ding, ding-a", brushes swishing, feathered kick, soft cross-stick sometimes
+    if (!isIntro) {
+      const rideHits = isLast ? [0] : [0, 2, 3, 4, 6, 7];
+      for (const b8 of rideHits) this.voices.push(new Ride(sr, at(b8, 4), (b8 % 2 ? 0.55 : b8 % 4 === 2 ? 0.95 : 0.8) * r.range(0.8, 1.05), this.noise));
+      if (!isLast) {
+        this.voices.push(new Brush(sr, at(0, 3), beat * 1.9, r.range(0.7, 1), this.noise, -0.2), new Brush(sr, at(4, 3), beat * 1.9, r.range(0.7, 1), this.noise, -0.1));
+        for (const b of [1, 3]) this.voices.push(new Snare(sr, at(b * 2, 5) + Math.round(0.01 * sr), r.range(0.22, 0.32), this.noise, 0.05, 210, 0.05));
+        for (const b of [0, 1, 2, 3]) if (b === 0 || r.chance(0.35)) { const t = at(b * 2, 3); this.voices.push(new Kick(sr, t, r.range(0.25, 0.35), this.noise)); }
+      }
+    } else if (bi === Math.min(2, s.intro) - 1) {
+      this.voices.push(new Brush(sr, at(4, 3), beat * 2, 0.6, this.noise));
+    }
+    // melody now and then, like the lofi generator
+    if (!isIntro && bi < s.bars - 2 && bi % 4 === 0) s.phrase = r.chance(s.melodyOdds * 0.8) ? 'new' : null;
+    if (s.phrase && !isIntro && !isLast && (bi % 2 === 0)) {
+      if (bi % 4 === 0) s.motif = this.makeMotif();
+      const scale = s.minor ? [0, 3, 5, 7, 10] : [0, 2, 4, 7, 9];
+      for (const [st, deg, len] of s.motif) {
+        const pc = (s.tonic + scale[((deg % 5) + 5) % 5]) % 12;
+        const m = clamp(67 + ((pc - 67 % 12 + 12) % 12) + 12 * Math.floor(deg / 5), 64, 88);
+        const b8 = Math.round(st / 2);
+        this.voices.push(new Rhodes(sr, at(b8, 8), m, r.range(0.4, 0.6), len * beat / 4, r.range(-0.25, 0.25), 1.15));
+      }
+    }
+    this.barPos += barS * sr;
+    s.bar++;
+    if (s.bar >= s.bars) { this.newSection(); return true; }
+    return bi === 0;
   }
 }
 
@@ -946,7 +1093,8 @@ export class Engine {
     const prev = this.gens.length ? this.gens[this.gens.length - 1].gen : null;
     const prevKey = prev ? (prev.section || (prev.key && { tonic: prev.key.tonic, minor: prev.key.mode === 'aeolian' || prev.key.mode === 'dorian', bpm: prev.key.bpm })) : null;
     const r = this.genRng.fork();
-    const gen = mode === 'ambient' ? new AmbientGen(this.sr, r, prevKey) : new LofiGen(this.sr, r, prevKey && { tonic: prevKey.tonic, minor: !!prevKey.minor, bpm: clamp(prevKey.bpm || 80, 70, 90) });
+    const lp = prevKey && { tonic: prevKey.tonic, minor: !!prevKey.minor, bpm: clamp(prevKey.bpm || 80, 70, 90) };
+    const gen = mode === 'ambient' ? new AmbientGen(this.sr, r, prevKey) : mode === 'jazz' ? new JazzGen(this.sr, r, lp) : new LofiGen(this.sr, r, lp);
     if (mode === 'ambient' && prevKey && prevKey.tonic !== undefined) { gen.key.tonic = prevKey.tonic; gen.droneRoot = 31 + ((gen.key.tonic - 31 % 12 + 24) % 12); }
     if (gen.barPos !== undefined) gen.barPos = this.t + (instant ? 0 : Math.round(1.5 * this.sr));
     if (gen.next !== undefined) gen.next = this.t;
@@ -972,7 +1120,7 @@ export class Engine {
         const e = g.gain * g.gain * (3 - 2 * g.gain); // smoothstep: equal-ish power crossfade
         L[s] += mL[s] * e; R[s] += mR[s] * e;
       }
-      if (g.gen.mode === 'lofi') lofiW += g.gain;
+      if (g.gen.mode === 'lofi') lofiW += g.gain; else if (g.gen.mode === 'jazz') lofiW += g.gain * 0.6;
       if (g.gain === 0 && g.target === 0) this.gens.splice(gi, 1);
     }
     // slow leveller keeps sections and modes at a similar loudness (±6 dB)

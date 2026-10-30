@@ -125,3 +125,15 @@ Overnight build of `/lofi/`. Each entry is a call I made without asking, and why
   smile, glows and flickers after dark; it's Halloween week), a tiny potted pine with baubles plus multicoloured
   fairy lights Dec 1–Jan 6, tulips in spring, a sunflower in summer. The town's trees already follow the season,
   and autumn leaves drift past the window now and then.
+
+## New music style: Jazz
+- A third mode beside Lofi and Ambient: a late-night trio. Brushes (band-passed noise sweeps) plus soft cross-stick
+  on 2 and 4 and a feathered kick, a ride cymbal playing "ding, ding-a" on triplet-swung 8ths, a **walking upright
+  bass** (root, chord tones or scale steps, then a chromatic approach to the next chord on beat 4, with the
+  occasional skip note), and piano or Rhodes comping in Charleston-style rhythms over ii–V–I style progressions.
+  Same seeded section system as lofi (new key and tempo every 1–3 minutes, 70–90 BPM). Less vinyl crackle, no
+  half-rate "dusty" drum bus (it would alias the ride).
+- Sample: `lofi/samples/jazz-3min-seed41.mp3`: peak −5.5 dBFS, no clipping, no gaps, short-term loudness −20.6 to
+  −15.6 LUFS, worst 1 s change 2.4 LU, −18.0 LUFS integrated. Tonal balance is like lofi with ~4 dB more air (ride).
+- Tested live in Chromium: Lofi → Jazz → Ambient → Lofi on desktop and phone. The info line follows each switch, the
+  new style starts in the old one's key, play/pause works, no console errors. `M` cycles the three styles.
