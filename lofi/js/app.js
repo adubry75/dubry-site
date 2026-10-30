@@ -398,7 +398,7 @@ function tick(dt, now) {
   // keep the music's weather sounds in step with what we see
   sendT -= dt;
   if (node && sendT <= 0) {
-    node.port.postMessage({ type: 'weather', weather: { rain: W.rain, snow: W.snow, fog: W.fog, storm: W.storm, crickets: crickets(P.month, night) } }); sendT = 1;
+    node.port.postMessage({ type: 'weather', weather: { rain: W.rain, snow: W.snow, fog: W.fog, storm: W.storm, crickets: crickets(P.month, night), water: scene.scenery === 'lake' ? 1 : 0 } }); sendT = 1;
   }
   clockT -= dt;
   if (clockT <= 0 && !hidden) {
@@ -418,7 +418,7 @@ if (MANUAL) { // the video renderer calls step() for each frame; flashes come fr
   window.__lofi.step = (dt, flashes = 0) => {
     for (let i = 0; i < flashes; i++) scene.lightning();
     manualNow += dt * 1000; tick(dt, manualNow);
-    const w = scene.w, lp = localParts(virtual); return { rain: w.rain, snow: w.snow, fog: w.fog, storm: w.storm, crickets: crickets(lp.month, lastNight), hour: lp.hour, trains: pendingTrains.splice(0) };
+    const w = scene.w, lp = localParts(virtual); return { rain: w.rain, snow: w.snow, fog: w.fog, storm: w.storm, crickets: crickets(lp.month, lastNight), water: scene.scenery === 'lake' ? 1 : 0, hour: lp.hour, trains: pendingTrains.splice(0) };
   };
   window.__lofi.mode = settings.mode;
 } else requestAnimationFrame(frame);

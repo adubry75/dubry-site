@@ -1090,9 +1090,10 @@ class WeatherSound {
     this.t = 0; this.nextThunder = Math.round(r.range(6, 20) * sr); this.rumbles = []; this.onFlash = null;
     this.brownL = 0; this.brownR = 0;
     // summer-night crickets: three of them, each chirping in little trains of pulses
+    this.water = 0; this.laps = []; this.nextLap = 0; this.wf = new SVF(sr, 500, 0.9);
     this.crickets = 0; this.cr = [0, 1, 2].map((i) => ({ f: 4300 + i * 260 + r() * 120, ph: 0, next: r() * 1.2, k: -1, pan: [-0.7, 0.1, 0.8][i], period: 0.55 + r() * 0.35 }));
   }
-  set(t) { for (const k of ['rain', 'snow', 'fog', 'storm', 'crickets']) if (Number.isFinite(t[k])) this.target[k] = clamp(t[k], 0, 1); }
+  set(t) { for (const k of ['rain', 'snow', 'fog', 'storm', 'crickets', 'water']) if (Number.isFinite(t[k])) this.target[k] = clamp(t[k], 0, 1); }
   thunder() {
     const r = this.r, sr = this.sr, delay = r.range(1.5, 5);
     const f = new SVF(sr, r.range(90, 150), 0.8), f2 = new SVF(sr, r.range(90, 150), 0.8);
@@ -1114,6 +1115,23 @@ class WeatherSound {
         L[s] += q.f.run(this.brownL) * a; R[s] += q.f2.run(this.brownR) * a;
       }
       if (q.k >= q.len) this.rumbles.splice(i, 1);
+    }
+    const wT = T.water || 0; // lake water lapping at the dock: slow, soft, low swashes
+    if (wT > 0.001 || this.water > 0.001) {
+      for (let s = 0; s < n; s++) {
+        this.water += (wT - this.water) * 2e-5;
+        if (--this.nextLap <= 0) { this.nextLap = Math.round(r.range(0.9, 2.6) * sr); this.laps.push({ k: 0, len: Math.round(r.range(0.5, 0.9) * sr), a: r.range(0.5, 1), c: r.range(350, 700), p: r.range(-0.6, 0.6) }); }
+        let l = 0, rr = 0;
+        for (let i = this.laps.length - 1; i >= 0; i--) {
+          const q = this.laps[i], u = q.k / q.len, env = Math.sin(Math.PI * Math.pow(u, 0.6)) ** 2;
+          if ((q.k & 63) === 0) this.wf.set(q.c * (1 + 0.5 * u), 0.9);
+          const y = this.wf.run(this.nL()) * env * q.a * 0.55 * this.water;
+          l += y * (1 - q.p); rr += y * (1 + q.p);
+          if (++q.k >= q.len) this.laps.splice(i, 1);
+        }
+        L[s] += l; R[s] += rr;
+      }
+      if (wT === 0 && this.water < 0.001) { this.water = 0; this.laps.length = 0; }
     }
     const cT = T.crickets || 0;
     if (cT > 0.001 || this.crickets > 0.001) {

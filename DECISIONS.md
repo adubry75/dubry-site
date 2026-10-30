@@ -309,6 +309,8 @@ weather changes, rapid switching, NaN injection, timing). Its real findings, all
   town-only.
 - Checked with the full screenshot sweep (6 weathers × 7 times, desktop + phone, Cabin room): no console errors.
   It caught the town's window lights "glowing through the fog" over the lake, now town-only.
+- Sound for the lake: soft water lapping at the dock (slow low swashes every 1–2.6 s, scattered across the stereo
+  field), ~19 dB under the music, only in the Lake view (and in Lake-view renders). Seeds without it are unchanged.
 - Built the same way as the town: drawn into per-palette caches (lit by the same four palettes, snow as a
   separate layer), with only the moving parts drawn each frame, so it costs about the same.
 
