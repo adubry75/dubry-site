@@ -171,6 +171,8 @@ else changed.
    `seed=42` (same seed = same music), `fast=3600` (one whole day passes in
    one hour; `fast=1` is a 6-minute day), `time=21:30` (start at a given Medford time).
    Example: `/lofi/?record=1&mode=lofi&weather=rain&cat=daisy&fast=3600&seed=7`.
+   (`autoplay=1` makes it start the music by itself in a Chrome launched with
+   `--autoplay-policy=no-user-gesture-required`; otherwise one click starts it.)
 2. In OBS: a Window or Display Capture of that Chrome window + Desktop Audio, output 1920×1080 at 30 or 60 fps,
    and record for 60 minutes.
 3. **Easiest: no screen recording at all.** `tools/render-video.mjs` renders a finished MP4 (picture and music)

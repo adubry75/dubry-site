@@ -286,8 +286,9 @@ start.querySelector('button').addEventListener('click', (e) => { e.stopPropagati
 start.addEventListener('click', () => { hideStart(); play(); poke(); });
 if (RECORD) {
   addEventListener('pointerdown', () => { if (!playing) play(); }, { once: true });
-  // where autoplay is allowed (e.g. Chrome started with --autoplay-policy=no-user-gesture-required) start right away
-  startAudio().then(() => { if (actx.state === 'running') play(); }).catch(() => {});
+  // ?autoplay=1: start right away where the browser allows it (e.g. Chrome started with
+  // --autoplay-policy=no-user-gesture-required); opt-in, since elsewhere it only earns a console warning
+  if (q.get('autoplay') === '1') startAudio().then(() => { if (actx.state === 'running') play(); }).catch(() => {});
 }
 if (!RECORD) poke();
 
