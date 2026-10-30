@@ -444,6 +444,9 @@ intact, drawing state never leaks out of the new views). Fixed:
 - Accessibility audit with axe-core (WCAG 2 A/AA + best practices, controls showing): one moderate finding (content
   outside landmarks) fixed by wrapping the page in `<main>`. Now 0 violations, 34 passes. Every control has a label;
   the play button exposes its state (`aria-pressed`); the cat canvas has a text description.
+- Final end-to-end checks (4:50 AM): a Lake-view video rendered through the full pipeline (30 s, correct size and
+  length, peak −3.3 dBFS, no gaps; the frame shows the sun's path on the water and the tucked-up cat); Lake and City on
+  a portrait phone, morning to night, no console errors; the tools' `--help` text matches their options.
 
 ---
 
