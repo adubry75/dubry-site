@@ -1188,16 +1188,24 @@ export class Scene {
       ctx.globalAlpha = 0.9; ctx.stroke();
     }
     ctx.globalAlpha = 1;
-    // a sunbeam on the wall at golden hour (window light thrown sideways)
+    // a sunbeam at golden hour: the window's shape, mullions and all, thrown onto the wall away from the sun.
+    // The window faces south, so an evening (western) sun lands on the left wall and a morning sun on the right.
     const beam = smooth(-1, 3, state.sunAlt) * smooth(22, 8, state.sunAlt) * (1 - this.w.cloud * 0.9) * (1 - this.w.fog);
     if (beam > 0.01) {
-      const west = state.sunAz > 0;
-      ctx.globalCompositeOperation = 'screen';
-      const x0 = west ? 1580 : 340, dir = west ? 1 : -1;
-      const gr = ctx.createLinearGradient(x0, 0, x0 + dir * 320, 0);
-      gr.addColorStop(0, `rgba(255,190,120,${0.32 * beam})`); gr.addColorStop(1, 'rgba(255,180,110,0)');
-      ctx.fillStyle = gr; ctx.beginPath(); ctx.moveTo(x0, 160); ctx.lineTo(x0 + dir * 300, 230); ctx.lineTo(x0 + dir * 300, 900); ctx.lineTo(x0, 760); ctx.closePath(); ctx.fill();
-      ctx.globalCompositeOperation = 'source-over';
+      if (!this.beamSprite) { // drawn tiny, then scaled up: the smoothing gives it soft edges for free
+        const c = document.createElement('canvas'); c.width = 60; c.height = 100;
+        const g = c.getContext('2d');
+        g.fillStyle = 'rgb(255,196,130)';
+        for (const [x, y, w, h] of [[6, 6, 11, 14], [19, 6, 11, 14], [32, 6, 11, 14], [45, 6, 9, 14], [6, 24, 23, 70], [33, 24, 21, 70]]) g.fillRect(x, y, w, h);
+        this.beamSprite = c;
+      }
+      const west = state.sunAz > 0, k = this.k;
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = 0.34 * beam; ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+      const X0 = west ? 40 : 1590, slant = west ? -1.1 : 1.1, sx = 290 / 60, sy = 5.6;
+      ctx.setTransform(k * sx, k * slant, 0, k * sy, this.ox + k * X0, this.oy + k * (west ? 250 : 190));
+      ctx.drawImage(this.beamSprite, 0, 0);
+      ctx.restore();
     }
   }
 }

@@ -278,3 +278,7 @@ weather changes, rapid switching, NaN injection, timing). Its real findings, all
   seed with and without a purr and subtracting, which works because the engine is deterministic. Nothing changes
   for recordings: `record=1` has no cursor, and the purr only happens on a tap. The cursor stays hidden when idle,
   even over the cat.
+- The golden-hour sunbeam is now the window's own shape (transom lights and the two big panes, with mullion
+  shadows) thrown onto the wall, slanted with the low sun and soft-edged (drawn tiny and scaled up). It was a
+  hard-edged slab, and it was on the wrong side: the window faces south, so evening sun from the west lands on the
+  left (east) wall and morning sun on the right.
