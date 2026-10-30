@@ -747,6 +747,12 @@ export class Scene {
     this.mark('lights');
     // fog
     if (W.fog > 0.02) this.drawFog(ctx, state, sky);
+    // lights glow through the fog
+    if (W.fog > 0.05 && state.dark > 0.3) {
+      ctx.globalCompositeOperation = 'lighter';
+      for (const w of this.town.windows) if (w.a > 0.2 && w.row > 0) { ctx.globalAlpha = w.a * W.fog * 0.35; ctx.drawImage(this.warmGlow, w.x - 10, w.y - 10, w.w + 20, w.h + 20); }
+      ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+    }
     // rain / snow outside
     this.precip(ctx, state);
     for (const l of this.leaves) { ctx.save(); ctx.translate(l.x, l.y); ctx.rotate(l.rot); ctx.fillStyle = css(mix(hex(l.col), [30, 30, 50], state.night * 0.7)); ctx.beginPath(); ctx.ellipse(0, 0, 6, 3, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
@@ -974,17 +980,25 @@ export class Scene {
 
   drawFog(ctx, state, sky) {
     const W = this.w, f = W.fog;
-    const col = mix(sky[2], [200, 205, 215], 0.4 * (1 - state.night));
+    const col = mix(mix(sky[2], [200, 205, 215], 0.4 * (1 - state.night)), [40, 42, 66], state.night * 0.45);
     const gr = ctx.createLinearGradient(0, 200, 0, G.h);
     gr.addColorStop(0, css(col, 0)); gr.addColorStop(0.4, css(col, f * 0.55)); gr.addColorStop(1, css(col, f * 0.7));
     ctx.fillStyle = gr; ctx.fillRect(0, 200, G.w, G.h);
-    ctx.globalAlpha = f * 0.55;
+    // fog banks: the soft sprite tinted to tonight's fog colour (rebuilt only when that colour changes)
+    const key = col.map((v) => Math.round(v / 6)).join(',');
+    if (key !== this.fogKey) {
+      this.fogKey = key;
+      const c = this.fogTinted || document.createElement('canvas'); c.width = this.fogSprite.width; c.height = this.fogSprite.height;
+      const g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height); g.globalCompositeOperation = 'source-over'; g.drawImage(this.fogSprite, 0, 0);
+      g.globalCompositeOperation = 'source-atop'; g.fillStyle = css(col); g.fillRect(0, 0, c.width, c.height);
+      this.fogTinted = c;
+    }
+    ctx.globalAlpha = f * (0.55 - state.night * 0.15);
     for (let j = 0; j < 5; j++) {
       const x = ((this.time * (6 + j * 2) + j * 400) % (G.w + 900)) - 450, y = 380 + j * 50;
-      ctx.drawImage(this.fogSprite, x, y - 60, 900, 160);
+      ctx.drawImage(this.fogTinted, x, y - 60, 900, 160);
     }
     ctx.globalAlpha = 1;
-    // tint the fog sprites by drawing over with the fog colour via the overlay rect above (cheap)
   }
 
   precip(ctx, state) {

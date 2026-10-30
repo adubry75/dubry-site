@@ -191,3 +191,6 @@ else changed.
   frame. The largest frame-to-frame brightness change is 2.2/255 (sunrise and sunset are smooth crossfades, and
   the lamp and window lights fade rather than pop). The contact sheet shows the moon at night, the sun by day, the
   jack-o'-lantern lighting up at dusk, and no visual glitches.
+- Full screenshot re-run (6 weathers × 7 times × desktop/phone = 84 shots + controls): no console errors. Fixed what
+  it showed: night fog was drawn with untinted white sprites and looked like a glowing band, so fog banks are now
+  tinted to the sky's colour (darker at night), and lit windows and street lamps glow through fog.
