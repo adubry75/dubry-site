@@ -372,6 +372,8 @@ these behaviour glitches, all fixed and re-measured:
   brightness, and one or two stutter now and then; their colours smear on the wet street in the rain; and every 1–2
   minutes an elevated train of 3–4 lit carriages glides across (the status line says "… is watching the train go
   by"). Weather, snow layers, sky, moon and palettes work as in the other views.
+  Two of the lit windows have a tiny cat silhouette sitting in them, flicking its tail now and then: a wink to the
+  window cat.
 - Checked: screenshot sweep (4 weathers × 7 times, desktop + phone, no console errors) and performance in software
   rendering (8–31 ms a frame, the same as the town).
 - The train is heard too: a soft, distant rumble with paired rail clacks every ~0.4 s, swelling and fading over exactly

@@ -29,6 +29,9 @@ export function buildCity() {
     if (r() < 0.6 && C.signs.length < 6) { const [text, col] = NEON[C.signs.length % NEON.length]; const vertical = r() < 0.4; C.signs.push({ x: x + w * (0.2 + r() * 0.4), y: Math.min(STREET - 30 - h * (0.25 + r() * 0.35), RAIL - (vertical ? 52 : 20)), text, col, vertical, ph: r() * 10, flick: r() < 0.3 }); }
     x += w + 2 + r() * 8;
   }
+  // a couple of lit windows have a cat sitting in them (big enough windows, away from the edges)
+  const roomy = C.windows.filter((w) => w.lit && !w.blink && w.w >= 8 && w.x > 60 && w.x < W - 60);
+  for (let k = 0; k < 2 && roomy.length; k++) roomy.splice((r() * roomy.length) | 0, 1)[0].cat = { ph: r() * 10, left: r() < 0.5 };
   const tall = C.near.reduce((a, b) => (b.h > a.h ? b : a));
   tall.mast = true;
   C.train = null; C.nextTrain = 20;
@@ -94,6 +97,15 @@ export function cityLive(ctx, C, scene, state, glow) {
       let a = on * 0.95;
       if (w.blink) a *= 0.75 + 0.25 * Math.sin(t * 6 + w.ph) * Math.sin(t * 2.3 + w.ph);
       ctx.globalAlpha = a; ctx.fillStyle = w.col; ctx.fillRect(w.x, w.y, w.w, w.h);
+      if (w.cat) { // a little silhouette on the sill inside: body, head, ears, a tail that flicks now and then
+        const c = w.cat, cx = w.x + (c.left ? w.w * 0.32 : w.w * 0.68), by = w.y + w.h;
+        ctx.fillStyle = '#2a2230';
+        ctx.beginPath(); ctx.ellipse(cx, by - 2.2, 2.3, 2.4, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx, by - 5.4, 1.6, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(cx - 1.6, by - 6); ctx.lineTo(cx - 1.2, by - 7.8); ctx.lineTo(cx - 0.2, by - 6.6); ctx.lineTo(cx + 0.4, by - 6.6); ctx.lineTo(cx + 1.2, by - 7.8); ctx.lineTo(cx + 1.6, by - 6); ctx.fill();
+        const flick = Math.sin(t * 0.7 + c.ph) > 0.85 ? Math.sin(t * 9) * 0.8 : 0;
+        ctx.strokeStyle = '#2a2230'; ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(cx + 2, by - 0.6); ctx.quadraticCurveTo(cx + 3.6, by - 1, cx + 3.4 + flick, by - 3.4); ctx.stroke();
+      }
     }
     ctx.globalAlpha = 1;
   }
