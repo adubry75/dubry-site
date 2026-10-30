@@ -119,3 +119,9 @@ Overnight build of `/lofi/`. Each entry is a call I made without asking, and why
   15 minutes and maps the WMO weather code to our weather (drizzle → light rain, showers → rain, thunderstorm →
   storm, fog codes → fog, cloud cover → how cloudy). On failure it says "live weather unavailable" in the info line
   and retries a couple of minutes later. Tested: it picked up tonight's real overcast (code 3, 98% cloud).
+
+## Seasonal touches (new mood detail)
+- The sill gets a small seasonal object by the real date: a friendly jack-o'-lantern Oct 1–Nov 7 (round eyes and a
+  smile, glows and flickers after dark; it's Halloween week), a tiny potted pine with baubles plus multicoloured
+  fairy lights Dec 1–Jan 6, tulips in spring, a sunflower in summer. The town's trees already follow the season,
+  and autumn leaves drift past the window now and then.

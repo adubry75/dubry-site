@@ -37,6 +37,15 @@ function keyBlend(alt) {
   for (let i = 0; i < KEYS.length - 1; i++) if (alt <= KEYS[i + 1].alt) return [i, i + 1, smooth(KEYS[i].alt, KEYS[i + 1].alt, alt)];
   return [3, 3, 0];
 }
+// a little seasonal something on the sill, by date
+function decorFor(month, day) {
+  const d = month * 100 + day;
+  if (d >= 1001 && d <= 1107) return 'pumpkin';
+  if (d >= 1201 || d <= 106) return 'holiday';
+  if (d >= 320 && d <= 531) return 'tulips';
+  if (d >= 601 && d <= 831) return 'sunflower';
+  return 'none';
+}
 function season(month, day) { // Rogue Valley-ish
   const d = month * 31 + day;
   if (d < 2 * 31 + 25 || d >= 12 * 31 + 5) return 'winter';
@@ -192,7 +201,7 @@ export class Scene {
 
   // ── per-palette caches
   cache(key, idx, build) {
-    const id = key + idx + this.season;
+    const id = key + idx + this.season + (key === 'room' ? this.decor : '');
     let c = this.caches.get(id);
     if (!c) { c = build(); this.caches.set(id, c); }
     return c;
@@ -201,7 +210,7 @@ export class Scene {
   prewarm() {
     if (!this.season) return false;
     for (let i = 0; i < KEYS.length; i++) {
-      if (!this.caches.has('room' + i + this.season)) { this.cache('room', i, () => this.renderRoom(i)); return true; }
+      if (!this.caches.has('room' + i + this.season + this.decor)) { this.cache('room', i, () => this.renderRoom(i)); return true; }
       if (!this.caches.has('town' + i + this.season)) { this.cache('town', i, () => this.renderTown(i)); return true; }
       if (this.w.snow > 0.05 && !this.caches.has('snow' + i + this.season)) { this.cache('snow', i, () => this.renderTown(i, true)); return true; }
     }
@@ -494,7 +503,38 @@ export class Scene {
     for (let x = x0 + 8; x < x1; x += 16) { g.fillStyle = C('#5a3b29'); g.beginPath(); g.arc(x, top + 2, 4, 0, Math.PI * 2); g.fill(); }
   }
 
+  decorThings(g, C) {
+    const d = this.decor, y = SILL_Y - 4;
+    if (d === 'pumpkin') {
+      for (const [dx, w] of [[-26, 30], [26, 30], [0, 34]]) { g.fillStyle = C(dx ? '#d9772e' : '#e8893a'); g.beginPath(); g.ellipse(830 + dx * 0.9, y - 34, w, 36, 0, 0, Math.PI * 2); g.fill(); }
+      g.strokeStyle = C('#b85f22'); g.lineWidth = 2; g.beginPath(); g.moveTo(816, y - 66); g.quadraticCurveTo(806, y - 34, 816, y - 2); g.moveTo(844, y - 66); g.quadraticCurveTo(854, y - 34, 844, y - 2); g.stroke();
+      g.fillStyle = C('#5d6b3a'); g.beginPath(); g.moveTo(826, y - 68); g.quadraticCurveTo(828, y - 84, 838, y - 88); g.lineTo(840, y - 84); g.quadraticCurveTo(834, y - 80, 834, y - 68); g.fill();
+      // the carved face, dark until the candle-glow is drawn over it at night
+      g.fillStyle = C('#5a2e14');
+      g.beginPath(); g.arc(812, y - 44, 6, 0, Math.PI * 2); g.arc(848, y - 44, 6, 0, Math.PI * 2); g.fill();
+      g.beginPath(); g.moveTo(806, y - 30); g.quadraticCurveTo(830, y - 12, 854, y - 30); g.quadraticCurveTo(830, y - 22, 806, y - 30); g.fill();
+    } else if (d === 'holiday') { // a tiny potted pine with baubles and a star
+      g.fillStyle = C('#b5583e'); g.beginPath(); g.moveTo(812, y - 30); g.lineTo(848, y - 30); g.lineTo(843, y); g.lineTo(817, y); g.closePath(); g.fill();
+      g.fillStyle = C('#9a4a33'); g.fillRect(809, y - 34, 42, 7);
+      for (const [w, ty] of [[40, y - 34], [32, y - 60], [23, y - 84]]) { g.fillStyle = C('#3f6e4c'); g.beginPath(); g.moveTo(830 - w, ty); g.lineTo(830, ty - 38); g.lineTo(830 + w, ty); g.closePath(); g.fill(); g.fillStyle = C('#4f8058'); g.beginPath(); g.moveTo(830, ty - 38); g.lineTo(830 + w, ty); g.lineTo(830 + w * 0.3, ty); g.closePath(); g.fill(); }
+      for (const [x, yy, col] of [[812, y - 42, '#d8504a'], [846, y - 46, '#e8b84a'], [824, y - 66, '#6a9ad8'], [842, y - 72, '#d8504a'], [830, y - 94, '#e8b84a'], [816, y - 76, '#e88ab0']]) { g.fillStyle = C(col); g.beginPath(); g.arc(x, yy, 4.5, 0, Math.PI * 2); g.fill(); }
+      g.fillStyle = C('#f2cf5a'); g.beginPath();
+      for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? 4 : 10; g.lineTo(830 + Math.cos(a) * rr, y - 124 + Math.sin(a) * rr); }
+      g.closePath(); g.fill();
+    } else if (d === 'tulips' || d === 'sunflower') {
+      g.fillStyle = C('#9fb8c8'); this.round(g, 812, y - 46, 36, 46, 10); g.fill();
+      g.strokeStyle = C('#5f8c4c'); g.lineWidth = 3;
+      const heads = d === 'tulips' ? [[808, y - 110, '#e86a7a'], [832, y - 124, '#f2b04a'], [856, y - 106, '#e88aa6']] : [[834, y - 138, '#f2c14a']];
+      for (const [x, yy] of heads) { g.beginPath(); g.moveTo(830, y - 40); g.quadraticCurveTo(x, (yy + y) / 2, x, yy); g.stroke(); }
+      for (const [x, yy, col] of heads) {
+        if (d === 'tulips') { g.fillStyle = C(col); g.beginPath(); g.moveTo(x - 11, yy - 4); g.lineTo(x - 7, yy - 18); g.lineTo(x, yy - 8); g.lineTo(x + 7, yy - 18); g.lineTo(x + 11, yy - 4); g.quadraticCurveTo(x, yy + 12, x - 11, yy - 4); g.fill(); }
+        else { g.fillStyle = C(col); for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2; g.beginPath(); g.ellipse(x + Math.cos(a) * 16, yy + Math.sin(a) * 16, 9, 4, a, 0, Math.PI * 2); g.fill(); } g.fillStyle = C('#6a4a2a'); g.beginPath(); g.arc(x, yy, 11, 0, Math.PI * 2); g.fill(); }
+      }
+    }
+  }
+
   sillThings(g, C) {
+    this.decorThings(g, C);
     // succulent in a pot
     g.fillStyle = C('#d9cbb8'); g.beginPath(); g.moveTo(520, 732); g.lineTo(584, 732); g.lineTo(576, SILL_Y - 4); g.lineTo(528, SILL_Y - 4); g.closePath(); g.fill();
     g.fillStyle = C('#b9a994'); g.fillRect(518, 728, 68, 7);
@@ -618,7 +658,8 @@ export class Scene {
     const ctx = this.ctx, k = this.k, W = this.w;
     if (this.prof) this.profT = performance.now();
     const sea = season(state.month, state.day);
-    if (sea !== this.season) { this.season = sea; this.caches.clear(); }
+    const dec = decorFor(state.month, state.day);
+    if (sea !== this.season || dec !== this.decor) { this.season = sea; this.decor = dec; this.caches.clear(); }
     const [ia, ib, bt] = keyBlend(state.sunAlt);
     const PA = KEYS[ia], PB = KEYS[ib];
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -964,7 +1005,7 @@ export class Scene {
     // fairy lights along the curtain rod, draped between hooks
     const hooks = [330, 610, 960, 1310, 1590];
     const on = 0.25 + 0.75 * smooth(0.2, 0.6, state.dark);
-    const cols = ['#ffd27a', '#ffb070', '#fff0b0', '#ffc2a0'];
+    const cols = this.decor === 'holiday' ? ['#ff8a7a', '#ffd27a', '#8fd6a0', '#9cc4ff', '#ffb0d8'] : ['#ffd27a', '#ffb070', '#fff0b0', '#ffc2a0'];
     let n = 0;
     ctx.strokeStyle = 'rgba(40,30,30,0.55)'; ctx.lineWidth = 1.2;
     ctx.beginPath();
@@ -996,6 +1037,17 @@ export class Scene {
     ctx.fillStyle = `rgba(255,190,110,${dial * 0.9})`; this.round(ctx, 244, 360, 68, 30, 4); ctx.fill();
     ctx.fillStyle = `rgba(120,50,30,${0.6})`; ctx.fillRect(250 + ((t * 2) % 1) * 0 + 34, 364, 2, 22);
     if (this.playing) { ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = 0.45; ctx.drawImage(this.warmGlow, 278 - 60, 375 - 60, 120, 120); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
+    // the jack-o'-lantern glows after dark
+    if (this.decor === 'pumpkin') {
+      const glow = smooth(0.3, 0.6, state.dark) * (0.85 + 0.15 * Math.sin(t * 7.3) * Math.sin(t * 3.1));
+      if (glow > 0.01) {
+        ctx.fillStyle = `rgba(255,190,80,${glow})`;
+        ctx.beginPath(); // a friendly face: round eyes, a smile
+        ctx.arc(812, SILL_Y - 48, 6, 0, Math.PI * 2); ctx.arc(848, SILL_Y - 48, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(806, SILL_Y - 34); ctx.quadraticCurveTo(830, SILL_Y - 16, 854, SILL_Y - 34); ctx.quadraticCurveTo(830, SILL_Y - 26, 806, SILL_Y - 34); ctx.fill();
+        ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = glow * 0.5; ctx.drawImage(this.warmGlow, 830 - 90, SILL_Y - 40 - 90, 180, 180); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+      }
+    }
     // steam from the mug
     ctx.strokeStyle = `rgba(255,255,255,${0.16 + state.night * 0.06})`; ctx.lineWidth = 3; ctx.lineCap = 'round';
     for (let j = 0; j < 3; j++) {
