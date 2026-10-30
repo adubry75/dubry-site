@@ -500,8 +500,8 @@ in code.
   lofi-1h.mp3` (deterministic per seed, ~2–3 minutes per hour of audio).
 
 **What I could and couldn't verify:** everything was tested in headless Chromium: screenshots of every weather ×
-time on desktop and phone (town, lake and city), five 10-minute soaks (town, lake, city) with flat memory, console clean, live mode switching, the browser
-audio matching the Node renderer bit for bit, and level analysis of every sample plus 60-minute renders of each
-style. I couldn't test real Safari/iPhone or Firefox (only Chromium is installed here), or frame rate on a real GPU.
+time on desktop and phone (town, lake and city), six 10-minute soaks (town, lake, city; the last on the final code) with flat memory, console clean, live mode switching, the browser
+audio matching the Node renderer bit for bit, level analysis of every sample plus 60-minute renders of each
+style, and three independent code reviews whose findings are all fixed. I couldn't test real Safari/iPhone or Firefox (only Chromium is installed here), or frame rate on a real GPU.
 In software rendering it already runs at 55–60 fps with adaptive resolution, and the Safari-specific risks I know
 of are handled in code. Worth a quick look on your phone.
