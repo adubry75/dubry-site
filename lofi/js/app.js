@@ -363,7 +363,7 @@ if (MANUAL) { // the video renderer calls step() for each frame; flashes come fr
   window.__lofi.step = (dt, flashes = 0) => {
     for (let i = 0; i < flashes; i++) scene.lightning();
     manualNow += dt * 1000; tick(dt, manualNow);
-    const w = scene.w; return { rain: w.rain, snow: w.snow, fog: w.fog, storm: w.storm };
+    const w = scene.w; return { rain: w.rain, snow: w.snow, fog: w.fog, storm: w.storm, hour: localParts(virtual).hour };
   };
   window.__lofi.mode = settings.mode;
 } else requestAnimationFrame(frame);

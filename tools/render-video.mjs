@@ -9,7 +9,7 @@
 // Options
 //   --minutes N     length (default 1)
 //   --seed N        music + scene seed (default 1)
-//   --mode M        lofi | jazz | bossa | ambient (default lofi)
+//   --mode M        lofi | jazz | bossa | ambient | auto (default lofi; auto follows the clock like the page)
 //   --weather W     auto | clear | cloudy | rain | storm | snow | fog (default auto)
 //   --cat C         daisy | nero | jammies | callie | black (default daisy)
 //   --room R        cozy | cabin | blue (default cozy)
@@ -86,7 +86,10 @@ ff.on('error', (e) => { console.error('ffmpeg failed to start:', e.message); pro
 const write = (b) => new Promise((res) => (ff.stdin.write(b) ? res() : ff.stdin.once('drain', res)));
 
 // audio: same engine as the page, stepped alongside the frames
-const engine = new Engine({ sampleRate: sr, seed, mode });
+const scheduleFor = (h) => (h >= 6 && h < 13 ? 'lofi' : h >= 13 && h < 17 ? 'bossa' : h >= 17 && h < 23 ? 'jazz' : 'ambient');
+const first = await page.evaluate(() => window.__lofi.step(0));
+let playingMode = mode === 'auto' ? scheduleFor(first.hour) : mode, lastSwitch = -1e9;
+const engine = new Engine({ sampleRate: sr, seed, mode: playingMode });
 let flashes = 0;
 engine.onFlash = () => { flashes++; };
 const totalSamples = Math.round(frames / fps * sr), fadeN = Math.round(fadeS * sr);
@@ -109,6 +112,10 @@ for (let f = 0; f < frames; f++) {
   }, [1 / fps, fl]);
   await write(Buffer.from(res.jpg, 'base64'));
   engine.setWeather(res.w);
+  if (mode === 'auto' && f / fps - lastSwitch > 120) { // same rule as the page: at most one style change every 2 minutes
+    const want = scheduleFor(res.w.hour);
+    if (want !== playingMode) { engine.setMode(want); playingMode = want; lastSwitch = f / fps; process.stderr.write(`\n  ${(f / fps).toFixed(0)} s: ${want}\n`); }
+  }
   // audio for this frame, in 128-frame quanta like the browser
   const need = Math.round((f + 1) / fps * sr) - written;
   const buf = Buffer.alloc(need * 4);

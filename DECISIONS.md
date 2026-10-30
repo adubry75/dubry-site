@@ -176,7 +176,8 @@ else changed.
 3. **Easiest: no screen recording at all.** `tools/render-video.mjs` renders a finished MP4 (picture and music)
    offline, frame by frame. It can't drop frames, and storms' flashes and rumbles stay in sync:
    `node tools/render-video.mjs --minutes 60 --seed 7 --mode lofi --weather rain --cat daisy --out lofi-rain-1h.mp4`
-   (add `--fast 3600 --time 05:30` for a whole day, dawn to night, in one hour). Here, without a GPU, it ran at
+   (add `--fast 3600 --time 05:30` for a whole day, dawn to night, in one hour; with `--mode auto` the music follows
+   that day too: Lofi → Bossa → Jazz → Ambient). Here, without a GPU, it ran at
    ~17 frames/s, so an hour at 30 fps takes under two hours; `--fps 24` is quicker. It needs Node, ffmpeg and
    Playwright's Chromium (`npx playwright install chromium` once).
 4. Or record the picture only and use a rendered soundtrack, e.g.
@@ -303,3 +304,5 @@ weather changes, rapid switching, NaN injection, timing). Its real findings, all
 - Sample `lofi/samples/bossa-3min-seed51.mp3`: peak −4.2 dBFS, 0 clipped, no gaps, short-term −23.8 to −14.8 LUFS,
   worst 1 s change 2.8 LU, −17.8 LUFS integrated. Tested live: Lofi → Jazz → Bossa → Ambient → Lofi with no errors,
   and the browser/Node bit-exactness check still passes.
+- `render-video.mjs --mode auto` follows the page's clock with the same 2-minute rule. Tested on a fast day
+  starting at noon: Bossa at 1 PM (15 s in), Jazz at 135 s, crossfades within 2.8 LU, no clipping or gaps.
