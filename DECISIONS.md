@@ -395,6 +395,17 @@ in code.
   `weather=auto|live|clear|cloudy|rain|storm|snow|fog`, `cat=daisy|nero|jammies|callie|black`,
   `room=cozy|cabin|blue`, `view=town|lake`, `seed=7` (same seed = same music), `fast=3600` (a whole day per hour), `time=21:30`,
   `caption=1` (now-playing captions).
+- **Ready-made recipes** (all checked by screenshot; append to `https://dubry.com/lofi/?record=1&`, or pass the same
+  values to `render-video.mjs` as `--mode … --weather … --cat … --room … --view … --time …`):
+  | Video | Settings |
+  |---|---|
+  | Rainy night lofi | `mode=lofi&weather=rain&time=21:30&cat=daisy&room=cozy&view=town` |
+  | Snowy cabin ambient | `mode=ambient&weather=snow&time=19:00&cat=nero&room=cabin&view=lake` |
+  | Sunny bossa afternoon | `mode=bossa&weather=clear&time=15:00&cat=jammies&room=blue&view=town` |
+  | Stormy jazz night | `mode=jazz&weather=storm&time=23:30&cat=black&room=cabin&view=town` |
+  | Misty lake morning | `mode=ambient&weather=fog&time=07:45&cat=callie&room=blue&view=lake` |
+  | Golden hour by the lake | `mode=lofi&weather=clear&time=17:45&cat=callie&room=cozy&view=lake` |
+  | A whole day in an hour | `mode=auto&weather=auto&fast=3600&time=05:30&view=lake&room=cabin` |
 - **Keys on the page:** Space play/pause · N next track · M music style · W weather · C cat · R room · V view ·
   T sleep timer · D fast day · F full screen · H hide controls. Click the cat to pet it.
 - **Soundtrack only:** `node tools/render-audio.mjs --minutes 60 --seed 7 --mode lofi --weather rain --out
