@@ -1247,6 +1247,12 @@ export class Engine {
     this.gens.push({ gen, gain: instant ? 1 : 0, target: 1 });
   }
   setWeather(w) { this.weather.set(w); }
+  next() { // skip to a new track: finish the current one gracefully (its closing bar, or the current chord)
+    const g = this.gens.length ? this.gens[this.gens.length - 1].gen : null;
+    if (!g) return;
+    if (g.section) g.section.bars = Math.min(g.section.bars, g.section.bar + 1);
+    else if (g.chordsLeft !== undefined) g.chordsLeft = 1;
+  }
   purr(seconds = 4) { if (this.extras.length < 2) this.extras.push(new Purr(this.sr, this.t, seconds, this.purrNoise)); }
   set onFlash(f) { this.weather.onFlash = f; }
   _info(i) { this.lastInfo = i; if (this.onInfo) this.onInfo(i); }

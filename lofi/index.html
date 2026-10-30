@@ -62,7 +62,8 @@
   .lbl { font-size: 12px; color: var(--ink-dim); margin-right: -4px; }
   .toggle { display: flex; align-items: center; gap: 6px; font-size: 14px; padding: 0 6px; cursor: pointer; white-space: nowrap; }
   .toggle input { accent-color: var(--accent); width: 16px; height: 16px; }
-  #full { width: 38px; padding: 0; display: grid; place-items: center; }
+  #full, #next { width: 38px; padding: 0; display: grid; place-items: center; }
+  #next svg { width: 16px; height: 16px; }
   #full svg { width: 16px; height: 16px; }
 
   #start { position: fixed; inset: 0; display: grid; place-items: center; background: radial-gradient(ellipse at center, rgba(20, 14, 28, 0.25), rgba(20, 14, 28, 0.6)); transition: opacity 0.7s ease; cursor: pointer; }
@@ -112,6 +113,7 @@
       <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 4.5v15l13-7.5z"/></svg>
       <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true" hidden><path fill="currentColor" d="M6 4h4.5v16H6zM13.5 4H18v16h-4.5z"/></svg>
     </button>
+    <button id="next" aria-label="Next track" title="Next track (N)"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M5 5.5v13l9-6.5zM15 5.5v13l0 0h3v-13z"/></svg></button>
     <label class="vol"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 9v6h4l5 4V5L8 9H4zm12.5 3a4 4 0 0 0-2-3.5v7a4 4 0 0 0 2-3.5z"/></svg><span class="sr">Volume</span><input id="vol" type="range" min="0" max="1" step="0.01" value="0.8"></label>
     <div class="seg" id="mode" role="group" aria-label="Music style">
       <button data-mode="lofi" aria-pressed="true">Lofi</button>
@@ -140,7 +142,7 @@
   <div class="card">
     <button><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 4.5v15l13-7.5z"/></svg>Tune in</button>
     <p>Lofi cats to relax to</p>
-    <p class="hint">Space play/pause · M music · W weather · C cat · R room · D fast day · F full screen · H hide</p>
+    <p class="hint">Space play/pause · N next · M music · W weather · C cat · R room · D fast day · F full screen · H hide</p>
   </div>
 </div>
 

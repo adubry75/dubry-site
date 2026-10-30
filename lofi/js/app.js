@@ -154,7 +154,7 @@ async function startAudio() {
       const sp = actx.createScriptProcessor(4096, 0, 2);
       // 128-frame quanta, like the worklet, so the same seed plays the same music
       sp.onaudioprocess = (ev) => { const L = ev.outputBuffer.getChannelData(0), R = ev.outputBuffer.getChannelData(1); for (let i = 0; i < L.length; i += 128) engine.process(L.subarray(i, i + 128), R.subarray(i, i + 128), Math.min(128, L.length - i)); };
-      node = { port: { postMessage: (m) => { if (m.type === 'mode') engine.setMode(m.mode); else if (m.type === 'weather') engine.setWeather(m.weather); else if (m.type === 'purr') engine.purr(); } }, connect: (d) => sp.connect(d) };
+      node = { port: { postMessage: (m) => { if (m.type === 'mode') engine.setMode(m.mode); else if (m.type === 'weather') engine.setWeather(m.weather); else if (m.type === 'purr') engine.purr(); else if (m.type === 'next') engine.next(); } }, connect: (d) => sp.connect(d) };
       sp.connect(gain);
     }
   })();
@@ -235,6 +235,7 @@ $('#cat').innerHTML = SKIN_IDS.map((id) => `<option value="${id}">${SKINS[id].na
 $('#room').innerHTML = Object.entries(THEMES).map(([id, t]) => `<option value="${id}">${t.name}</option>`).join('');
 $('#room').addEventListener('change', (e) => { settings.room = e.target.value; store.set('room', settings.room); scene.theme = settings.room; });
 $('#play').addEventListener('click', toggle);
+$('#next').addEventListener('click', () => { if (node && playing) node.port.postMessage({ type: 'next' }); });
 for (const b of document.querySelectorAll('#mode button')) b.addEventListener('click', () => setMode(b.dataset.mode));
 $('#vol').addEventListener('input', (e) => { settings.volume = parseFloat(e.target.value); store.set('volume', settings.volume); if (gain && playing) gain.gain.setTargetAtTime(settings.volume, actx.currentTime, 0.05); });
 $('#weather').addEventListener('change', (e) => { settings.weather = e.target.value; store.set('weather', settings.weather); if (settings.weather === 'auto') auto.left = 0; else if (settings.weather === 'live') { live.at = 0; } else applyWeather(settings.weather); clockT = 0; });
@@ -257,6 +258,7 @@ addEventListener('keydown', (e) => {
   else if (k === 'w') { const i = (WEATHER_ORDER.indexOf(settings.weather) + 1) % WEATHER_ORDER.length; $('#weather').value = WEATHER_ORDER[i]; $('#weather').dispatchEvent(new Event('change')); }
   else if (k === 'c') { const i = (SKIN_IDS.indexOf(settings.cat) + 1) % SKIN_IDS.length; $('#cat').value = SKIN_IDS[i]; $('#cat').dispatchEvent(new Event('change')); }
   else if (k === 'f') $('#full').click();
+  else if (k === 'n') $('#next').click();
   else if (k === 'r') { const ids = Object.keys(THEMES), i = (ids.indexOf(settings.room) + 1) % ids.length; $('#room').value = ids[i]; $('#room').dispatchEvent(new Event('change')); }
   else if (k === 'd') { $('#fast').checked = !settings.fast; $('#fast').dispatchEvent(new Event('change')); }
   else if (k === 'h') { hidden = !hidden; document.body.classList.toggle('hide-ui', hidden); }

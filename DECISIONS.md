@@ -317,3 +317,5 @@ weather changes, rapid switching, NaN injection, timing). Its real findings, all
 - The info panel has a live status line naming what the cat is up to: "Daisy is napping", "… is curled up asleep",
   "… is washing a paw", "… is watching the birds", "… is watching a cat on the roof", "… has a visitor: Nero", and so
   on. The solid-black skin is called "Kitty" there, and Callie/Soybean "Callie".
+- **Next track** (⏭ button, `N` key): moves the current track to its closing bar (or, in Ambient, to the end of the
+  current chord), so the normal smooth transition plays into a new key and tempo. Checked in all four styles.
