@@ -197,3 +197,7 @@ else changed.
 - Phones (portrait) showed a big empty band of wall above the window, so there's now a high floating shelf up there
   (framed photos, books, a little cat figurine, a jar, a trailing pothos). It sits above y=0 in the design, so a
   16:9 screen never shows it and the desktop composition is unchanged.
+- Small life touches: fireflies blink over the town on clear summer nights, spring days have pink blossom petals
+  drifting past (like the autumn leaves), and the info panel shows the session's **seed**. Same seed, same
+  music: open `?seed=N` or render it offline with `--seed N`. Switching room themes now drops the other themes'
+  cached room images, so cycling themes can't pile up memory.

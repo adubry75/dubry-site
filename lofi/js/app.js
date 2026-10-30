@@ -300,6 +300,7 @@ function tick(dt, now) {
     const st = sunTimes(virtual);
     const wl = settings.weather === 'live' ? (live.failed ? ' · live weather unavailable' : live.label ? ` · ${live.label} (live)` : '') : '';
     $('#clock').textContent = `Medford, OR · ${clockText(virtual)}` + (st.sunrise ? ` · sunrise ${clockText(st.sunrise)} · sunset ${clockText(st.sunset)}` : '') + wl;
+    $('#seed').textContent = `seed ${seed}`;
     clockT = settings.fast ? 0.2 : 5;
   }
   const work = performance.now() - t0;

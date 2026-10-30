@@ -32,6 +32,7 @@
   .brand h1 svg { width: 22px; height: 22px; flex: none; }
   .brand p { margin: 4px 0 0; font-size: 13px; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
   .brand #now { color: var(--accent); }
+  .brand .seed { font-size: 11px; opacity: 0.6; }
   .brand a { color: inherit; text-decoration: none; }
 
   .bar { position: absolute; left: 50%; bottom: max(18px, env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center;
@@ -89,6 +90,7 @@
     <h1><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#ffc58a" d="M4 20c0-5 2.5-9 8-9s8 4 8 9H4z"/><path fill="#ffc58a" d="M7 7l1.5-4L11 6.5h2L15.5 3 17 7c1 1.2 1.5 2.5 1.5 4H5.5C5.5 9.5 6 8.2 7 7z"/></svg><a href="/">Lofi Cat Radio</a></h1>
     <p id="now">Lofi</p>
     <p id="clock">Medford, OR</p>
+    <p id="seed" class="seed" title="Same seed, same music: use it with ?seed= or tools/render-audio.mjs --seed"></p>
   </header>
   <div class="bar" role="toolbar" aria-label="Radio controls">
     <button id="play" aria-label="Play" aria-pressed="false">

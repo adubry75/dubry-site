@@ -653,8 +653,15 @@ export class Scene {
       if (d.v > 0) { d.y += d.v * dt; d.x += Math.sin(d.y * 0.05) * 0.2; d.v *= 0.995; if (d.trail.length === 0 || d.y - d.trail[d.trail.length - 1][1] > 6) d.trail.push([d.x, d.y]); if (d.trail.length > 24) d.trail.shift(); d.r = Math.max(2, d.r - dt * 0.5); }
     }
     this.drops = this.drops.filter((d) => d.life > 0 && d.y < G.h + 10);
-    // autumn leaves drift past now and then
-    if (this.season === 'autumn' && W.rain < 0.5 && r() < dt * 0.05 && this.leaves.length < 4) this.leaves.push({ x: -20, y: 80 + r() * 300, vx: 50 + r() * 50, ph: r() * 6, rot: 0, col: ['#d08a3a', '#c96a32', '#e0b04a'][(r() * 3) | 0] });
+    // autumn leaves (and spring blossom) drift past now and then
+    const drift = this.season === 'autumn' ? ['#d08a3a', '#c96a32', '#e0b04a'] : this.season === 'spring' && state.night < 0.5 ? ['#f2c4d0', '#f7d8e0', '#ebb0c2'] : null;
+    if (drift && W.rain < 0.5 && W.snow < 0.3 && r() < dt * (this.season === 'spring' ? 0.12 : 0.05) && this.leaves.length < 6) this.leaves.push({ x: -20, y: 80 + r() * 300, vx: 50 + r() * 50, ph: r() * 6, rot: 0, col: drift[(r() * drift.length) | 0], petal: this.season === 'spring' });
+    // fireflies on warm summer nights
+    const flies = this.season === 'summer' && W.rain < 0.3 && W.fog < 0.5 ? Math.round(smooth(0.5, 0.9, state.night) * 14) : 0;
+    if (!this.fireflies) this.fireflies = [];
+    while (this.fireflies.length < flies) this.fireflies.push({ x: r() * G.w, y: 430 + r() * 200, ph: r() * 6, sp: 0.5 + r(), vx: (r() - 0.5) * 12, vy: (r() - 0.5) * 6 });
+    if (this.fireflies.length > flies) this.fireflies.length = flies;
+    for (const f of this.fireflies) { f.x += (f.vx + Math.sin(this.time * 0.7 + f.ph) * 8) * dt; f.y += (f.vy + Math.cos(this.time * 0.5 + f.ph) * 5) * dt; if (f.x < 0) f.x += G.w; if (f.x > G.w) f.x -= G.w; if (f.y < 400 || f.y > 650) f.vy = -f.vy; }
     for (const l of this.leaves) { l.x += l.vx * dt; l.y += (20 + Math.sin(this.time * 2 + l.ph) * 30) * dt; l.rot += dt * 2; }
     this.leaves = this.leaves.filter((l) => l.x < G.w + 30 && l.y < G.h);
     // cars
@@ -721,6 +728,10 @@ export class Scene {
     const sea = season(state.month, state.day);
     const dec = decorFor(state.month, state.day);
     if (sea !== this.season || dec !== this.decor) { this.season = sea; this.decor = dec; this.caches.clear(); }
+    if (this.theme !== this.cachedTheme) { // drop the other themes' room images
+      for (const k of [...this.caches.keys()]) if (k.startsWith('room') && !k.endsWith(this.theme)) this.caches.delete(k);
+      this.cachedTheme = this.theme;
+    }
     const [ia, ib, bt] = keyBlend(state.sunAlt);
     const PA = KEYS[ia], PB = KEYS[ib];
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -791,7 +802,12 @@ export class Scene {
     }
     // rain / snow outside
     this.precip(ctx, state);
-    for (const l of this.leaves) { ctx.save(); ctx.translate(l.x, l.y); ctx.rotate(l.rot); ctx.fillStyle = css(mix(hex(l.col), [30, 30, 50], state.night * 0.7)); ctx.beginPath(); ctx.ellipse(0, 0, 6, 3, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
+    for (const l of this.leaves) { ctx.save(); ctx.translate(l.x, l.y); ctx.rotate(l.rot); ctx.fillStyle = css(mix(hex(l.col), [30, 30, 50], state.night * 0.7)); ctx.beginPath(); ctx.ellipse(0, 0, l.petal ? 4 : 6, l.petal ? 2.5 : 3, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
+    if (this.fireflies && this.fireflies.length) {
+      ctx.globalCompositeOperation = 'lighter';
+      for (const f of this.fireflies) { const a = Math.max(0, Math.sin(this.time * f.sp + f.ph)); if (a < 0.05) continue; ctx.globalAlpha = a; ctx.drawImage(this.warmGlow, f.x - 13, f.y - 13, 26, 26); ctx.fillStyle = '#fff7b0'; ctx.fillRect(f.x - 1.2, f.y - 1.2, 2.4, 2.4); }
+      ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+    }
     this.mark('fogprecip');
     // glass: drops, frost, reflections
     this.glass(ctx, state);
