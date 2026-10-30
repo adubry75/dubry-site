@@ -408,6 +408,9 @@ intact, drawing state never leaks out of the new views). Fixed:
 - Re-checked the visitor cameo in the City, the Lake on a landscape phone and the Town on a portrait phone: it sat
   too low (only ears and eyes showed). It now rises a bit higher, so its whole face and both front paws rest on the
   bottom edge of the frame.
+- The fallback for browsers without AudioWorklet, tested by forcing the worklet to fail: the page switches to the
+  same engine on a ScriptProcessor, music plays (signal measured), style switching works, and the console shows only
+  the expected "using ScriptProcessor" notice. Laptop sizes (1366×768, 1024×768) checked with the controls up.
 
 ---
 
