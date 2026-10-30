@@ -24,7 +24,11 @@ const settings = {
 };
 if (!SKINS[settings.cat]) settings.cat = 'daisy';
 if (!THEMES[settings.room]) settings.room = 'cozy';
-if (!['lofi', 'jazz', 'ambient'].includes(settings.mode)) settings.mode = 'lofi';
+if (!['lofi', 'jazz', 'ambient', 'auto'].includes(settings.mode)) settings.mode = 'lofi';
+// Auto: the music follows the clock: lofi by day, jazz in the evening, ambient late at night
+const scheduleFor = (hour) => (hour >= 6 && hour < 17 ? 'lofi' : hour >= 17 && hour < 23 ? 'jazz' : 'ambient');
+let playingMode = null, lastSwitch = -1e9; // what the engine is actually playing
+const startMode = () => (settings.mode === 'auto' ? scheduleFor(localParts(virtual).hour) : settings.mode);
 const DAY_SECONDS = q.has('fast') && parseFloat(q.get('fast')) > 1 ? parseFloat(q.get('fast')) : 360; // a fast day lasts 6 minutes
 const seed = q.has('seed') ? parseInt(q.get('seed'), 10) >>> 0 : (Date.now() ^ (performance.now() * 1000)) >>> 0;
 
@@ -134,14 +138,14 @@ async function startAudio() {
     const weather = { rain: scene.w.rain, snow: scene.w.snow, fog: scene.w.fog, storm: scene.w.storm };
     try {
       await actx.audioWorklet.addModule(new URL('./worklet.js', import.meta.url));
-      node = new AudioWorkletNode(actx, 'lofi-radio', { numberOfInputs: 0, outputChannelCount: [2], processorOptions: { seed, mode: settings.mode, weather } });
+      node = new AudioWorkletNode(actx, 'lofi-radio', { numberOfInputs: 0, outputChannelCount: [2], processorOptions: { seed, mode: (playingMode = startMode()), weather } });
       node.port.onmessage = (e) => { if (e.data.type === 'info') showInfo(e.data.info); else if (e.data.type === 'flash') scene.lightning(); };
       scene.audioThunder = true;
       node.connect(gain);
     } catch (err) { // older browsers: run the same engine on the main thread
       console.warn('AudioWorklet unavailable, using ScriptProcessor', err);
       const { Engine } = await import('./engine.js');
-      const engine = new Engine({ sampleRate: actx.sampleRate, seed, mode: settings.mode });
+      const engine = new Engine({ sampleRate: actx.sampleRate, seed, mode: (playingMode = startMode()) });
       engine.setWeather(weather); engine.onInfo = showInfo; engine.onFlash = () => scene.lightning(); scene.audioThunder = true;
       const sp = actx.createScriptProcessor(4096, 0, 2);
       sp.onaudioprocess = (ev) => { const L = ev.outputBuffer.getChannelData(0), R = ev.outputBuffer.getChannelData(1); engine.process(L, R, L.length); };
@@ -203,8 +207,9 @@ function updateUI() {
 }
 function setMode(m) {
   settings.mode = m; store.set('mode', m);
-  if (node) node.port.postMessage({ type: 'mode', mode: m });
-  const el = $('#now'); if (el && !node) el.textContent = { lofi: 'Lofi', jazz: 'Jazz', ambient: 'Ambient' }[m];
+  const real = m === 'auto' ? scheduleFor(localParts(virtual).hour) : m;
+  if (node && real !== playingMode) { node.port.postMessage({ type: 'mode', mode: real }); playingMode = real; lastSwitch = performance.now(); }
+  const el = $('#now'); if (el && !node) el.textContent = { lofi: 'Lofi', jazz: 'Jazz', ambient: 'Ambient', auto: 'Auto' }[m];
   updateUI();
 }
 $('#cat').innerHTML = SKIN_IDS.map((id) => `<option value="${id}">${SKINS[id].name}</option>`).join('');
@@ -226,7 +231,7 @@ addEventListener('keydown', (e) => {
   if (e.target.closest && e.target.closest('select, input[type=range]') && e.key !== ' ') return;
   const k = e.key.toLowerCase();
   if (k === ' ' || k === 'k') { e.preventDefault(); hideStart(); toggle(); }
-  else if (k === 'm') setMode({ lofi: 'jazz', jazz: 'ambient', ambient: 'lofi' }[settings.mode]);
+  else if (k === 'm') setMode({ lofi: 'jazz', jazz: 'ambient', ambient: 'auto', auto: 'lofi' }[settings.mode]);
   else if (k === 'w') { const i = (WEATHER_ORDER.indexOf(settings.weather) + 1) % WEATHER_ORDER.length; $('#weather').value = WEATHER_ORDER[i]; $('#weather').dispatchEvent(new Event('change')); }
   else if (k === 'c') { const i = (SKIN_IDS.indexOf(settings.cat) + 1) % SKIN_IDS.length; $('#cat').value = SKIN_IDS[i]; $('#cat').dispatchEvent(new Event('change')); }
   else if (k === 'f') $('#full').click();
@@ -279,6 +284,10 @@ function tick(dt, now) {
   const P = localParts(virtual);
   // weather auto-pilot: a new pattern every 8–20 minutes (sooner on a fast day)
   if (settings.weather === 'live' && Date.now() - live.at > 15 * 60e3) fetchLive();
+  if (settings.mode === 'auto' && node && now - lastSwitch > 120e3) { // follow the schedule, at most every 2 minutes
+    const want = scheduleFor(P.hour);
+    if (want !== playingMode) { node.port.postMessage({ type: 'mode', mode: want }); playingMode = want; lastSwitch = now; }
+  }
   if (settings.weather === 'auto') {
     auto.left -= dt * (settings.fast ? 8 : 1);
     if (auto.left <= 0) { auto.current = autoPick(P.month); applyWeather(auto.current); auto.left = 480 + wr() * 720; }
