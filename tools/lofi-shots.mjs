@@ -47,7 +47,7 @@ async function open(dev, params) {
 const soak = opt('soak', null);
 if (soak) {
   const mins = parseFloat(soak);
-  const { ctx, page } = await open('desktop', `record=1&seed=5&weather=auto&fast=120`);
+  const { ctx, page } = await open('desktop', `record=1&seed=5&weather=auto&fast=120&view=${opt('view', 'town')}&mode=${opt('mode', 'lofi')}`);
   await page.mouse.click(960, 540); // starts the audio
   const samples = [];
   const cdp = await ctx.newCDPSession(page);

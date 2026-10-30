@@ -3,7 +3,6 @@
 // Lighting follows the sun's altitude through four palettes (night, blue hour, golden hour, day). The
 // town and the room are pre-rendered once per palette and crossfaded, so a frame is mostly a handful of
 // drawImage calls plus the moving things (sky, clouds, weather, lights, cars, birds, the cat).
-import { sunPosition, moonPosition, moonIllumination, localParts } from './sky.js';
 import { drawCat, drawPeek, CatBrain, SKIN_IDS, lit } from './cat.js';
 import { buildLake, renderLake, lakeLive } from './lake.js';
 
