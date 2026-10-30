@@ -124,7 +124,9 @@ export function drawCat(ctx, x, y, s, skinId, brain, time, light, rim, eyeGlow =
   ctx.beginPath(); ctx.ellipse(20, 2, 200, 10, 0, 0, Math.PI * 2); ctx.fill();
 
   // tail: behind the body while it hangs over the edge, in front once it's wrapped along the sill
-  if ((p.wrap || 0) < 0.5) drawTail(ctx, S, p, brain, time, C);
+  // (between 0.35 and 0.65 it's drawn in both layers, crossfading, so it never pops in front of the hind paw)
+  const wf = clamp(((p.wrap || 0) - 0.35) / 0.3, 0, 1);
+  if (wf < 1) { ctx.globalAlpha = 1; drawTail(ctx, S, p, brain, time, C); }
 
   // body
   const backY = -104 - br * 2.4 + st * 18, chestX = -92 - st * 6, rumpY = -116 - br * 1.6 - st * 26;
@@ -169,7 +171,7 @@ export function drawCat(ctx, x, y, s, skinId, brain, time, light, rim, eyeGlow =
 
   // hind paw
   paw(ctx, 112, -4, 26, 13, S, C, 0);
-  if ((p.wrap || 0) >= 0.5) drawTail(ctx, S, p, brain, time, C);
+  if (wf > 0) { ctx.save(); ctx.globalAlpha = wf; drawTail(ctx, S, p, brain, time, C); ctx.restore(); }
   // front paws (tucked → sphinx → stretched)
   const reach = lerp(0, 54, clamp(p.paws, 0, 1)) + st * 60;
   const gr = clamp(p.groom, 0, 1);

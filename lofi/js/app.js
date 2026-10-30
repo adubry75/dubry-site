@@ -80,7 +80,6 @@ function adaptQuality(dt) {
 }
 scene.skin = settings.cat; scene.theme = settings.room; scene.scenery = settings.view;
 if (q.has('peek')) scene.nextPeek = parseFloat(q.get('peek')) || 1;
-if (q.has('stray')) scene.nextStray = parseFloat(q.get('stray')) || 1;
 if (q.get('awake') === '1') { scene.cat.wake(); scene.cat.action = null; }
 addEventListener('resize', () => { clearTimeout(resize.t); resize.t = setTimeout(resize, 120); });
 function resize() { scene.resize(); }
@@ -130,6 +129,7 @@ function autoPick(month) {
 function applyWeather(name) { scene.setWeather(WEATHER[name] || WEATHER.clear); }
 if (settings.weather !== 'auto' && WEATHER[settings.weather]) { applyWeather(settings.weather); Object.assign(scene.w, WEATHER[settings.weather]); }
 if (q.get('instant') === '1') { Object.assign(scene.w, scene.wt); scene.snowCover = scene.w.snow; for (let i = 0; i < 20; i++) scene.update(0.5, { night: 0, dark: 0, hour: 12, fast: false }); scene.birds = []; scene.cars = []; scene.stray = null; }
+if (q.has('stray')) scene.nextStray = parseFloat(q.get('stray')) || 1; // after the warm-up, which would use it up
 
 // ── audio
 let actx = null, node = null, gain = null, playing = false, starting = null, info = null;
@@ -305,6 +305,10 @@ canvas.addEventListener('pointerdown', (e) => {
 });
 canvas.addEventListener('pointermove', (e) => { canvas.style.cursor = scene.hitCat(e.clientX, e.clientY) ? 'pointer' : ''; }, { passive: true });
 
+// summer-night crickets, for the music engine (live and in rendered videos)
+function crickets(month, night) { const W = scene.w; return month >= 6 && month <= 8 ? night * (1 - W.rain) * (1 - W.fog * 0.5) * (1 - W.snow) : 0; }
+let lastNight = 0;
+
 // a little live status line: what the cat is up to
 const CAT_NAME = { daisy: 'Daisy', nero: 'Nero', jammies: 'Jammies', callie: 'Callie', black: 'Kitty' };
 function catStatus() {
@@ -356,7 +360,7 @@ function tick(dt, now) {
   }
   const W = scene.w;
   const sunAlt = sunCache.sAlt;
-  const night = smooth(-1, -12, sunAlt);
+  const night = smooth(-1, -12, sunAlt); lastNight = night;
   const dark = clamp(smooth(7, -7, sunAlt) + W.cloud * 0.12 + W.rain * 0.1 + W.fog * 0.08, 0, 1);
   if (!lampOn && dark > 0.5) lampOn = true; else if (lampOn && dark < 0.38) lampOn = false;
   lamp += ((lampOn ? 1 : 0) - lamp) * Math.min(1, dt * 1.4);
@@ -371,8 +375,7 @@ function tick(dt, now) {
   // keep the music's weather sounds in step with what we see
   sendT -= dt;
   if (node && sendT <= 0) {
-    const crickets = P.month >= 6 && P.month <= 8 ? night * (1 - W.rain) * (1 - W.fog * 0.5) * (1 - W.snow) : 0; // warm summer nights
-    node.port.postMessage({ type: 'weather', weather: { rain: W.rain, snow: W.snow, fog: W.fog, storm: W.storm, crickets } }); sendT = 1;
+    node.port.postMessage({ type: 'weather', weather: { rain: W.rain, snow: W.snow, fog: W.fog, storm: W.storm, crickets: crickets(P.month, night) } }); sendT = 1;
   }
   clockT -= dt;
   if (clockT <= 0 && !hidden) {
@@ -392,7 +395,7 @@ if (MANUAL) { // the video renderer calls step() for each frame; flashes come fr
   window.__lofi.step = (dt, flashes = 0) => {
     for (let i = 0; i < flashes; i++) scene.lightning();
     manualNow += dt * 1000; tick(dt, manualNow);
-    const w = scene.w; return { rain: w.rain, snow: w.snow, fog: w.fog, storm: w.storm, hour: localParts(virtual).hour };
+    const w = scene.w, lp = localParts(virtual); return { rain: w.rain, snow: w.snow, fog: w.fog, storm: w.storm, crickets: crickets(lp.month, lastNight), hour: lp.hour };
   };
   window.__lofi.mode = settings.mode;
 } else requestAnimationFrame(frame);

@@ -312,6 +312,28 @@ weather changes, rapid switching, NaN injection, timing). Its real findings, all
 - Built the same way as the town: drawn into per-palette caches (lit by the same four palettes, snow as a
   separate layer), with only the moving parts drawn each frame, so it costs about the same.
 
+## Polish pass 6: second independent review (of everything added after the first)
+A second reviewer read the new code cold and stress-tested it. It found no crashes, NaNs or runaway voices; it found
+these behaviour glitches, all fixed and re-measured:
+- **Next in Ambient took up to ~55 s** (it waited for one more old-key chord). It now switches key right away, and
+  the first new-key chord arrives 1.5 s after the press, with the old pads releasing underneath.
+- **A second Next within a bar made a one-bar "track"**, and so did pressing Next during a style crossfade. Next is
+  now ignored while a new track is already lined up. Tested: two presses 2.5 s apart give one clean transition.
+- **Petting spam made the music pump** (two stacked purrs drove the limiter down to −3 dB). Now there's only ever one
+  purr (petting again extends it), its envelope is smoothed, and it's mixed about 13 dB under the music. With purr
+  spam, limiter activity is the same as with no purr.
+- A possible doubled (flammed) kick when Next landed on the last intro bar. Fixed.
+- **Rendered videos never had crickets**: the page now reports them to the video renderer too, from the same helper.
+- `?stray=1` (testing) was used up by the instant warm-up. Now it's applied after it.
+- **The tail jumped in front of the hind paw** in one frame mid-tuck; it now crossfades between the two layers.
+- The rooftop cat only ever had one short roof. The filter was stricter than needed (the sill's things sit lower
+  than every roof), so four roofs qualify now.
+- **10-minute 1080p video test** (`--mode auto --fast 600 --weather auto`): exactly 600 s at 30 fps, and the music
+  followed the rendered day (Lofi → Bossa → Jazz → Ambient → Lofi at dawn). Peak −3.0 dBFS, no clipping or gaps,
+  −17.0 LUFS. Rendered in 21 min here (software rendering, other tests running alongside). Memory for Chromium +
+  Node + ffmpeg together stayed flat at ~710–790 MB. Output is ~175 MB per 10 minutes at the default `--crf 18`;
+  use `--crf 22` for files about half the size.
+
 ---
 
 # Summary
@@ -344,7 +366,7 @@ in code.
   `--fast 3600 --time 2026-11-01T05:30:00-07:00 --mode auto` for a whole day in an hour, with the music following
   it. `--still thumb.png --size 1280x720` makes a thumbnail. It needs Node, ffmpeg and Playwright (once:
   `npm i -D playwright && npx playwright install chromium`). It ran at ~17 frames/s here without a GPU, so an hour at 30 fps takes
-  under two hours.
+  about two hours (≈1 GB at the default quality; `--crf 22` roughly halves it).
 - **Or screen-record:** open `https://dubry.com/lofi/?record=1` in Chrome full screen (F11) at 1920×1080, click once
   to start the sound (`record=1` hides every control and the cursor; `&autoplay=1` starts it by itself in a Chrome
   launched with `--autoplay-policy=no-user-gesture-required`), and record the window + desktop audio in

@@ -726,7 +726,8 @@ export class Scene {
     if (this.nextStray === undefined) this.nextStray = 240 + r() * 400;
     this.nextStray -= dt;
     if (!this.roofs) // flat roofs in the nearer rows that nothing on the sill (or the cat) hides
-      this.roofs = this.town.rows.flat().filter((b) => b.kind === 'flat' && b.row > 0 && b.w > 60 && (b.x + b.w < 470 || b.x > 880) && b.x > 20 && b.x + b.w < G.w - 20);
+      // (the sill's things sit lower than any roof; only the cat's head can hide one, so skip roofs right behind it)
+      this.roofs = this.town.rows.flat().filter((b) => b.kind === 'flat' && b.row > 0 && b.w > 50 && b.x > 10 && b.x + b.w < G.w - 10 && !(b.y - b.h > 500 && b.x < 640 && b.x + b.w > 500));
     if (this.nextStray <= 0 && !this.stray && W.rain < 0.6 && this.roofs.length && this.scenery !== 'lake') {
       const b = this.roofs[(r() * this.roofs.length) | 0], dir = r() < 0.5 ? 1 : -1;
       this.stray = { x0: b.x + 6, x1: b.x + b.w - 6, x: dir > 0 ? b.x + 6 : b.x + b.w - 6, y: b.y - b.h - 4, s: b.row === 2 ? 0.85 : 0.65, dir, v: 16 + r() * 8, ph: 0,

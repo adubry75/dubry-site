@@ -647,7 +647,7 @@ class LofiGen {
 
     // drums
     const g = GROOVES[s.groove];
-    if (isIntro && bi === s.intro - 1) for (const st of [0, 8]) { const t = at(st, 3); this.voices.push(new Kick(sr, t, 0.5, this.noise)); this.kicks.push(t); } // lean into the groove
+    if (isIntro && !isLast && bi === s.intro - 1) for (const st of [0, 8]) { const t = at(st, 3); this.voices.push(new Kick(sr, t, 0.5, this.noise)); this.kicks.push(t); } // lean into the groove
     if (isLast) { const t = at(0, 3); this.voices.push(new Kick(sr, t, 0.8, this.noise)); this.kicks.push(t); this.voices.push(new Riser(sr, Math.round(t0 + barS * sr * 0.25), barS * 0.8, this.noise)); }
     if (!isIntro && !isLast) {
       const ks = isFillBar && r.chance(0.5) ? g.k.filter((x) => x < 8) : g.k;
@@ -1181,12 +1181,13 @@ class Purr {
   process(L, R, t0, n) {
     let i = this.start - t0; if (i >= n) return true; if (i < 0) i = 0;
     for (; i < n && this.k < this.len; i++, this.k++) {
-      const u = this.k / this.len, env = Math.min(1, u * 6, (1 - u) * 4);
+      const u = this.k / this.len, target = Math.max(0, Math.min(1, u * 6, (1 - u) * 4));
+      this.e = (this.e || 0) + (target - (this.e || 0)) * 0.0008; const env = this.e; // smoothed, so extending a purr never jumps
       const breath = 0.6 + 0.4 * Math.sin(TAU * this.k / this.sr * 0.45);
       this.ph += this.inc; if (this.ph > 1) this.ph -= 1;
       const pulse = Math.pow(Math.max(0, Math.sin(TAU * this.ph)), 2);
       this.bp.run(this.noise());
-      const y = this.lp.lp(this.bp.band * pulse) * env * breath * 4;
+      const y = this.lp.lp(this.bp.band * pulse) * env * breath * 2;
       L[i] += y; R[i] += y;
     }
     return this.k < this.len;
@@ -1270,10 +1271,19 @@ export class Engine {
   next() { // skip to a new track: finish the current one gracefully (its closing bar, or the current chord)
     const g = this.gens.length ? this.gens[this.gens.length - 1].gen : null;
     if (!g) return;
-    if (g.section) g.section.bars = Math.min(g.section.bars, g.section.bar + 1);
-    else if (g.chordsLeft !== undefined) g.chordsLeft = 1;
+    if (g.section) {
+      // ignore while a new track is already lined up (its first bar not started yet): no 1-bar stubs
+      if (g.section.bar === 0 && g.barPos > this.t) return;
+      g.section.bars = Math.min(g.section.bars, g.section.bar + 1);
+    } else if (g.key) { // ambient: move to a new key now; the slow pads crossfade by themselves
+      g.newKey(); g.needDrone = true; g.next = Math.min(g.next, this.t + Math.round(1.5 * this.sr));
+    }
   }
-  purr(seconds = 4) { if (this.extras.length < 2) this.extras.push(new Purr(this.sr, this.t, seconds, this.purrNoise)); }
+  purr(seconds = 4) { // one purr at a time: petting again just keeps it going
+    const p = this.extras.find((x) => x instanceof Purr);
+    if (p) p.len = Math.max(p.len, Math.min(p.k + Math.round(seconds * this.sr), Math.round(20 * this.sr)));
+    else this.extras.push(new Purr(this.sr, this.t, seconds, this.purrNoise));
+  }
   set onFlash(f) { this.weather.onFlash = f; }
   _info(i) { this.lastInfo = i; if (this.onInfo) this.onInfo(i); }
   process(L, R, n) {
