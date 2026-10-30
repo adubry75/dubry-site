@@ -235,8 +235,9 @@ export class Scene {
     for (let i = 0; i < KEYS.length; i++) {
       if (!this.caches.has(this.cacheId('room', i))) { this.cache('room', i, () => this.renderRoom(i)); return true; }
       if (!this.caches.has(this.cacheId('town', i))) { this.cache('town', i, () => this.renderTown(i)); return true; }
-      if (this.w.snow > 0.05 && !this.caches.has(this.cacheId('snow', i))) { this.cache('snow', i, () => this.renderTown(i, true)); return true; }
     }
+    // then the snow layers, so the first snowfall never has to build one mid-frame
+    for (let i = 0; i < KEYS.length; i++) if (!this.caches.has(this.cacheId('snow', i))) { this.cache('snow', i, () => this.renderTown(i, true)); return true; }
     return false;
   }
   glassCanvas() {

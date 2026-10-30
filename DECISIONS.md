@@ -350,6 +350,10 @@ these behaviour glitches, all fixed and re-measured:
   machine is CPU-bound), so I left it simple. On a machine with a GPU, rendering is the cheaper half.
 - Accessibility: with the OS "reduce motion" setting, lightning is a slow 2-second glow at half the brightness
   instead of a quick flicker (measured: peak 0.35 over 1 s, versus a 0.72 flicker). The thunder still rumbles.
+- **Third 10-minute soak** (Lake view, Auto music, auto weather, 2-minute days): heap 1.6 → 2.4 MB and flat,
+  DOM nodes constant (332), 55–60 fps, no console errors. It showed two rare long frames (55 and 82 ms), most likely
+  a snow layer being built when snow first fell. Snow layers are now built in idle time too. Measured afterwards:
+  every cache is ready within 8 s of opening the page, and the worst frame when snow begins is 4 ms.
 
 ---
 
@@ -397,7 +401,7 @@ in code.
   lofi-1h.mp3` (deterministic per seed, ~2–3 minutes per hour of audio).
 
 **What I could and couldn't verify:** everything was tested in headless Chromium: screenshots of every weather ×
-time on desktop and phone, two 10-minute soaks with flat memory, console clean, live mode switching, the browser
+time on desktop and phone (town and lake), three 10-minute soaks with flat memory, console clean, live mode switching, the browser
 audio matching the Node renderer bit for bit, and level analysis of every sample plus 60-minute renders of each
 style. I couldn't test real Safari/iPhone or Firefox (only Chromium is installed here), or frame rate on a real GPU.
 In software rendering it already runs at 55–60 fps with adaptive resolution, and the Safari-specific risks I know
