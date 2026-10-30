@@ -13,7 +13,8 @@
 //   --weather W     auto | clear | cloudy | rain | storm | snow | fog (default auto)
 //   --cat C         daisy | nero | jammies | callie | black (default daisy)
 //   --room R        cozy | cabin | blue (default cozy)
-//   --time T        Medford start time, HH:MM today or an ISO date (default: now)
+//   --time T        Medford start time, HH:MM today or an ISO date (default: now). For a render that is exactly
+//                   repeatable, give a full date: auto weather and the season depend on it.
 //   --fast S        a whole day passes every S seconds (default: real time)
 //   --fps N         frames per second (default 30)
 //   --size WxH      video size (default 1920x1080)
@@ -50,10 +51,11 @@ const server = http.createServer((req, res) => {
   let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   if (p.endsWith('/')) p += 'index.html';
   const f = path.join(root, p);
-  if (!f.startsWith(root) || !fs.existsSync(f)) { res.writeHead(404); res.end(); return; }
+  if (!f.startsWith(root + path.sep) || !fs.existsSync(f) || !fs.statSync(f).isFile()) { res.writeHead(404); res.end(); return; }
   res.writeHead(200, { 'content-type': TYPES[path.extname(f)] || 'application/octet-stream' });
   fs.createReadStream(f).pipe(res);
-}).listen(0);
+});
+await new Promise((r) => server.listen(0, '127.0.0.1', r));
 
 const params = new URLSearchParams({ record: '1', manual: '1', quality: '1', seed: String(seed), mode, weather, cat, room: opt('room', 'cozy'), instant: '1' });
 if (opt('time', null)) params.set('time', opt('time'));
@@ -63,7 +65,7 @@ const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
 const problems = [];
 page.on('pageerror', (e) => problems.push(e.message));
-await page.goto(`http://localhost:${server.address().port}/lofi/?${params}`);
+await page.goto(`http://127.0.0.1:${server.address().port}/lofi/?${params}`);
 await page.waitForFunction(() => window.__lofi && window.__lofi.step);
 await page.evaluate(() => { window.__lofi.scene.playing = true; });
 
@@ -90,7 +92,7 @@ engine.onFlash = () => { flashes++; };
 const totalSamples = Math.round(frames / fps * sr), fadeN = Math.round(fadeS * sr);
 const af = fs.openSync(tmpAudio, 'w');
 { // 16-bit stereo WAV header
-  const b = Buffer.alloc(44), data = totalSamples * 4;
+  const b = Buffer.alloc(44), data = Math.min(totalSamples * 4, 0xFFFFFFFF - 36);
   b.write('RIFF', 0); b.writeUInt32LE(36 + data, 4); b.write('WAVE', 8); b.write('fmt ', 12); b.writeUInt32LE(16, 16); b.writeUInt16LE(1, 20); b.writeUInt16LE(2, 22);
   b.writeUInt32LE(sr, 24); b.writeUInt32LE(sr * 4, 28); b.writeUInt16LE(4, 32); b.writeUInt16LE(16, 34); b.write('data', 36); b.writeUInt32LE(data, 40);
   fs.writeSync(af, b);

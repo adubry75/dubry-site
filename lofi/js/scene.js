@@ -140,16 +140,18 @@ export class Scene {
   // ── sizing and the camera
   resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2) * (this.quality || 1);
-    const cw = Math.max(1, Math.round(window.innerWidth * dpr)), ch = Math.max(1, Math.round(window.innerHeight * dpr));
-    this.canvas.width = cw; this.canvas.height = ch;
     const vw = window.innerWidth, vh = window.innerHeight;
+    if (!vw || !vh) { this.zero = true; return; } // hidden / 0×0 frame: wait for a real size
+    this.zero = false;
+    const cw = Math.max(1, Math.round(vw * dpr)), ch = Math.max(1, Math.round(vh * dpr));
+    this.canvas.width = cw; this.canvas.height = ch;
     // landscape: fit the height (wider screens see more room); portrait: fit the window's width
     const s = vw < vh ? Math.min(vh / 1080, vw / 940) : Math.min(vh / 1080, vw / 1060);
     this.k = s * dpr;
     const cx = vw / vh < 1 ? 975 : 960, cy = vw / vh < 1 ? 640 : 540;
     this.ox = cw / 2 - cx * this.k; this.oy = ch / 2 - cy * this.k;
     this.view = { x0: -this.ox / this.k, y0: -this.oy / this.k, x1: (cw - this.ox) / this.k, y1: (ch - this.oy) / this.k };
-    this.caches.clear();
+    this.dropCaches();
     this.cloudLayer = null;
   }
   get portrait() { return this.canvas.width < this.canvas.height; }
@@ -216,6 +218,9 @@ export class Scene {
     if (!c) { c = build(); this.caches.set(id, c); }
     return c;
   }
+  // release cached canvases' memory right away (Safari caps total canvas memory)
+  dropCaches() { for (const c of this.caches.values()) { c.width = 0; c.height = 0; } this.caches.clear(); }
+
   // build one missing palette cache (called from idle time so a palette change never stutters)
   prewarm() {
     if (!this.season) return false;
@@ -731,13 +736,14 @@ export class Scene {
 
   // ── frame
   draw(state) {
+    if (this.zero) { this.resize(); if (this.zero) return; }
     const ctx = this.ctx, k = this.k, W = this.w;
     if (this.prof) this.profT = performance.now();
     const sea = season(state.month, state.day);
     const dec = decorFor(state.month, state.day);
-    if (sea !== this.season || dec !== this.decor) { this.season = sea; this.decor = dec; this.caches.clear(); }
+    if (sea !== this.season || dec !== this.decor) { this.season = sea; this.decor = dec; this.dropCaches(); }
     if (this.theme !== this.cachedTheme) { // drop the other themes' room images
-      for (const k of [...this.caches.keys()]) if (k.startsWith('room') && !k.endsWith(this.theme)) this.caches.delete(k);
+      for (const k of [...this.caches.keys()]) if (k.startsWith('room') && !k.endsWith(this.theme)) { const c = this.caches.get(k); c.width = c.height = 0; this.caches.delete(k); }
       this.cachedTheme = this.theme;
     }
     const [ia, ib, bt] = keyBlend(state.sunAlt);

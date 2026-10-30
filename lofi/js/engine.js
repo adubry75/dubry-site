@@ -338,7 +338,8 @@ function blep(t, dt) {
   return 0;
 }
 class Pad {
-  constructor(sr, r, start, midi, vel, durS, atkS, relS, cutoff = 1400) {
+  constructor(sr, r, start, midi, vel, durS, atkS, relS, cutoff = 1400, wave = 'saw') {
+    this.soft = wave === 'soft';
     this.sr = sr; this.start = start; this.end = start + Math.round(durS * sr);
     this.k = 0; this.atkN = Math.round(atkS * sr); this.rel = Math.exp(-1 / (sr * relS / 4.6));
     this.env = 0; this.relStart = 1;
@@ -372,7 +373,7 @@ class Pad {
       let l = 0, rr = 0;
       for (let j = 0; j < N; j++) {
         let p = this.ph[j] + this.inc[j]; if (p >= 1) p -= 1; this.ph[j] = p;
-        const s = 2 * p - 1 - blep(p, this.inc[j]);
+        const s = this.soft ? 1.3 * (sinc(p) - sinc(3 * p) / 9 + sinc(5 * p) / 25) : 2 * p - 1 - blep(p, this.inc[j]);
         l += s * this.gl[j]; rr += s * this.gr[j];
       }
       this.subPh += this.subInc; if (this.subPh > 1) this.subPh -= 1;
@@ -830,7 +831,8 @@ class JazzGen extends LofiGen {
     const nextCh = s.prog[(bi + 1) % s.prog.length];
     const sw = 0.62 + (s.swing - 0.17) * 0.3; // triplet-ish swing for the off-beat 8ths
     const at = (b8, jitterMs = 7) => { const beatN = Math.floor(b8 / 2), off = b8 % 2 ? sw : 0; return Math.round(t0 + ((beatN + off) * beat + r.range(-jitterMs, jitterMs) / 1000) * sr); };
-    this.cut = 6500; this.cutTarget = isLast ? 4200 : 9000; this.cutRate = (this.cutTarget - this.cut) / (barS * sr);
+    if (bi === 0) this.cut = 6500;
+    this.cutTarget = isLast ? 4200 : 9000; this.cutRate = (this.cutTarget - this.cut) / (barS * sr);
     // comping: Charleston rhythm, a push into the next bar, or long chords in intros and at the end
     const voicing = voiceChord(rootPc, q, this.prevVoicing, r);
     this.prevVoicing = voicing;
@@ -912,7 +914,7 @@ class AmbientGen {
     const tonic = last ? (last.tonic + r.pick([5, 7, -2, 2, -5, 3, -3])) % 12 : r.int(0, 11);
     const mode = r.weighted([['lydian', 3], ['ionian', 3], ['dorian', 2], ['aeolian', 2], ['mixolydian', 1]]);
     const bpm = r.int(70, 90);
-    this.key = { tonic: (tonic + 12) % 12, mode, bpm };
+    this.key = { tonic: (tonic + 12) % 12, mode, bpm, wave: r.pick(['saw', 'soft', 'saw', 'soft', 'saw']) };
     this.chordsLeft = r.int(9, 15);
     this.deg = 0;
     this.droneRoot = 31 + ((this.key.tonic - 31 % 12 + 24) % 12); // G1..F#2
@@ -937,7 +939,7 @@ class AmbientGen {
     notes = [...new Set(notes)].sort((a, b) => a - b);
     const atk = r.range(3.5, 6.5), rel = r.range(7, 11);
     const overlap = r.range(2.5, 4.5);
-    notes.forEach((m, i) => this.voices.push(new Pad(sr, r, start + Math.round(r.range(0, 1.2) * sr), m, r.range(0.75, 1) * (i === 0 ? 1.1 : 1), holdS + overlap, atk + r.range(0, 1.5), rel, r.range(900, 1700))));
+    notes.forEach((m, i) => this.voices.push(new Pad(sr, r, start + Math.round(r.range(0, 1.2) * sr), m, r.range(0.75, 1) * (i === 0 ? 1.1 : 1) * (k.wave === 'soft' ? 0.6 : 1), holdS + overlap, atk + r.range(0, 1.5), rel, r.range(900, 1700) * (k.wave === 'soft' ? 1.6 : 1), k.wave)));
     this.chordLabel = NOTE_NAMES[((root % 12) + 12) % 12] + ' ' + ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'][deg % 7].toLowerCase();
     this.next = start + Math.round(holdS * sr);
     // walk to the next degree: steps and fourths, home now and then
@@ -1006,7 +1008,7 @@ class WeatherSound {
     this.t = 0; this.nextThunder = Math.round(r.range(6, 20) * sr); this.rumbles = []; this.onFlash = null;
     this.brownL = 0; this.brownR = 0;
   }
-  set(t) { Object.assign(this.target, t); }
+  set(t) { for (const k of ['rain', 'snow', 'fog', 'storm']) if (Number.isFinite(t[k])) this.target[k] = clamp(t[k], 0, 1); }
   thunder() {
     const r = this.r, sr = this.sr, delay = r.range(1.5, 5);
     const f = new SVF(sr, r.range(90, 150), 0.8), f2 = new SVF(sr, r.range(90, 150), 0.8);
@@ -1032,6 +1034,7 @@ class WeatherSound {
     this.t += n;
     for (let s = 0; s < n; s++) {
       this.rain = T.rain + (this.rain - T.rain) * k; this.snow = T.snow + (this.snow - T.snow) * k; this.fog = T.fog + (this.fog - T.fog) * k;
+      if ((s & 127) === 0) { if (Math.abs(this.rain - T.rain) < 1e-6) this.rain = T.rain; if (Math.abs(this.snow - T.snow) < 1e-6) this.snow = T.snow; if (Math.abs(this.fog - T.fog) < 1e-6) this.fog = T.fog; }
       let l = 0, rr = 0;
       if (this.rain > 1e-4) {
         // pinkish noise for the hiss of the rain
@@ -1078,7 +1081,7 @@ class Crackle {
     const r = this.r, sr = this.sr;
     for (let s = 0; s < n; s++) {
       if (vinyl > 0.001 && r() < 7 / sr) { const a = r(); this.pop = (r.chance(0.5) ? 1 : -1) * a * a * a * 0.22; }
-      const c = this.lp.lp(this.hp.hp(this.pop)) * vinyl; this.pop *= this.popD;
+      const c = this.lp.lp(this.hp.hp(this.pop)) * vinyl; this.pop *= this.popD; if (Math.abs(this.pop) < 1e-12) this.pop = 0;
       const h = this.hissLp.lp(this.n()) * (0.0035 * vinyl + 0.0022 * hiss);
       L[s] += c + h; R[s] += c * 0.8 + h;
     }
@@ -1089,7 +1092,7 @@ class Crackle {
 class Wobble {
   constructor(sr, r) {
     this.sr = sr; this.r = r; this.N = 8192; this.bL = new Float32Array(this.N); this.bR = new Float32Array(this.N); this.w = 0;
-    this.wow = r(); this.flut = r(); this.drift = 0; this.driftT = 0;
+    this.wow = r(); this.flut = r(); this.drift = 0; this.driftT = 0; this.n = 0;
     this.base = 0.008 * sr; this.wowD = 0.0011 * sr; this.flD = 0.00007 * sr;
   }
   process(L, R, n, amt) {
@@ -1097,7 +1100,7 @@ class Wobble {
     for (let s = 0; s < n; s++) {
       this.bL[this.w] = L[s]; this.bR[this.w] = R[s];
       this.wow += 0.31 / sr; this.flut += 5.7 / sr;
-      if ((s & 255) === 0) { this.driftT += (r() - 0.5) * 0.02; this.driftT *= 0.995; }
+      if ((++this.n & 255) === 0) { this.driftT += (r() - 0.5) * 0.02; this.driftT *= 0.995; }
       this.drift += (this.driftT - this.drift) * 0.0005;
       const d = this.base + amt * (this.wowD * (sinc(this.wow) + this.drift) + this.flD * sinc(this.flut));
       let p = this.w - d; if (p < 0) p += N;
@@ -1133,7 +1136,7 @@ export class Engine {
     const gen = mode === 'ambient' ? new AmbientGen(this.sr, r, prevKey) : mode === 'jazz' ? new JazzGen(this.sr, r, lp) : new LofiGen(this.sr, r, lp);
     if (mode === 'ambient' && prevKey && prevKey.tonic !== undefined) { gen.key.tonic = prevKey.tonic; gen.droneRoot = 31 + ((gen.key.tonic - 31 % 12 + 24) % 12); }
     if (gen.barPos !== undefined) gen.barPos = this.t + (instant ? 0 : Math.round(1.5 * this.sr));
-    if (gen.next !== undefined) gen.next = this.t;
+    if (gen.next !== undefined) { gen.next = this.t; gen.nextSwell += this.t; gen.nextBreath += this.t; }
     for (const g of this.gens) g.target = 0;
     // rapid switching: drop generators that are already (nearly) silent, and never run more than three at once
     this.gens = this.gens.filter((g) => g.gain > 0.02);
@@ -1170,6 +1173,7 @@ export class Engine {
       this.agcGain += this.agcG * (target - this.agcGain);
       L[s] *= this.agcGain; R[s] *= this.agcGain;
     }
+    lofiW = clamp(lofiW, 0, 1);
     this.wobble.process(L, R, n, 0.4 + 0.6 * lofiW);
     this.weather.process(L, R, n);
     this.crackle.process(L, R, n, lofiW, 1 - lofiW);
@@ -1183,7 +1187,12 @@ export class Engine {
       this.dL[this.di] = L[s]; this.dR[this.di] = R[s]; if (++this.di >= this.la) this.di = 0;
       // gain is the minimum over the look-ahead window via the instant attack above
       L[s] = Math.tanh(dl * this.lim / 0.98) * 0.98; R[s] = Math.tanh(dr * this.lim / 0.98) * 0.98;
+      if (L[s] !== L[s] || R[s] !== R[s]) { L[s] = 0; R[s] = 0; this.lim = 1; this.agcEnv = 0.02; this.agcGain = 1; this.dL.fill(0); this.dR.fill(0); this.broken = true; } // never let a NaN stick
     }
     this.t += n;
+    if (this.broken) { // rebuild the generator that produced it (a fresh start in the same style)
+      const m = this.mode; this.broken = false; this.gens = []; this.setMode(m, true);
+      this.wobble.bL.fill(0); this.wobble.bR.fill(0);
+    }
   }
 }

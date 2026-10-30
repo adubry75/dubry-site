@@ -30,7 +30,8 @@ export function sunPosition(ms, lat = LAT, lng = LNG) {
 export function moonPosition(ms, lat = LAT, lng = LNG) {
   const lw = rad * -lng, phi = rad * lat, d = toDays(ms), c = moonCoords(d), H = sidereal(d, lw) - c.ra;
   let h = altitude(H, phi, c.dec);
-  h += rad * 0.017 / Math.tan(h + rad * 10.26 / (h + rad * 5.10)); // refraction
+  const hr = Math.max(h, 0); // refraction (the formula blows up below the horizon, so clamp like SunCalc does)
+  h += rad * 0.017 / Math.tan(hr + rad * 10.26 / (hr + rad * 5.10));
   return { azimuth: azimuth(H, phi, c.dec), altitude: h };
 }
 // fraction lit (0..1), phase (0 new, 0.25 first quarter, 0.5 full, 0.75 last quarter), and the bright limb angle

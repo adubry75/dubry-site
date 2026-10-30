@@ -19,11 +19,13 @@ const settings = {
   weather: q.get('weather') || store.get('weather', 'auto'),
   cat: q.get('cat') || store.get('cat', 'daisy'),
   room: q.get('room') || store.get('room', 'cozy'),
-  volume: q.has('vol') ? clamp(parseFloat(q.get('vol')), 0, 1) : store.get('volume', 0.8),
+  volume: (() => { const v = q.has('vol') ? parseFloat(q.get('vol')) : Number(store.get('volume', 0.8)); return Number.isFinite(v) ? clamp(v, 0, 1) : 0.8; })(),
   fast: q.has('fast') ? q.get('fast') !== '0' : false,
 };
-if (!SKINS[settings.cat]) settings.cat = 'daisy';
-if (!THEMES[settings.room]) settings.room = 'cozy';
+const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+if (!own(SKINS, settings.cat)) settings.cat = 'daisy';
+if (!own(THEMES, settings.room)) settings.room = 'cozy';
+if (!['auto', 'live', 'clear', 'cloudy', 'rain', 'storm', 'snow', 'fog'].includes(settings.weather)) settings.weather = 'auto';
 if (!['lofi', 'jazz', 'ambient', 'auto'].includes(settings.mode)) settings.mode = 'lofi';
 // Auto: the music follows the clock: lofi by day, jazz in the evening, ambient late at night
 const scheduleFor = (hour) => (hour >= 6 && hour < 17 ? 'lofi' : hour >= 17 && hour < 23 ? 'jazz' : 'ambient');
@@ -134,33 +136,38 @@ async function startAudio() {
     // iOS: play like a music app, even with the ring/silent switch on
     try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch { /* older Safari */ }
     actx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'playback' });
+    actx.resume().catch(() => {}); // inside the tap, before any await (Safari is strict about this)
+    actx.onstatechange = () => { if (playing && actx.state !== 'running' && actx.state !== 'closed') actx.resume().catch(() => {}); };
     gain = actx.createGain(); gain.gain.value = 0; gain.connect(actx.destination);
     const weather = { rain: scene.w.rain, snow: scene.w.snow, fog: scene.w.fog, storm: scene.w.storm };
     try {
       await actx.audioWorklet.addModule(new URL('./worklet.js', import.meta.url));
       node = new AudioWorkletNode(actx, 'lofi-radio', { numberOfInputs: 0, outputChannelCount: [2], processorOptions: { seed, mode: (playingMode = startMode()), weather } });
       node.port.onmessage = (e) => { if (e.data.type === 'info') showInfo(e.data.info); else if (e.data.type === 'flash') scene.lightning(); };
-      scene.audioThunder = true;
       node.connect(gain);
     } catch (err) { // older browsers: run the same engine on the main thread
       console.warn('AudioWorklet unavailable, using ScriptProcessor', err);
       const { Engine } = await import('./engine.js');
       const engine = new Engine({ sampleRate: actx.sampleRate, seed, mode: (playingMode = startMode()) });
-      engine.setWeather(weather); engine.onInfo = showInfo; engine.onFlash = () => scene.lightning(); scene.audioThunder = true;
+      engine.setWeather(weather); engine.onInfo = showInfo; engine.onFlash = () => scene.lightning();
       const sp = actx.createScriptProcessor(4096, 0, 2);
-      sp.onaudioprocess = (ev) => { const L = ev.outputBuffer.getChannelData(0), R = ev.outputBuffer.getChannelData(1); engine.process(L, R, L.length); };
+      // 128-frame quanta, like the worklet, so the same seed plays the same music
+      sp.onaudioprocess = (ev) => { const L = ev.outputBuffer.getChannelData(0), R = ev.outputBuffer.getChannelData(1); for (let i = 0; i < L.length; i += 128) engine.process(L.subarray(i, i + 128), R.subarray(i, i + 128), Math.min(128, L.length - i)); };
       node = { port: { postMessage: (m) => { if (m.type === 'mode') engine.setMode(m.mode); else if (m.type === 'weather') engine.setWeather(m.weather); } }, connect: (d) => sp.connect(d) };
       sp.connect(gain);
     }
   })();
+  starting.catch(() => { starting = null; }); // let a later tap try again
   return starting;
 }
+let suspendT = 0;
 async function play() {
+  clearTimeout(suspendT);
   await startAudio();
-  if (actx.state !== 'running') await actx.resume();
+  await actx.resume();
   const t = actx.currentTime;
   gain.gain.cancelScheduledValues(t); gain.gain.setValueAtTime(gain.gain.value, t); gain.gain.linearRampToValueAtTime(settings.volume, t + 1.5);
-  playing = true; scene.playing = true; updateUI();
+  playing = true; scene.playing = true; scene.audioThunder = true; updateUI();
   wakeLock();
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
 }
@@ -168,14 +175,15 @@ async function pause() {
   if (!actx) return;
   const t = actx.currentTime;
   gain.gain.cancelScheduledValues(t); gain.gain.setValueAtTime(gain.gain.value, t); gain.gain.linearRampToValueAtTime(0, t + 0.8);
-  playing = false; scene.playing = false; updateUI();
-  setTimeout(() => { if (!playing && actx.state === 'running') actx.suspend(); }, 900);
+  playing = false; scene.playing = false; scene.audioThunder = false; updateUI();
+  clearTimeout(suspendT); suspendT = setTimeout(() => { if (!playing && actx.state === 'running') actx.suspend(); }, 900);
+  if (lock) { lock.release().catch(() => {}); lock = null; }
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
 }
 const toggle = () => (playing ? pause() : play());
 let lock = null;
 async function wakeLock() { try { if ('wakeLock' in navigator && !lock) { lock = await navigator.wakeLock.request('screen'); lock.addEventListener('release', () => { lock = null; }); } } catch { /* not allowed */ } }
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && playing) wakeLock(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && playing) { wakeLock(); if (actx && actx.state !== 'running') actx.resume().catch(() => {}); } });
 if ('mediaSession' in navigator) {
   navigator.mediaSession.metadata = new MediaMetadata({ title: 'Lofi Cat Radio', artist: 'dubry.com', album: 'Lofi cats to relax to' });
   navigator.mediaSession.setActionHandler('play', play);
@@ -239,7 +247,9 @@ updateUI();
 const WEATHER_ORDER = ['auto', 'live', 'clear', 'cloudy', 'rain', 'storm', 'snow', 'fog'];
 let hidden = RECORD;
 addEventListener('keydown', (e) => {
-  if (e.target.closest && e.target.closest('select, input[type=range]') && e.key !== ' ') return;
+  if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
+  if (e.target.closest && e.target.closest('select, input, button') && e.key !== ' ') return;
+  if (e.key === ' ' && e.target.closest && e.target.closest('button, input, select')) return; // let the control handle its own Space
   const k = e.key.toLowerCase();
   if (k === ' ' || k === 'k') { e.preventDefault(); hideStart(); toggle(); }
   else if (k === 'm') setMode({ lofi: 'jazz', jazz: 'ambient', ambient: 'auto', auto: 'lofi' }[settings.mode]);
@@ -283,11 +293,12 @@ let last = performance.now(), sunCache = { at: -1e9 }, lamp = 0, lampOn = false,
 const stats = { frames: 0, work: 0, worst: 0 };
 window.__lofi = { scene, settings, stats, get virtual() { return virtual; }, setTime(ms) { offset = ms - Date.now(); virtual = ms; }, play, pause, setMode };
 
+let failures = 0;
 function frame(now) {
+  requestAnimationFrame(frame); // first, so one bad frame can never stop the scene
   const dt = Math.min(0.1, (now - last) / 1000); last = now;
   adaptQuality(dt);
-  tick(dt, now);
-  requestAnimationFrame(frame);
+  try { tick(dt, now); failures = 0; } catch (err) { if (++failures < 3) console.error(err); if (failures === 30) { scene.resize(); } }
 }
 function tick(dt, now) {
   const t0 = performance.now();

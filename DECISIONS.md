@@ -229,3 +229,31 @@ else changed.
   recordings but not in `render-video.mjs` output, which captures only the canvas.
 - When snow has settled on the town, a small snowman (top hat, carrot nose, red scarf) stands on the far sidewalk,
   fading in with the snow cover.
+
+## Polish pass 4: independent code review
+I had a separate reviewer agent read all the code cold and stress-test the engine (hour-long renders with mode and
+weather changes, rapid switching, NaN injection, timing). Its real findings, all fixed:
+- **One exception could freeze the scene forever**: the animation loop now re-arms itself before drawing and survives
+  a bad frame. Odd URL values like `?cat=constructor` got past `SKINS[x]` checks, so they're validated with own-property
+  checks now, plus weather. A 0×0 window (hidden or embedded frame) no longer produces Infinity transforms; the
+  scene waits for a real size.
+- **The moon jumped around at moonrise/moonset**: the refraction formula divided by zero just below the horizon. It's
+  clamped now, as in SunCalc: 0 jumps over 30 simulated days, minute by minute.
+- `?vol=abc` made `play()` throw (NaN gain ramp), so it's validated now.
+- Audio robustness: the AudioContext is resumed inside the tap before any `await` (Safari), resumed again after an
+  interruption (phone call, lock screen, tab back to visible), a failed start can be retried, and quick
+  pause/play/pause no longer lets an old suspend timer cut the sound. Holding Space doesn't machine-gun play/pause,
+  and Cmd/Ctrl shortcuts are left to the browser.
+- **Jazz filter swept every bar** (a subtle "whoosh" on the ride): fixed, it now opens once per section like lofi.
+- Denormals: the weather smoothers and the crackle state crept into subnormal numbers after ~37 min of silence,
+  costing CPU on the audio thread. They now snap to zero.
+- Weather values are clamped and NaN-proofed. If a NaN ever reached the output, the engine now zeros it and
+  rebuilds the generator, so the radio can't go permanently silent.
+- Ambient started with a burst if chosen mid-session (its timers counted from 0). Fixed.
+- The ScriptProcessor fallback now runs the engine in 128-frame quanta, and the tape wobble no longer depends on block
+  boundaries, so every path plays the same music for a seed. Re-verified browser vs Node: bit-identical for Lofi,
+  Jazz and Ambient.
+- Dropped canvas caches release their memory immediately (iOS caps total canvas memory). Lightning shows while the
+  music is paused, the screen wake lock is released on pause.
+- Tools: the local servers bind to 127.0.0.1 only and refuse paths outside the repo or folders; WAV headers no longer
+  overflow on renders over ~6 h; very short renders fade correctly.

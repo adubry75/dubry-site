@@ -47,7 +47,7 @@ engine.onInfo = (i) => { const last = infos[infos.length - 1]; if (!last || last
 
 // WAV header for 16-bit stereo PCM
 function wavHeader(frames) {
-  const b = Buffer.alloc(44), data = frames * 4;
+  const b = Buffer.alloc(44), data = Math.min(frames * 4, 0xFFFFFFFF - 36); // past ~6 h the 32-bit sizes saturate (players then read to the end)
   b.write('RIFF', 0); b.writeUInt32LE(36 + data, 4); b.write('WAVE', 8); b.write('fmt ', 12);
   b.writeUInt32LE(16, 16); b.writeUInt16LE(1, 20); b.writeUInt16LE(2, 22); b.writeUInt32LE(rate, 24);
   b.writeUInt32LE(rate * 4, 28); b.writeUInt16LE(4, 32); b.writeUInt16LE(16, 34); b.write('data', 36); b.writeUInt32LE(data, 40);
@@ -67,7 +67,7 @@ if (ext === '.mp3' || ext === '.flac') {
 }
 if (!sinks.length) throw new Error('--out must end in .wav, .mp3 or .flac');
 
-const N = 4096, L = new Float32Array(N), R = new Float32Array(N), fadeN = Math.round(fadeS * rate);
+const N = 4096, L = new Float32Array(N), R = new Float32Array(N), fadeN = Math.max(1, Math.min(Math.round(fadeS * rate), Math.floor(total / 2)));
 let peak = 0, done = 0, lastPct = -1;
 const t0 = Date.now();
 while (done < total) {
