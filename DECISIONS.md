@@ -354,6 +354,9 @@ these behaviour glitches, all fixed and re-measured:
   DOM nodes constant (332), 55–60 fps, no console errors. It showed two rare long frames (55 and 82 ms), most likely
   a snow layer being built when snow first fell. Snow layers are now built in idle time too. Measured afterwards:
   every cache is ready within 8 s of opening the page, and the worst frame when snow begins is 4 ms.
+- Refreshed the arcade cabinet image (`lofi-radio.webp`, in `src/static/cabs/` and `dist/nine-lives/cabs/`) and the
+  share image (`lofi/og.jpg`, now `?v=2` so social sites refetch it) with the current look (dusk, chimney smoke,
+  window-shaped sunbeam, birds on the wire). Both were rendered with `render-video.mjs --still`.
 
 ---
 
