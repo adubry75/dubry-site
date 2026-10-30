@@ -365,7 +365,10 @@ function tick(dt, now) {
   window.__lofi.state = state;
   // keep the music's weather sounds in step with what we see
   sendT -= dt;
-  if (node && sendT <= 0) { node.port.postMessage({ type: 'weather', weather: { rain: W.rain, snow: W.snow, fog: W.fog, storm: W.storm } }); sendT = 1; }
+  if (node && sendT <= 0) {
+    const crickets = P.month >= 6 && P.month <= 8 ? night * (1 - W.rain) * (1 - W.fog * 0.5) * (1 - W.snow) : 0; // warm summer nights
+    node.port.postMessage({ type: 'weather', weather: { rain: W.rain, snow: W.snow, fog: W.fog, storm: W.storm, crickets } }); sendT = 1;
+  }
   clockT -= dt;
   if (clockT <= 0 && !hidden) {
     const st = sunTimes(virtual);

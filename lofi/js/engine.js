@@ -1089,8 +1089,10 @@ class WeatherSound {
     // distant thunder for storms: a soft rumble a few seconds after each (visual) flash
     this.t = 0; this.nextThunder = Math.round(r.range(6, 20) * sr); this.rumbles = []; this.onFlash = null;
     this.brownL = 0; this.brownR = 0;
+    // summer-night crickets: three of them, each chirping in little trains of pulses
+    this.crickets = 0; this.cr = [0, 1, 2].map((i) => ({ f: 4300 + i * 260 + r() * 120, ph: 0, next: r() * 1.2, k: -1, pan: [-0.7, 0.1, 0.8][i], period: 0.55 + r() * 0.35 }));
   }
-  set(t) { for (const k of ['rain', 'snow', 'fog', 'storm']) if (Number.isFinite(t[k])) this.target[k] = clamp(t[k], 0, 1); }
+  set(t) { for (const k of ['rain', 'snow', 'fog', 'storm', 'crickets']) if (Number.isFinite(t[k])) this.target[k] = clamp(t[k], 0, 1); }
   thunder() {
     const r = this.r, sr = this.sr, delay = r.range(1.5, 5);
     const f = new SVF(sr, r.range(90, 150), 0.8), f2 = new SVF(sr, r.range(90, 150), 0.8);
@@ -1112,6 +1114,24 @@ class WeatherSound {
         L[s] += q.f.run(this.brownL) * a; R[s] += q.f2.run(this.brownR) * a;
       }
       if (q.k >= q.len) this.rumbles.splice(i, 1);
+    }
+    const cT = T.crickets || 0;
+    if (cT > 0.001 || this.crickets > 0.001) {
+      for (let s = 0; s < n; s++) {
+        this.crickets += (cT - this.crickets) * 2e-5;
+        let l = 0, rr = 0;
+        for (const c of this.cr) {
+          if (c.k < 0) { c.next -= 1 / sr; if (c.next <= 0) { c.k = 0; c.next = c.period * (0.85 + r() * 0.3); } continue; }
+          const u = c.k / sr; c.k++;
+          if (u > 0.09) { c.k = -1; continue; } // a chirp = 3 short pulses in ~90 ms
+          const w = u % 0.03, pulse = w < 0.022 ? Math.sin(Math.PI * w / 0.022) : 0;
+          c.ph += c.f / sr; if (c.ph > 1) c.ph -= 1;
+          const y = sinc(c.ph) * pulse * 0.03 * this.crickets;
+          l += y * (1 - c.pan) * 0.7; rr += y * (1 + c.pan) * 0.7;
+        }
+        L[s] += l; R[s] += rr;
+      }
+      if (cT === 0 && this.crickets < 0.001) this.crickets = 0;
     }
     this.t += n;
     for (let s = 0; s < n; s++) {
