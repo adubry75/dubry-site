@@ -300,7 +300,7 @@ weather changes, rapid switching, NaN injection, timing). Its real findings, all
 
 **What I built:** Lofi Cat Radio, a new page at `/lofi/`. A cozy, endless, generative scene: a cat (Daisy, Nero,
 Jammies, Callie/Soybean or solid black) napping, yawning, grooming and stretching on a windowsill above a small town
-(cats can be petted, and it purrs). Sky, sun, moon and room lighting follow real Medford time. Weather drifts
+(you can pet the cat, and it purrs). Sky, sun, moon and room lighting follow real Medford time. Weather drifts
 through clear, cloudy, rain, gentle storms, snow and fog, or follows Medford's live weather. Lights come on in the
 town at dusk, and cars, birds, a rooftop cat, chimney smoke, seasonal décor and a visiting second cat keep it gently
 alive. Three room moods (Cozy, Cabin, Blue hour).
@@ -323,8 +323,8 @@ in code.
 - **Easiest, no screen recording:** `node tools/render-video.mjs --minutes 60 --seed 7 --mode lofi --weather rain
   --cat daisy --out lofi-rain-1h.mp4` renders a finished 1080p MP4 (picture and music in sync) offline. Add
   `--fast 3600 --time 2026-11-01T05:30:00-07:00 --mode auto` for a whole day in an hour, with the music following
-  it. `--still thumb.png --size 1280x720` makes a thumbnail. It needs Node, ffmpeg and Playwright's Chromium
-  (`npx playwright install chromium` once). It ran at ~17 frames/s here without a GPU, so an hour at 30 fps takes
+  it. `--still thumb.png --size 1280x720` makes a thumbnail. It needs Node, ffmpeg and Playwright (once:
+  `npm i -D playwright && npx playwright install chromium`). It ran at ~17 frames/s here without a GPU, so an hour at 30 fps takes
   under two hours.
 - **Or screen-record:** open `https://dubry.com/lofi/?record=1` in Chrome full screen (F11) at 1920×1080, click once
   to start the sound (`record=1` hides every control and the cursor; `&autoplay=1` starts it by itself in a Chrome

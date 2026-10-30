@@ -183,7 +183,7 @@ lofi/
 | Tool | What it does |
 |---|---|
 | `node tools/render-audio.mjs --minutes 60 --seed 7 --mode lofi --weather rain --out lofi-1h.mp3` | N minutes of music to WAV/MP3/FLAC, deterministic per seed (same seed = same music as the page) |
-| `node tools/render-video.mjs --minutes 60 --seed 7 --mode lofi --weather rain --out lofi-1h.mp4` | a finished 1080p MP4 (picture + music in sync), rendered offline frame by frame |
+| `node tools/render-video.mjs --minutes 60 --seed 7 --mode lofi --weather rain --out lofi-1h.mp4` | a finished 1080p MP4 (picture + music in sync), rendered offline frame by frame; `--mode auto --fast 3600` for a whole day, `--still thumb.png` for a thumbnail. Needs ffmpeg and Playwright (`npm i -D playwright && npx playwright install chromium`) |
 | `node tools/check-audio.mjs file.wav [--png spec.png]` | peak, clipping, silence gaps, loudness over time (LUFS), smoothness of transitions |
 | `node tools/lofi-shots.mjs [--soak 10]` | Playwright screenshots of every weather × time on desktop and phone, or a long soak run |
 
