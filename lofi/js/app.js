@@ -126,7 +126,7 @@ function autoPick(month) {
 }
 function applyWeather(name) { scene.setWeather(WEATHER[name] || WEATHER.clear); }
 if (settings.weather !== 'auto' && WEATHER[settings.weather]) { applyWeather(settings.weather); Object.assign(scene.w, WEATHER[settings.weather]); }
-if (q.get('instant') === '1') { Object.assign(scene.w, scene.wt); scene.snowCover = scene.w.snow; for (let i = 0; i < 20; i++) scene.update(0.5, { night: 0, dark: 0, hour: 12, fast: false }); }
+if (q.get('instant') === '1') { Object.assign(scene.w, scene.wt); scene.snowCover = scene.w.snow; for (let i = 0; i < 20; i++) scene.update(0.5, { night: 0, dark: 0, hour: 12, fast: false }); scene.birds = []; scene.cars = []; }
 
 // ── audio
 let actx = null, node = null, gain = null, playing = false, starting = null, info = null;

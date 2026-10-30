@@ -282,3 +282,6 @@ weather changes, rapid switching, NaN injection, timing). Its real findings, all
   shadows) thrown onto the wall, slanted with the low sun and soft-edged (drawn tiny and scaled up). It was a
   hard-edged slab, and it was on the wrong side: the window faces south, so evening sun from the west lands on the
   left (east) wall and morning sun on the right.
+- Night atmosphere: on a wet road (during rain and for a while after) the street lamps, headlights and tail lights
+  leave soft shimmering reflections; clear dark nights show a faint Milky Way band (dimmer when the moon is
+  bright); and now and then a distant plane's blinking lights crawl across the night sky.

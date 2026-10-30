@@ -645,6 +645,7 @@ export class Scene {
       if (t > 2) { this.flashT = -1; this.flash = 0; }
     }
     const W = this.w;
+    this.wetRoad = clamp((this.wetRoad || 0) + (W.rain > 0.3 ? dt / 20 : -dt / 600), 0, 1);
     this.snowCover = clamp(this.snowCover + (W.snow > 0.3 ? dt / 120 : -dt / 300) * (state.fast ? 6 : 1), 0, 1);
     // clouds
     const want = 5 + Math.round(W.cloud * 12);
@@ -710,6 +711,8 @@ export class Scene {
       if (wb.state === 'gone' && wb.t <= 0 && state.night < 0.5 && W.rain < 0.5) { wb.state = 'sit'; wb.u = 0.1 + r() * 0.3; wb.t = 6; }
       wb.hop = Math.max(0, wb.hop - dt);
     }
+    if (!this.plane && state.night > 0.6 && W.cloud < 0.6 && r() < dt / 420) this.plane = { x: -10, y: 60 + r() * 160, v: 9 + r() * 6, dy: (r() - 0.5) * 1.5 };
+    if (this.plane) { this.plane.x += this.plane.v * dt; this.plane.y += this.plane.dy * dt; if (this.plane.x > G.w + 10) this.plane = null; }
     // a shooting star on clear nights, rarely
     this.nextShooting -= dt;
     if (this.nextShooting <= 0) { if (state.night > 0.8 && W.cloud < 0.5) this.shooting = { x: 200 + r() * 600, y: 40 + r() * 120, t: 0 }; this.nextShooting = 90 + r() * 240; }
@@ -768,7 +771,23 @@ export class Scene {
     ctx.fillStyle = sg; ctx.fillRect(0, 0, G.w, G.h);
     // stars
     const starA = state.night * (1 - W.cloud * 0.9) * (1 - W.fog);
-    if (starA > 0.02) this.stars(ctx, starA);
+    if (starA > 0.02) {
+      if (!this.milky) { // a faint diagonal band of sky-glow, made once
+        const c = document.createElement('canvas'); c.width = 240; c.height = 160; const g = c.getContext('2d'), rr = seeded(31);
+        g.translate(120, 80); g.rotate(-0.45);
+        for (let i = 0; i < 70; i++) { const x = (rr() - 0.5) * 300, y = (rr() - 0.5) * 26 * (1 + rr()), r0 = 8 + rr() * 22; const gr = g.createRadialGradient(x, y, 0, x, y, r0); gr.addColorStop(0, 'rgba(190,200,255,0.10)'); gr.addColorStop(1, 'rgba(190,200,255,0)'); g.fillStyle = gr; g.fillRect(x - r0, y - r0, r0 * 2, r0 * 2); }
+        this.milky = c;
+      }
+      ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(1, starA * 1.3 * (1 - state.moonFraction * 0.5));
+      ctx.drawImage(this.milky, 120, -40, G.w * 0.85, 420); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+      this.stars(ctx, starA);
+    }
+    // a plane's lights crossing far away, now and then at night
+    if (this.plane) {
+      const pl = this.plane, blink = (this.time * 1.1) % 1 < 0.12;
+      ctx.fillStyle = `rgba(255,255,255,${0.75 * state.night})`; ctx.fillRect(pl.x, pl.y, 2, 2);
+      if (blink) { ctx.fillStyle = `rgba(255,90,80,${state.night})`; ctx.fillRect(pl.x + 3, pl.y, 2.4, 2.4); }
+    }
     // sun glow and moon
     this.sunMoon(ctx, state, sky);
     // shooting star
@@ -809,6 +828,9 @@ export class Scene {
     this.mark('town');
     // lit windows, street lamps, cars, birds
     this.townLights(ctx, state);
+    // a wet road mirrors the lamps and headlights
+    const wet = Math.max(W.rain, this.wetRoad || 0);
+    if (wet > 0.05 && state.dark > 0.3) this.reflections(ctx, state, wet);
     this.drawCars(ctx, state);
     this.drawBirds(ctx, state);
     this.mark('lights');
@@ -1031,6 +1053,25 @@ export class Scene {
       }
     }
     this.headlight = head; this.headX = headX;
+  }
+
+  reflections(ctx, state, wet) {
+    const on = smooth(0.3, 0.5, state.dark) * wet;
+    ctx.globalCompositeOperation = 'lighter';
+    for (const l of this.town.lamps) {
+      const x = l.x + 13, sh = 0.75 + 0.25 * Math.sin(this.time * 3 + l.x);
+      const gr = ctx.createLinearGradient(0, 606, 0, 662);
+      gr.addColorStop(0, `rgba(255,200,120,${0.32 * on * sh})`); gr.addColorStop(1, 'rgba(255,200,120,0)');
+      ctx.fillStyle = gr; ctx.fillRect(x - 4, 606, 8, 56);
+    }
+    for (const c of this.cars) { // headlight and tail-light streaks
+      const fx = c.x + c.dir * 34, bx = c.x - c.dir * 34;
+      let gr = ctx.createLinearGradient(0, c.lane, 0, c.lane + 26); gr.addColorStop(0, `rgba(255,236,190,${0.35 * on})`); gr.addColorStop(1, 'rgba(255,236,190,0)');
+      ctx.fillStyle = gr; ctx.fillRect(fx - 3, c.lane, 6, 26);
+      gr = ctx.createLinearGradient(0, c.lane, 0, c.lane + 18); gr.addColorStop(0, `rgba(255,80,70,${0.3 * on})`); gr.addColorStop(1, 'rgba(255,80,70,0)');
+      ctx.fillStyle = gr; ctx.fillRect(bx - 2, c.lane, 4, 18);
+    }
+    ctx.globalCompositeOperation = 'source-over';
   }
 
   smoke(ctx, state) {
