@@ -61,7 +61,7 @@ async function scrollThrough(page) {
   ok(info.unnamedLinks === 0, 'every link has an accessible name', String(info.unnamedLinks));
   ok(info.imgsNoAlt === 0, 'every <img> has alt');
   ok(info.catHidden === 'true', 'decorative cat is aria-hidden');
-  ok(info.cabs === 34, '34 arcade cabinets', String(info.cabs));
+  ok(info.cabs === 35, '35 arcade cabinets', String(info.cabs));
   ok(info.benches === 54, '54 benches', String(info.benches));
   ok(info.art === 59, 'gallery parsed 59 artworks from /art-portfolio/', String(info.art));
   ok(info.pbi === 6, 'office parsed 6 Power BI screenshots', String(info.pbi));

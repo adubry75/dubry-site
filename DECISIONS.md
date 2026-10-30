@@ -44,6 +44,9 @@ Overnight build of `/lofi/`. Each entry is a call I made without asking, and why
   "54 Bench Challenge" and "Art portfolio". The only source edits are one line in `src/data/content.js` and one
   line in `src/index.html`. `dist/` was rebuilt: `dist/index.html` changed and one image was added; every hashed
   JS file is byte-identical. The arcade heading counts the cabinets itself, so it now says 35.
+- The home page's own test suite (`tools/check.mjs`) expected exactly 34 cabinets; updated to 35. The whole suite
+  passes with the new cabinet and footer link (all checks, including keyboard reachability of cabinets, every outbound
+  link opening in a new tab, reduced-motion layout, and the cat's scroll behaviour).
 - If the server has a separate games index page (outside this repo), it needs a link added by hand:
   `<a href="/lofi/">Lofi Cat Radio</a>`.
 
