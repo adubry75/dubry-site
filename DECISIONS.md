@@ -288,3 +288,7 @@ weather changes, rapid switching, NaN injection, timing). Its real findings, all
 - Layout QA beyond the two required sizes: landscape phone (844×390), tablet portrait (1024×1366), ultrawide
   (2560×1080, more room shows), tiny (320×480), 1366×768, 1080×1920, and live resizing through a hidden 0×0 state
   and back. All compose sensibly with no console errors.
+- After ~25 s asleep the cat **tucks its tail in**: over about ten seconds the tail is drawn up from hanging over the
+  sill's edge to lying along the sill in front of the body, tip curled. It unfurls again on waking. The two tail
+  shapes are blended point by point, with the tip slightly ahead. Blending the bend angles was tried first, and it
+  swept the tail through mid-air under the sill.

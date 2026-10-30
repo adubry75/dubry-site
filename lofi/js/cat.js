@@ -34,7 +34,7 @@ export class CatBrain {
     this.r = rand;
     this.state = 'sleep'; this.stateLeft = 40 + rand() * 60;
     // smoothed pose parameters
-    this.p = { head: 0, eyes: 0, paws: 0.35, yawn: 0, stretch: 0, groom: 0, earL: 0, earR: 0, lookX: 0, lookY: 0, tail: 0, curl: 0 };
+    this.p = { head: 0, eyes: 0, paws: 0.35, yawn: 0, stretch: 0, groom: 0, wrap: 0, earL: 0, earR: 0, lookX: 0, lookY: 0, tail: 0, curl: 0 };
     this.t = { head: 0, eyes: 0, paws: 0.35, yawn: 0, stretch: 0, groom: 0, lookX: 0, lookY: 0 };
     this.action = null; this.actionT = 0; this.nextAction = 8 + rand() * 10;
     this.blinkT = 3; this.blink = 0;
@@ -98,6 +98,10 @@ export class CatBrain {
     const k = 1 - Math.exp(-dt * 2.2), kf = 1 - Math.exp(-dt * 5);
     for (const key of ['head', 'paws', 'stretch', 'lookX', 'lookY']) p[key] += (t[key] - p[key]) * k;
     p.groom += (t.groom - p.groom) * kf;
+    // after a while asleep the tail curls up along the sill; it unfurls on waking
+    this.slept = this.state === 'sleep' ? (this.slept || 0) + dt : 0;
+    const wrapT = this.slept > 25 ? 1 : 0;
+    p.wrap += (wrapT - p.wrap) * (1 - Math.exp(-dt * (wrapT ? 0.35 : 0.9)));
     p.eyes += (t.eyes - p.eyes) * kf; p.yawn += (t.yawn - p.yawn) * kf;
     p.earL = this.ear[0]; p.earR = this.ear[1];
   }
@@ -119,8 +123,8 @@ export function drawCat(ctx, x, y, s, skinId, brain, time, light, rim, eyeGlow =
   ctx.fillStyle = `rgba(20,10,20,${0.28})`;
   ctx.beginPath(); ctx.ellipse(20, 2, 200, 10, 0, 0, Math.PI * 2); ctx.fill();
 
-  // tail (behind the body: drapes over the sill's front edge)
-  drawTail(ctx, S, p, brain, time, C);
+  // tail: behind the body while it hangs over the edge, in front once it's wrapped along the sill
+  if ((p.wrap || 0) < 0.5) drawTail(ctx, S, p, brain, time, C);
 
   // body
   const backY = -104 - br * 2.4 + st * 18, chestX = -92 - st * 6, rumpY = -116 - br * 1.6 - st * 26;
@@ -165,6 +169,7 @@ export function drawCat(ctx, x, y, s, skinId, brain, time, light, rim, eyeGlow =
 
   // hind paw
   paw(ctx, 112, -4, 26, 13, S, C, 0);
+  if ((p.wrap || 0) >= 0.5) drawTail(ctx, S, p, brain, time, C);
   // front paws (tucked → sphinx → stretched)
   const reach = lerp(0, 54, clamp(p.paws, 0, 1)) + st * 60;
   const gr = clamp(p.groom, 0, 1);
@@ -207,15 +212,26 @@ function drawTail(ctx, S, p, brain, time, C) {
   const pts = [];
   const sway = Math.sin(time * 0.7) * 0.12 + brain.flick * Math.sin(time * 9) * 0.35;
   const N = 18;
-  let x = 134, y = -26, ang = 0.35;
-  for (let i = 0; i <= N; i++) {
-    const u = i / N;
-    pts.push([x, y]);
-    const curl = u > 0.6 ? (u - 0.6) * 2.4 * (0.8 + 0.4 * Math.sin(time * 0.5)) : 0;
-    ang += (u < 0.15 ? 0.13 : 0.02) + curl * 0.32 * (1 + sway) - sway * 0.05 * u;
-    const segLen = 11;
-    x += Math.cos(ang) * segLen; y += Math.sin(ang) * segLen;
-  }
+  const w = clamp(p.wrap || 0, 0, 1);
+  // two spines (hanging over the edge, wrapped along the sill) blended point by point, so the tail is drawn
+  // up and over rather than sweeping through the air under the sill
+  const spine = (wrapped) => {
+    const out = [];
+    let x = 134, y = -26, ang = wrapped ? 1.1 : 0.35;
+    for (let i = 0; i <= N; i++) {
+      const u = i / N;
+      out.push([x, y]);
+      const curl = u > 0.6 ? (u - 0.6) * 2.4 * (0.8 + 0.4 * Math.sin(time * 0.5)) : 0;
+      ang += wrapped ? (u < 0.25 ? 0.42 : u > 0.82 ? 0.22 : 0) + sway * 0.04 * (u > 0.6 ? 1 : 0)
+        : (u < 0.15 ? 0.13 : 0.02) + curl * 0.32 * (1 + sway) - sway * 0.05 * u;
+      x += Math.cos(ang) * 11; y += Math.sin(ang) * 11;
+    }
+    return out;
+  };
+  const e = w * w * (3 - 2 * w);
+  if (e <= 0.001) pts.push(...spine(false));
+  else if (e >= 0.999) pts.push(...spine(true));
+  else { const a = spine(false), b = spine(true); for (let i = 0; i <= N; i++) { const t = Math.min(1, e * (1 + 0.6 * i / N)); pts.push([lerp(a[i][0], b[i][0], t), lerp(a[i][1], b[i][1], t)]); } }
   const left = [], right = [];
   for (let i = 0; i < pts.length; i++) {
     const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
